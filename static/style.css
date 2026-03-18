@@ -87,6 +87,13 @@ sidebar stays in place when scrolling.*/
     border: none;
     font: inherit;
     cursor: pointer;
+    border-radius: .5em;
+    padding: .85em;
+    text-decoration: none;
+    color: var(--text-clr);
+    display: flex;
+    align-items: center;
+    gap: 1em;
 }
 
 /* Prevent changes to size of icons and have them be the same color as the text. */
@@ -96,11 +103,40 @@ sidebar stays in place when scrolling.*/
 }
 
 /* Style the spans in anchor tags and dropdown buttons the same. Make sure they fill the parent element so svg icon goes to the right. */
-#sidebar a span, #sidebar.dropdown-btn{
+#sidebar a span, #sidebar.dropdown-btn span{
     flex-grow: 1;
 }
 
 /* Give the sidebar links and dropdowns a different color when hovering over them with the cursor. */
-#sidebar a:hover, #siderbar.dropdown-btn{
+#sidebar a:hover, #sidebar.dropdown-btn:hover{
     background-color: var(--hover-clr);
 }
+
+/* Use grid to handle one child element. Div has overflow hidden as it hides elements that don't fit in the container. Control height of grid
+row to do this and set it to 0fr. Meaning it has no height. */
+#sidebar.sub-menu{
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: 300ms;
+    > div{
+        overflow: hidden;
+    }
+}
+
+/* Don't show the submenu unless you override the grid-template-rows value to be 1fr. Which adjusts automatically like height auto when the 
+submenu should be shown. */
+#sidebar.sub-menu.show{
+    grid-template-rows: 1fr;
+}
+
+/* Make the rotation of arrow svg visible by making it delayed. */
+.dropdown-btn svg{
+    transition: 200ms;
+}
+
+/* Rotate the svg arrow when a submenu is toggled. */
+.rotate svg:last-child{
+    rotate: -180deg;
+}
+
+#sidebar

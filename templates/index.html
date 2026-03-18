@@ -3,15 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speech Chess</title>
-    <style type = "text/css">
-        .img_deg{
-            margin-top: -50px;
-            width: 20%;
-            height: 1%;
-        }
-    </style>
+    <title>Home</title>
     <link rel="stylesheet" href="/static/style.css">
+    <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
+    <script type="text/javascript" src="app.js" defer></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
 
 </head>
@@ -23,7 +18,7 @@
         <ul>
             <li>
                 <!--<img class = "img_deg" src="static/images/SpeechChess_logo.png">-->
-                <span>SpeechChess</span>
+                <span class="logo">SpeechChess</span>
                 <button id="toggle-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M160-240q-17 0-28.5-11.5T120-280q0-17 11.5-28.5T160-320h640q17 0 28.5 11.5T840-280q0 17-11.5 28.5T800-240H160Zm0-200q-17 0-28.5-11.5T120-480q0-17 11.5-28.5T160-520h640q17 0 28.5 11.5T840-480q0 17-11.5 28.5T800-440H160Zm0-200q-17 0-28.5-11.5T120-680q0-17 11.5-28.5T160-720h640q17 0 28.5 11.5T840-680q0 17-11.5 28.5T800-640H160Z"/></svg>
                 </button>
@@ -36,18 +31,21 @@
                 </a>
             </li>
             <li>
-                <button class="dropdown-btn">
+                <!--Use onclick attribute to call the function toggle submenu and pass 'this' as an argument().-->
+                <button onclick=toggleSubMenu(this) class="dropdown-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M320-273v-414q0-17 12-28.5t28-11.5q5 0 10.5 1.5T381-721l326 207q9 6 13.5 15t4.5 19q0 10-4.5 19T707-446L381-239q-5 3-10.5 4.5T360-233q-16 0-28-11.5T320-273Zm80-207Zm0 134 210-134-210-134v268Z"/></svg>
                     <span>Play</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M459-381 314-526q-3-3-4.5-6.5T308-540q0-8 5.5-14t14.5-6h304q9 0 14.5 6t5.5 14q0 2-6 14L501-381q-5 5-10 7t-11 2q-6 0-11-2t-10-7Z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M465-363.5q-7-2.5-13-8.5L268-556q-11-11-11-28t11-28q11-11 28-11t28 11l156 156 156-156q11-11 28-11t28 11q11 11 11 28t-11 28L508-372q-6 6-13 8.5t-15 2.5q-8 0-15-2.5Z"/></svg>
                 </button>
-                <ul> class="sub-menu">
-                    <li><a href="#">Play Online</a></li>
-                    <li><a href="#">Play AI</a></li>
-                    <li><a href="#">Play a Friend</a></li>
-                    <li><a href="#">Statistics</a></li>
-                    <li><a href="#">History</a></li>
-            
+                <ul class="sub-menu">
+                    <!--Use a div container around the list items in the submenu-->
+                    <div>
+                        <li><a href="#">Play Online</a></li>
+                        <li><a href="#">Play AI</a></li>
+                        <li><a href="#">Play a Friend</a></li>
+                        <li><a href="#">Statistics</a></li>
+                        <li><a href="#">History</a></li>  
+                    </div>                       
                 </ul>
             </li>
             <li>
