@@ -13,12 +13,19 @@ Install Requirements:
 
 python -m pip install chess SpeechRecognition sounddevice numpy pyttsx3
 
+pip install fastapi
+pip install uvicorn
+pip install jinja2
+
 
 ## Usage
 
 **Chess Demo:**
 
 python Chess.py
+
+python -m uvicorn main:app --reload
+Then proceed to the link generated in the terminal.
 
 
 **Voice to Text:**
