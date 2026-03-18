@@ -16,15 +16,20 @@
 
 </head>
 <body>
-
+    <!--Sidebar consists of a toggle button to toggle the sidebar, dropdown buttons for features with multiple options, and regular buttons.
+    svg icons are used as a physical representative for each feature listed in the siderbar. This is done in the body and using an 
+    unordered list, each list item is an anchor tag that uses href attribute to specify the domain to link to-->
     <aside id="sidebar">
         <ul>
             <li>
-                <img class = "img_deg" src="static/images/SpeechChess_logo.png">
+                <!--<img class = "img_deg" src="static/images/SpeechChess_logo.png">-->
+                <span>SpeechChess</span>
                 <button id="toggle-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M160-240q-17 0-28.5-11.5T120-280q0-17 11.5-28.5T160-320h640q17 0 28.5 11.5T840-280q0 17-11.5 28.5T800-240H160Zm0-200q-17 0-28.5-11.5T120-480q0-17 11.5-28.5T160-520h640q17 0 28.5 11.5T840-480q0 17-11.5 28.5T800-440H160Zm0-200q-17 0-28.5-11.5T120-680q0-17 11.5-28.5T160-720h640q17 0 28.5 11.5T840-680q0 17-11.5 28.5T800-640H160Z"/></svg>
                 </button>
             </li>
+            <!--This class holds the current website link. Depending on where we are on the website, a different link will be highlighted
+            using this class.-->
             <li class="active">
                 <a href="index.html">
                     <span>Home</span>

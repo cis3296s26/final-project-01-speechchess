@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins');
 
+/* Root element defines color palette. */
 :root{
     --base-clr: black;
     --line-clr: rgb(89, 89, 89);
@@ -24,10 +25,13 @@ body {
     min-height: 100dvh;
     background-color: var(--base-clr);
     color: var(--text-clr);
+    /* Grid will have two columns, one of automatic size, the other grows and shrinks depending on how much space there is.*/
     display: grid;
     grid-template-columns: auto 1fr;
 }
 
+/* Format the sidebar. Stretch the whole page, and apply padding. Give a border-right to make it look separate from page. Make sure that 
+sidebar stays in place when scrolling.*/
 #sidebar{
     box-sizing: border-box;
     height: 100vh;
@@ -35,8 +39,68 @@ body {
     padding: 5px 1em;
     background-color: var(--base-clr);
     border-right: 1px solid var(--line-clr);
+    /* Sets sticking point of sidebar to top edge of viewpoint. And viewpoint always follows you, it's where one views. */
+    position: sticky;
+    top: 0;
+    align-self: start;
 }
 
+/* Removes the bullet points. */
 #sidebar ul{
     list-style: none;
+}
+
+/* First list item in unordered list, the logo, uses flexbox layout with flex end to have it oriented on the right side. */
+#sidebar > ul > li:first-child{
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16 px;
+    .logo{
+        font-weight: 600;
+    }
+}
+
+/* Style the class we apply to the li and which holds the current website link. Highlights the current link and icon. */
+#sidebar ul li.active a{
+    color: var(--acent-clr);
+    svg{
+        fill: var(--acent-clr);
+    }
+}
+
+/* All share the same style because they should be consistent.*/
+#sidebar a, #sidebar.dropdown-btn, #sidebar.logo{
+    border-radius: .5em;
+    padding: .85em;
+    text-decoration: none;
+    color: var(--text-clr);
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}
+
+/* .dropdown-btn buttons are not anchor tags so they need additional information so that they remain the same. */
+.dropdown-btn{
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    font: inherit;
+    cursor: pointer;
+}
+
+/* Prevent changes to size of icons and have them be the same color as the text. */
+#sidebar svg{
+    flex-shrink: 0;
+    fill: var(--text-clr);
+}
+
+/* Style the spans in anchor tags and dropdown buttons the same. Make sure they fill the parent element so svg icon goes to the right. */
+#sidebar a span, #sidebar.dropdown-btn{
+    flex-grow: 1;
+}
+
+/* Give the sidebar links and dropdowns a different color when hovering over them with the cursor. */
+#sidebar a:hover, #siderbar.dropdown-btn{
+    background-color: var(--hover-clr);
 }

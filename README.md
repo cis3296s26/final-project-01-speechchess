@@ -21,6 +21,9 @@ Follow this project board to know the latest status of the project: [http://...]
 - What is expected to happen when the app start. 
 
 # Sources
+YouTube
+-Used to help setup a navigatable sidebar menu for the homepage; https://www.youtube.com/watch?v=R7b3OlEyqug.
+
 Useful FastAPI Info
 -Simple FastAPI intro with examples and more information; https://fastapi.tiangolo.com/tutorial/first-steps/?utm_source=chatgpt.com#interactive-api-docs
 -Information about template engines and the syntax to use Jinja2. This link is very helpful!; https://fastapi.tiangolo.com/advanced/templates/?utm_source=chatgpt.com
