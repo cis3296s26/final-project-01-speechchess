@@ -1,20 +1,9 @@
-# Project Name
-Put here a short paragraph describing your project. 
-Adding an screenshot or a mockup of your application in action would be nice.  
+# Speech Chess
+Speech Chess is a web application that allows users to interract with a chess game purely through their voice. Especially for those who are either visually impaired or physically disabled but still want to engage with the game of chess, or those who want to multitask, this game presents a great oppurtunity.  
 
 ![This is a screenshot.](images.png)
 # How to run
-Provide here instructions on how to use your application.   
-- Download the latest binary from the Release section on the right on GitHub.  
-- On the command line uncompress using
-```
-tar -xzf  
-```
-- On the command line run with
-```
-./hello
-```
-- You will see Hello World! on your terminal. 
+This game is entirely run in a web browser. Just click the link and you can play right away! 
 
 pip install fastapi
 pip install uvicorn
@@ -43,3 +32,8 @@ HTML
 -Learned about containers; https://www.w3schools.com/w3css/w3css_containers.asp
 -Used as a temporary container; https://www.w3schools.com/w3css/4/w3.css
 
+# Requirements
+A modern web browser, microphone access enabled
+# How to contribute
+Follow this project board to know the latest status of the project: [https://github.com/orgs/cis3296s26/projects/29/views/1] 
+ 
