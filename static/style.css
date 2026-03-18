@@ -1,8 +1,14 @@
 body {
-    background-color: green;
+    background-color: grey;
 }
 
 h1 {
-    color: black;
-    margin-left: 50;
+    background-color: black;
+    color: white;
+    text-align: center;
+    margin-top: -20px;
+}
+
+.right-align-text{
+    text-align: right;
 }
