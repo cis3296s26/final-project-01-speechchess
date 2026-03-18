@@ -26,3 +26,10 @@ Follow this project board to know the latest status of the project: [http://...]
 - Specify additional library to download if needed 
 - What file and target to compile and run. 
 - What is expected to happen when the app start. 
+
+# Sources
+Useful FastAPI Info
+-Simple FastAPI intro with examples and more information; https://fastapi.tiangolo.com/tutorial/first-steps/?utm_source=chatgpt.com#interactive-api-docs
+-Information about template engines and the syntax to use Jinja2. This link is very helpful!; https://fastapi.tiangolo.com/advanced/templates/?utm_source=chatgpt.com
+-Really helped to understand static files and the purpose of mounting; https://fastapi.tiangolo.com/tutorial/static-files/?utm_source=chatgpt.com#what-is-mounting
+
