@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chess</title>
+
+    <link rel="stylesheet" href="Chess%20JS/css/chessboard-1.0.0.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="Chess%20JS/js/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+          --bg:       #0c0c0c;
+          --surface:  #141414;
+          --border:   #252525;
+          --gold:     #c9a84c;
+          --gold-dim: #7a5f28;
+          --text:     #e8dcc8;
+          --muted:    #4a4030;
+          --danger:   #b03030;
+          --check:    rgba(180,40,40,0.55);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+          background: var(--bg);
+          color: var(--text);
+          font-family: 'Crimson Text', serif;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 2rem 1rem 3rem;
+          background-image: radial-gradient(ellipse at 20% 0%, #1a1408 0%, transparent 60%),
+                            radial-gradient(ellipse at 80% 100%, #0a1015 0%, transparent 60%);
+        }
+
+        header {
+          text-align: center;
+          margin-bottom: 2rem;
+          animation: fadeDown .6s ease both;
+        }
+        @keyframes fadeDown {
+          from { opacity:0; transform:translateY(-12px); }
+          to   { opacity:1; transform:translateY(0); }
+        }
+        header h1 {
+          font-family: 'Cinzel', serif;
+          font-size: clamp(2rem, 5vw, 3rem);
+          letter-spacing: .14em;
+          color: var(--gold);
+          text-shadow: 0 0 50px rgba(201,168,76,.2);
+        }
+        header p { font-size: .9rem; color: var(--muted); letter-spacing: .08em; margin-top: .2rem; }
+
+        .layout {
+          display: flex;
+          gap: 1.8rem;
+          align-items: flex-start;
+          flex-wrap: wrap;
+          justify-content: center;
+          width: 100%;
+          max-width: 860px;
+          animation: fadeUp .6s .1s ease both;
+        }
+        @keyframes fadeUp {
+          from { opacity:0; transform:translateY(14px); }
+          to   { opacity:1; transform:translateY(0); }
+        }
+
+        /* Board */
+        #board { width: min(480px, 90vw); }
+
+        .highlight-from { box-shadow: inset 0 0 0 4px rgba(201,168,76,.9) !important; }
+        .highlight-to   { box-shadow: inset 0 0 0 4px rgba(201,168,76,.55) !important; }
+        .highlight-legal {
+          background: radial-gradient(circle, rgba(201,168,76,.45) 28%, transparent 72%) !important;
+        }
+        .highlight-check { background: var(--check) !important; }
+
+        /* Panel */
+        .panel {
+          width: 220px;
+          display: flex;
+          flex-direction: column;
+          gap: .9rem;
+        }
+
+        .card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          padding: 1.1rem 1.3rem;
+        }
+        .card h2 {
+          font-family: 'Cinzel', serif;
+          font-size: .72rem;
+          letter-spacing: .12em;
+          text-transform: uppercase;
+          color: var(--gold-dim);
+          border-bottom: 1px solid var(--border);
+          padding-bottom: .45rem;
+          margin-bottom: .8rem;
+        }
+
+        /* Status */
+        #status-text { font-size: 1.05rem; line-height: 1.6; }
+        .dot {
+          display:inline-block; width:11px; height:11px; border-radius:50%;
+          margin-right:.4rem; vertical-align:middle; border:1px solid #333;
+        }
+        .dot-w { background:#f0f0f0; }
+        .dot-b { background:#1c1c1c; }
+
+        .badge {
+          display:inline-block; padding:.12rem .55rem; border-radius:3px;
+          font-family:'Cinzel',serif; font-size:.75rem; letter-spacing:.06em;
+        }
+        .badge-check { background:rgba(176,48,48,.2); color:#e05050; border:1px solid #b03030; }
+        .badge-end   { background:rgba(201,168,76,.12); color:var(--gold); border:1px solid var(--gold-dim); }
+
+        /* Captured pieces */
+        .captured-row { font-size: 1.15rem; min-height: 1.4rem; letter-spacing:.05rem; line-height:1; }
+        .cap-label { font-size:.7rem; color:var(--muted); margin-bottom:.3rem; font-family:'Cinzel',serif; letter-spacing:.08em; }
+
+        /* Buttons */
+        .btn-row { display:flex; gap:.5rem; }
+        button {
+          flex:1;
+          font-family:'Cinzel',serif; font-size:.7rem; letter-spacing:.08em;
+          padding:.5rem .6rem;
+          border:1px solid var(--gold-dim);
+          background:transparent; color:var(--gold);
+          border-radius:4px; cursor:pointer;
+          transition:background .18s, color .18s;
+          text-transform:uppercase;
+        }
+        button:hover  { background:var(--gold); color:#000; }
+        button:active { opacity:.8; }
+        #btn-new { border-color:var(--danger); color:var(--danger); }
+        #btn-new:hover { background:var(--danger); color:#fff; }
+
+        /* Move history */
+        #move-list {
+          list-style:none;
+          max-height:220px; overflow-y:auto;
+          font-size:.9rem;
+        }
+        .move-pair {
+          display:grid; grid-template-columns:2rem 1fr 1fr;
+          gap:0 .4rem; padding:.1rem .2rem;
+          border-radius:3px;
+        }
+        .move-pair:hover { background:rgba(255,255,255,.03); }
+        .move-num { color:var(--muted); font-size:.8rem; }
+        .move-w, .move-b { cursor:default; }
+        .move-b { color: rgba(232,220,200,.6); }
+        #move-list::-webkit-scrollbar { width:3px; }
+        #move-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+        /* FEN */
+        #fen-display {
+          font-family:monospace; font-size:.65rem;
+          word-break:break-all; color:var(--muted); line-height:1.6;
+        }
+
+        /* Toast */
+        #toast {
+          position:fixed; bottom:1.5rem; left:50%;
+          transform:translateX(-50%) translateY(8px);
+          background:var(--surface); border:1px solid var(--gold-dim);
+          color:var(--gold); padding:.55rem 1.3rem;
+          border-radius:4px; font-family:'Cinzel',serif;
+          font-size:.75rem; letter-spacing:.07em;
+          opacity:0; transition:opacity .25s, transform .25s;
+          pointer-events:none; white-space:nowrap;
+        }
+        #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+        @media (max-width:600px) {
+          .panel { width:min(480px,90vw); }
+          .btn-row { flex-wrap:wrap; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<header>
+    <h1>♟ Chess</h1>
+    <p>chessboard.js · chess.js · no backend required</p>
+</header>
+
+<div class="layout">
+    <div id="board"></div>
+
+    <div class="panel">
+
+        <div class="card">
+            <h2>Status</h2>
+            <div id="status-text">White to move</div>
+        </div>
+
+        <div class="card">
+            <h2>Captured</h2>
+            <div class="cap-label">White took</div>
+            <div class="captured-row" id="cap-white"></div>
+            <div class="cap-label" style="margin-top:.55rem">Black took</div>
+            <div class="captured-row" id="cap-black"></div>
+        </div>
+
+        <div class="card">
+            <h2>Controls</h2>
+            <div class="btn-row">
+                <button id="btn-flip">Flip</button>
+                <button id="btn-undo">Undo</button>
+            </div>
+            <div class="btn-row" style="margin-top:.5rem">
+                <button id="btn-new">New Game</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Moves</h2>
+            <ul id="move-list"></ul>
+        </div>
+
+        <div class="card">
+            <h2>FEN</h2>
+            <div id="fen-display"></div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // ── Chess engine ────────────────────────────────────────────────────────────
+    const game = new Chess();
+
+    // ── Piece unicode maps (for captured display) ──────────────────────────────
+    const GLYPHS = {
+      p:'♟', r:'♜', n:'♞', b:'♝', q:'♛', k:'♚',
+      P:'♙', R:'♖', N:'♘', B:'♗', Q:'♕', K:'♔',
+    };
+
+    // ── State ───────────────────────────────────────────────────────────────────
+    let selectedSq  = null;
+    let legalDests  = [];
+    let lastFrom    = null;
+    let lastTo      = null;
+
+    // ── Board init ───────────────────────────────────────────────────────────────
+    const board = Chessboard('board', {
+      draggable:   true,
+      position:    'start',
+      pieceTheme:  'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+      onDragStart,
+      onDrop,
+      onSnapEnd,
+      onMouseoverSquare,
+      onMouseoutSquare,
+      onSquareClick,
+    });
+
+    $(window).resize(() => board.resize());
+
+    // ── Drag & drop ──────────────────────────────────────────────────────────────
+    function onDragStart(source, piece) {
+      if (game.game_over()) return false;
+      if (game.turn() === 'w' && piece.startsWith('b')) return false;
+      if (game.turn() === 'b' && piece.startsWith('w')) return false;
+      clearHighlights();
+      selectedSq = null;
+    }
+
+    function onDrop(source, target) {
+      clearHighlights();
+      const move = tryMove(source, target);
+      if (!move) return 'snapback';
+    }
+
+    function onSnapEnd() { board.position(game.fen()); }
+
+    // ── Hover highlights ─────────────────────────────────────────────────────────
+    function onMouseoverSquare(square) {
+      if (selectedSq) return;
+      const moves = game.moves({ square, verbose: true });
+      if (!moves.length) return;
+      moves.forEach(m => $(`#board .square-${m.to}`).addClass('highlight-legal'));
+    }
+    function onMouseoutSquare() {
+      if (!selectedSq) clearLegalHighlights();
+    }
+
+    // ── Click-to-move ────────────────────────────────────────────────────────────
+    function onSquareClick(square) {
+      if (game.game_over()) return;
+
+      // If a square is already selected
+      if (selectedSq) {
+        if (legalDests.includes(square)) {
+          tryMove(selectedSq, square);
+          clearHighlights(); selectedSq = null; legalDests = [];
+          return;
+        }
+        clearHighlights(); selectedSq = null; legalDests = [];
+        // fall through — maybe clicking a new own piece
+      }
+
+      // Select the square
+      const moves = game.moves({ square, verbose: true });
+      if (!moves.length) return;
+      // only select own pieces
+      const piece = game.get(square);
+      if (!piece || piece.color !== game.turn()) return;
+
+      selectedSq = square;
+      legalDests = moves.map(m => m.to);
+      $(`#board .square-${square}`).addClass('highlight-from');
+      legalDests.forEach(sq => $(`#board .square-${sq}`).addClass('highlight-legal'));
+    }
+
+    // ── Move logic ───────────────────────────────────────────────────────────────
+    function tryMove(from, to) {
+      const move = game.move({ from, to, promotion: 'q' }); // auto-queen
+      if (!move) return null;
+      lastFrom = from; lastTo = to;
+      board.position(game.fen());
+      updateUI();
+      return move;
+    }
+
+    // ── Highlight helpers ─────────────────────────────────────────────────────────
+    function clearLegalHighlights() {
+      $('#board .square-55d63').removeClass('highlight-legal');
+    }
+    function clearHighlights() {
+      $('#board .square-55d63').removeClass('highlight-from highlight-to highlight-legal highlight-check');
+    }
+    function applyLastMoveHighlight() {
+      if (lastFrom) $(`#board .square-${lastFrom}`).addClass('highlight-from');
+      if (lastTo)   $(`#board .square-${lastTo}`).addClass('highlight-to');
+    }
+    function applyCheckHighlight() {
+      if (!game.in_check()) return;
+      // Find king square
+      const color = game.turn();
+      for (const sq of Object.keys(game.board() ? getAllSquares() : {})) {
+        const p = game.get(sq);
+        if (p && p.type === 'k' && p.color === color) {
+          $(`#board .square-${sq}`).addClass('highlight-check');
+          break;
+        }
+      }
+    }
+    function getAllSquares() {
+      const files = 'abcdefgh', ranks = '12345678', map = {};
+      for (const f of files) for (const r of ranks) map[f+r] = true;
+      return map;
+    }
+
+    // ── UI update ─────────────────────────────────────────────────────────────────
+    function updateUI() {
+      clearHighlights();
+      applyLastMoveHighlight();
+      applyCheckHighlight();
+      renderStatus();
+      renderMoves();
+      renderCaptured();
+      document.getElementById('fen-display').textContent = game.fen();
+    }
+
+    function renderStatus() {
+      const el = document.getElementById('status-text');
+      const turn = game.turn();
+
+      if (game.in_checkmate()) {
+        const winner = turn === 'w' ? 'Black' : 'White';
+        el.innerHTML = `<span class="badge badge-end">♚ ${winner} wins</span>`;
+        toast(`${winner} wins by checkmate!`);
+        return;
+      }
+      if (game.in_draw()) {
+        const reason = game.in_stalemate() ? 'Stalemate'
+                     : game.in_threefold_repetition() ? 'Threefold repetition'
+                     : game.insufficient_material() ? 'Insufficient material'
+                     : 'Draw';
+        el.innerHTML = `<span class="badge badge-end">${reason}</span>`;
+        toast(reason + ' — Draw');
+        return;
+      }
+
+      const color = turn === 'w' ? 'White' : 'Black';
+      const dot   = turn === 'w' ? 'dot-w' : 'dot-b';
+      let html = `<span class="dot ${dot}"></span><strong>${color}</strong> to move`;
+      if (game.in_check()) html += `<br/><span class="badge badge-check" style="margin-top:.35rem">Check!</span>`;
+      el.innerHTML = html;
+    }
+
+    function renderMoves() {
+      const history = game.history();
+      const ul = document.getElementById('move-list');
+      ul.innerHTML = '';
+      for (let i = 0; i < history.length; i += 2) {
+        const li = document.createElement('li');
+        li.className = 'move-pair';
+        const num  = document.createElement('span');
+        num.className = 'move-num'; num.textContent = `${i/2+1}.`;
+        const mw = document.createElement('span');
+        mw.className = 'move-w'; mw.textContent = history[i] || '';
+        const mb = document.createElement('span');
+        mb.className = 'move-b'; mb.textContent = history[i+1] || '';
+        li.append(num, mw, mb);
+        ul.appendChild(li);
+      }
+      ul.scrollTop = ul.scrollHeight;
+    }
+
+    function renderCaptured() {
+      // Reconstruct captured pieces from history
+      const startCounts = { p:8, r:2, n:2, b:2, q:1, k:1 };
+      const remaining = { w:{...startCounts}, b:{...startCounts} };
+      const board2 = game.board();
+      board2.forEach(row => row && row.forEach(sq => {
+        if (!sq) return;
+        remaining[sq.color][sq.type]--;
+      }));
+
+      // white captured = black pieces missing; black captured = white pieces missing
+      const capByWhite = []; // pieces of black that are gone
+      const capByBlack = []; // pieces of white that are gone
+      for (const [type, count] of Object.entries(remaining.b)) {
+        const missing = startCounts[type] - count;
+        for (let i = 0; i < missing; i++) capByWhite.push(GLYPHS[type]);
+      }
+      for (const [type, count] of Object.entries(remaining.w)) {
+        const missing = startCounts[type] - count;
+        for (let i = 0; i < missing; i++) capByBlack.push(GLYPHS[type.toUpperCase()]);
+      }
+
+      document.getElementById('cap-white').textContent = capByWhite.join('') || '—';
+      document.getElementById('cap-black').textContent = capByBlack.join('') || '—';
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────────────────────
+    let toastTimer;
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    // ── Button wiring ─────────────────────────────────────────────────────────────
+    document.getElementById('btn-flip').addEventListener('click', () => board.flip());
+
+    document.getElementById('btn-undo').addEventListener('click', () => {
+      if (!game.history().length) return;
+      game.undo();
+      // Undo twice if vs human (both halves of a full move)
+      // For 2-player, undo one half-move
+      board.position(game.fen());
+      const h = game.history({ verbose: true });
+      lastFrom = h.length ? h[h.length-1].from : null;
+      lastTo   = h.length ? h[h.length-1].to   : null;
+      updateUI();
+      toast('Move undone');
+    });
+
+    document.getElementById('btn-new').addEventListener('click', () => {
+      game.reset();
+      board.start();
+      lastFrom = null; lastTo = null;
+      selectedSq = null; legalDests = [];
+      clearHighlights();
+      updateUI();
+      toast('New game');
+    });
+
+    // ── Boot ──────────────────────────────────────────────────────────────────────
+    updateUI();
+</script>
+</body>
+</html>
