@@ -7,10 +7,10 @@ from fastapi.templating import Jinja2Templates
 app = FastAPI()
 # Mounted to the /static path, refers to the "static directory", referred by FastAPI as static. If a there is a request to a file with /static, serve it from the static/ folder directly with FastAPI.
 app.mount("/static", StaticFiles(directory="static"), name="static")
-# Create an instance, templates, to later render and return a TemplateResponse.
+# Create an instance, templates, to later render and return a TemplateResponse. All html files are in templates directory.
 templates = Jinja2Templates(directory="templates")
 
-# Root function is in charge of the path "/" with a get operation. Use async if needed
-@app.get("/")
-def root():
-    return {"message": "hello world"}
+# root() runs whenever "/" path occurs. Route returns HTML. root() passes an instance of the Request object named request. Returns template instance.
+@app.get("/", response_class = HTMLResponse)
+def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
