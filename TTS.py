@@ -35,6 +35,10 @@ def text_to_speech(text):
         print(f"Error with TTS: {e}")
         sys.exit(1)
 
+# can be later implemented fully when the core chess game is developed and can be called after the computer's move, or can be repeated with the voice command "repeat"
+def opponent_move_tts(txt):
+    text_to_speech(f"Opponent move: {txt}")
+
 
 def main():
     """Main function."""
@@ -53,4 +57,5 @@ def main():
 
 
 if __name__ == "__main__":
+    opponent_move_tts("Knight to f3 This is a test")
     main()
