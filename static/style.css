@@ -1,14 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins');
+
+:root{
+    --base-clr: black;
+    --line-clr: rgb(89, 89, 89);
+    --hover-clr: rgb(34, 32, 32);
+    --text-clr: white;
+    --acent-clr: rgb(21, 21, 255);
+    --secondary-text-clr: rgb(145, 145, 145);
+}
+
+*{
+    margin: 0;
+    padding: 0;
+}
+
+html{
+    font-family: Poppins, 'Segoe UI', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.5rem;
+}
+
 body {
-    background-color: grey;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--base-clr);
+    color: var(--text-clr);
+    display: grid;
+    grid-template-columns: auto 1fr;
 }
 
-h1 {
-    background-color: black;
-    color: white;
-    text-align: center;
-    margin-top: -20px;
+#sidebar{
+    box-sizing: border-box;
+    height: 100vh;
+    width: 250px;
+    padding: 5px 1em;
+    background-color: var(--base-clr);
+    border-right: 1px solid var(--line-clr);
 }
 
-.right-align-text{
-    text-align: right;
+#sidebar ul{
+    list-style: none;
 }
