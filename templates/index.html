@@ -1,15 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Speech Chess</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            margin-top: 100px;
+        }
+        .btn {
+            display: block;
+            margin: 15px auto;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <div class="w3-container"></div>
-        <h1>Speech Chess</h1>
-        <p>Welcome to the Speech Chess home page.</p1>
+
+<h1>Speech Chess</h1>
+
+<button class="btn" onclick="startGame()">Start Game</button>
+<button class="btn" onclick="voiceMode()">Voice Mode</button>
+
+<script>
+function startGame() {
+    window.location.href = "/game";
+}
+
+function voiceMode() {
+    window.location.href = "/voice";
+}
+</script>
+
 </body>
 </html>
