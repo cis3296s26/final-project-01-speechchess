@@ -4,3 +4,9 @@ function toggleSubMenu(button){
     // Rotate the svg arrow from down to up as the submenu is now open.
     button.classList.toggle('rotate')
 } 
+
+function getStarted(button){
+    // Access the next element sibling, which will be the redirection to sign up or log in. They should be the same hierarchy level within the same li element. 
+    button.redirectGetStarted
+    window.location.href = "http://www.w3schools.com";
+}

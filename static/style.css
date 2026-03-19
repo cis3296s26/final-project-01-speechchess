@@ -31,6 +31,21 @@ body {
     grid-template-columns: auto 1fr;
 }
 
+p{
+    text-indent: 30px;
+    margin-top: 50px;
+    padding: 4em;
+    color: var(--text-clr);
+    text-align: justify;
+    border: 2px solid var(--accent-clr);
+    width: auto;
+    height: auto;
+}
+
+p:first-child {
+    
+}
+
 /* Format the sidebar. Stretch the whole page, and apply padding. Give a border-right to make it look separate from page. Make sure that 
 sidebar stays in place when scrolling.*/
 #sidebar{
@@ -153,4 +168,23 @@ submenu should be shown. */
     background: none;
     cursor: pointer;
     padding: 0.9em;
+}
+
+/* Need to style the "Get Started" button. */
+.buttonGetStarted {
+    background-color: var(--accent-clr);
+    color: var(--text-clr);
+    text-align: center;
+    cursor: pointer;
+    /* px first in border changes the margins between the border and the text inside the button. */
+    border: 20px solid var(--accent-clr);
+    border-radius: 12px;
+    font-size: 24px;
+    margin: 8px;
+}
+
+h1 {
+    text-align: center;
+    margin: 1em;
+    line-height: 2.5rem;
 }
