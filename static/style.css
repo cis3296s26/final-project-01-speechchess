@@ -4,10 +4,11 @@
 :root{
     --base-clr: rgb(19, 19, 19);
     --line-clr: rgb(0, 204, 255);
-    --hover-clr: rgb(34, 32, 32);
+    --hover-base-clr: rgb(34, 32, 32);
     --text-clr: white;
     --accent-clr: rgb(0, 204, 255);
     --secondary-text-clr: rgb(145, 145, 145);
+    --hover-accent-clr: rgb(0, 255, 234);
 }
 
 *{
@@ -35,11 +36,11 @@ body {
 sidebar stays in place when scrolling.*/
 #sidebar{
     background-color: var(--base-clr);
-    border-right: 1px solid var(--line-clr);
+    border-right: 2px solid var(--line-clr);
     box-sizing: border-box;
     height: 100vh;
     width: 250px;
-    padding: 8px 12px;
+    padding: 2.5px 10px;
     /* Sets sticking point of sidebar to top edge of viewpoint. And viewpoint always follows you, it's where one views. */
     position: sticky;
     top: 0;
@@ -79,12 +80,12 @@ sidebar stays in place when scrolling.*/
 /* All share the same style because they should be consistent.*/
 #sidebar a, #sidebar .dropdown-btn, #sidebar .logo{
     border-radius: 1em;
-    padding: 0.9em;
+    padding: 0.65em;
     text-decoration: none;
     color: var(--text-clr);
     display: flex;
     align-items: center;
-    gap: 1.1em;
+    gap: 1em;
 }
 
 /* .dropdown-btn buttons are not anchor tags so they need additional information so that they remain the same. */
@@ -110,7 +111,7 @@ sidebar stays in place when scrolling.*/
 
 /* Give the sidebar links and dropdowns a different color when hovering over them with the cursor. */
 #sidebar a:hover, #sidebar .dropdown-btn:hover{
-    background-color: var(--hover-clr);
+    background-color: var(--hover-base-clr);
 }
 
 /* Use grid to handle one child element. Control height of grid row to do this and set it to 0fr. Meaning it has no height. */
@@ -146,6 +147,41 @@ submenu should be shown. */
     padding-left: 2em;
 }
 
+#sidebar .login-btn {
+    background-color: var(--secondary-text-clr);
+    color: var(--text-clr);
+    text-align: center;
+    cursor: pointer;
+    border: 12px solid var(--secondary-text-clr);
+    border-radius: 12px;
+    font-size: 18px;
+    display: block;
+    margin: 5px auto;
+    width: 225px;
+}
+#sidebar .login-btn:hover {
+    background-color: var(--hover-base-clr);
+    border: 12px solid var(--hover-base-clr);
+}
+
+#sidebar .signup-btn {
+    background-color: var(--accent-clr);
+    color: var(--text-clr);
+    text-align: center;
+    cursor: pointer;
+    border: 12px solid var(--accent-clr);
+    border-radius: 12px;
+    font-size: 18px;
+    display: block;
+    margin: 5px auto;
+    width: 225px;
+}
+
+#sidebar .signup-btn:hover {
+    background-color: var(--hover-accent-clr);
+    border: 12px solid var(--hover-accent-clr);
+}
+
 /* Styles the toggle btn, may change logo text to a picture logo later. */
 #toggle-btn{
     margin-left: auto;
@@ -163,7 +199,7 @@ main {
 div.temp_welcome_message h1 {
     text-align: center;
     font-size: 48px;
-    line-height: 4rem;
+    line-height: 3.5rem;
 }
 
 div.temp_welcome_message p {
@@ -182,7 +218,6 @@ div.chess_board{
     align-items: center;
     justify-content: space-between;
     margin-top: 20px;
-    margin-left: 10px;
     gap: 30px;
 }
 
@@ -216,7 +251,7 @@ div.get_started p.second_line{
 }
 
 /* Styles the "Get Started" button. */
-div.get_started .buttonGetStarted {
+div.get_started .getStarted-btn {
     background-color: var(--accent-clr);
     color: var(--text-clr);
     text-align: center;
@@ -228,4 +263,9 @@ div.get_started .buttonGetStarted {
     display: block;
     margin: 20px auto; /* centers it */
     width: 420px
+}
+
+div.get_started .getStarted-btn:hover {
+    background-color: var(--hover-accent-clr);
+    border: 40px solid var(--hover-accent-clr);
 }
