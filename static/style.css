@@ -31,21 +31,6 @@ body {
     grid-template-columns: auto 1fr;
 }
 
-p{
-    text-indent: 30px;
-    margin-top: 50px;
-    padding: 4em;
-    color: var(--text-clr);
-    text-align: justify;
-    border: 2px solid var(--accent-clr);
-    width: auto;
-    height: auto;
-}
-
-p:first-child {
-    
-}
-
 /* Format the sidebar. Stretch the whole page, and apply padding. Give a border-right to make it look separate from page. Make sure that 
 sidebar stays in place when scrolling.*/
 #sidebar{
@@ -170,8 +155,37 @@ submenu should be shown. */
     padding: 0.9em;
 }
 
+div.temp_welcome_message .h1 {
+    text-align: center;
+    margin: 1em;
+    line-height: 4rem;
+}
+
+div.temp_welcome_message p {
+    color: var(--text-clr);
+    text-indent: 30px;
+    margin-top: 50px;
+    padding: 4em;
+    text-align: justify;
+    border: 2px solid var(--accent-clr);
+    width: auto;
+    height: auto;
+}
+
+div.get_started h1 {
+    text-align: right;
+    margin: 1em;
+    line-height: 1.5rem;
+}
+
+/* */
+div.get_started p {
+    color: var(--text-clr);
+
+}
+
 /* Need to style the "Get Started" button. */
-.buttonGetStarted {
+div.get_started .buttonGetStarted {
     background-color: var(--accent-clr);
     color: var(--text-clr);
     text-align: center;
@@ -181,10 +195,4 @@ submenu should be shown. */
     border-radius: 12px;
     font-size: 24px;
     margin: 8px;
-}
-
-h1 {
-    text-align: center;
-    margin: 1em;
-    line-height: 2.5rem;
 }
