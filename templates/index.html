@@ -82,10 +82,27 @@
             </li>
         </ul>
     </aside>
-
-
-
-
-    
+    <main>
+        <div class="temp_welcome_message">
+            <h1>Welcome to SpeechChess. Pages are still under construction.</h1>
+            <p>
+                The following are some ideas to add to this homepage if time allows. Displays user rank if logged in to an account. Next
+                to it is a play online button that still appears when someone is not logged in. Display a link to the daily puzzle. A link to 
+                learn, a link to tools, a link to community, and pictures associated with those buttons to make it look nice.
+            </p>
+        </div>
+        <!--Will use display: flex; in CSS to put the get_started class next to chess_board class horizontally. Then will build get_started downwards.-->
+        <div class="chess_board">
+            <img src="static/images/chess_board_plain.png" alt="Plain digital chess board."> 
+            <div class="get_started">
+                <h1>Experience Chess</h1>
+                <h2>in a unique way!</h2>
+                <p class="first_line">Compete online, train your brain, and improve</p>
+                <p class="second_line">your skills. Join our community today!</p>
+                <button onclick="getStarted()" class="button buttonGetStarted">Get Started</button>
+            </div>
+        </div>
+       
+    </main>    
 </body>
 </html>
