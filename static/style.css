@@ -1,8 +1,156 @@
-body {
-    background-color: green;
+@import url('https://fonts.googleapis.com/css2?family=Poppins');
+
+/* Root element defines color palette. */
+:root{
+    --base-clr: rgb(19, 19, 19);
+    --line-clr: rgb(0, 204, 255);
+    --hover-clr: rgb(34, 32, 32);
+    --text-clr: white;
+    --accent-clr: rgb(0, 204, 255);
+    --secondary-text-clr: rgb(145, 145, 145);
 }
 
-h1 {
-    color: black;
-    margin-left: 50;
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html{
+    font-family: Poppins, 'Segoe UI', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.5rem;
+}
+
+body {
+    background-color: var(--base-clr);
+    color: var(--text-clr);
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Grid will have two columns, one of automatic size, the other grows and shrinks depending on how much space there is.*/
+    display: grid;
+    grid-template-columns: auto 1fr;
+}
+
+/* Format the sidebar. Stretch the whole page, and apply padding. Give a border-right to make it look separate from page. Make sure that 
+sidebar stays in place when scrolling.*/
+#sidebar{
+    background-color: var(--base-clr);
+    border-right: 1px solid var(--line-clr);
+    box-sizing: border-box;
+    height: 100vh;
+    width: 250px;
+    padding: 8px 12px;
+    /* Sets sticking point of sidebar to top edge of viewpoint. And viewpoint always follows you, it's where one views. */
+    position: sticky;
+    top: 0;
+    align-self: start;
+}
+
+/* Removes the bullet points. */
+#sidebar ul{
+    list-style: none;
+}
+
+/* First list item in unordered list, the logo, uses flexbox layout with flex end to have it oriented on the right side. */
+#sidebar > ul > li:first-child{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 18px;
+}
+
+/* Style the logo, this may change if decide to put picture of logo instead of text. */
+#sidebar .logo{
+    font-weight: 600;
+    font-size: 1.3rem;
+    letter-spacing: 0.25px;
+}
+
+/* Style the class we apply to the li and which holds the current website link. Highlights the current link. */
+#sidebar ul li.active a{
+    color: var(--accent-clr);
+}
+
+/* Highlights the current svg icon selected. */
+#sidebar ul li.active a svg{
+    fill: var(--accent-clr);
+}
+
+/* All share the same style because they should be consistent.*/
+#sidebar a, #sidebar .dropdown-btn, #sidebar .logo{
+    border-radius: 1em;
+    padding: 0.9em;
+    text-decoration: none;
+    color: var(--text-clr);
+    display: flex;
+    align-items: center;
+    gap: 1.1em;
+}
+
+/* .dropdown-btn buttons are not anchor tags so they need additional information so that they remain the same. */
+.dropdown-btn{
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    font: inherit;
+    cursor: pointer;
+}
+
+/* Prevent changes to size of icons and have them be the same color as the text. */
+#sidebar svg{
+    flex-shrink: 0;
+    fill: var(--text-clr);
+}
+
+/* Style the spans in anchor tags and dropdown buttons the same. Make sure they fill the parent element so svg icon goes to the right. */
+#sidebar a span, #sidebar .dropdown-btn span{
+    flex-grow: 1;
+}
+
+/* Give the sidebar links and dropdowns a different color when hovering over them with the cursor. */
+#sidebar a:hover, #sidebar .dropdown-btn:hover{
+    background-color: var(--hover-clr);
+}
+
+/* Use grid to handle one child element. Control height of grid row to do this and set it to 0fr. Meaning it has no height. */
+#sidebar .sub-menu{
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: 300ms;
+}
+
+/* Div has overflow hidden as it hides elements that don't fit in the container. */
+#sidebar .sub-menu > div{
+    overflow: hidden;
+}
+
+/* Don't show the submenu unless you override the grid-template-rows value to be 1fr. Which adjusts automatically like height auto when the 
+submenu should be shown. */
+#sidebar .sub-menu.show{
+    grid-template-rows: 1fr;
+}
+
+/* Make the rotation of arrow svg visible by making it delayed. */
+.dropdown-btn svg{
+    transition: 200ms;
+}
+
+/* Rotate the svg arrow when a submenu is toggled. */
+.rotate svg:last-child{
+    rotate: -180deg;
+}
+
+/* Anchor tags in submenu padded to have indentation. */
+#sidebar .sub-menu a{
+    padding-left: 2em;
+}
+
+/* Styles the toggle btn, may change logo text to a picture logo later. */
+#toggle-btn{
+    margin-left: auto;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0.9em;
 }
