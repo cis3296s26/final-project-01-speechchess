@@ -1,3 +1,5 @@
+import chess_logic 
+from pydantic import BaseModel
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -14,3 +16,18 @@ templates = Jinja2Templates(directory="templates")
 @app.get("/", response_class = HTMLResponse)
 def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+class Move(BaseModel):
+    move: str
+
+@app.post("/move")
+def move_piece(data: Move):
+    return chess_logic.make_move(data.move)
+
+@app.get("/board")
+def board():
+    return {"board": chess_logic.get_board()}
+
+@app.get("/game", response_class=HTMLResponse)
+def game(request: Request):
+    return templates.TemplateResponse("game.html", {"request": request})
