@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from Voice import speech_to_move
 
 # Creates a fastapi instance
 app = FastAPI()
@@ -30,7 +31,16 @@ def game(request: Request):
 
 @app.post("/move")
 def move_piece(data: Move):
-    return chess_logic.make_move(data.move)
+    parsed = speech_to_move(data.move)
+
+    if parsed:
+        return chess_logic.make_move(parsed)
+
+    return {
+        "success": False,
+        "error": "Could not understand move",
+        **chess_logic.get_game_state(),
+    }
 
 @app.post("/reset")
 def reset():
