@@ -29,6 +29,8 @@ curl -X POST http://127.0.0.1:8000/move \
   
 curl -X POST http://127.0.0.1:8000/reset
 
+Front End is not implemented yet.
+
 """
 
 board = chess.Board()
