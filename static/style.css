@@ -54,10 +54,7 @@ sidebar stays in place when scrolling.*/
 
 /* First list item in unordered list, the logo, uses flexbox layout with flex end to have it oriented on the right side. */
 #sidebar > ul > li:first-child{
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    margin-bottom: 18px;
+    text-align: center;
 }
 
 /* Style the logo, this may change if decide to put picture of logo instead of text. */
@@ -65,6 +62,8 @@ sidebar stays in place when scrolling.*/
     font-weight: 600;
     font-size: 1.3rem;
     letter-spacing: 0.25px;
+    text-align: center;
+    margin-left: 20px;
 }
 
 /* Style the class we apply to the li and which holds the current website link. Highlights the current link. */
@@ -194,9 +193,7 @@ submenu should be shown. */
     padding: 0.9em;
 }
 
-#sidebar .sidebar-learn-btn {
-    
-}
+
 
 /* Main is a wrapper for the non-sidebar elements of the body on the homepage. All elements have a 20 pixel margin in all directions. */
 main {
@@ -451,3 +448,5 @@ div.puzzles img {
     height: 325px;
     border-radius: 12px;
 }
+
+comm
