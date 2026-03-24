@@ -1,24 +1,22 @@
 # Speech Chess
-Speech Chess is a web application that allows users to interract with a chess game purely through their voice. Especially for those who are either visually impaired or physically disabled but still want to engage with the game of chess, or those who want to multitask, this game presents a great oppurtunity.  
+Speech Chess is a web application that allows users to interract with a chess game purely through their voice. Especially for those who are either visually impaired or physically disabled but still want to engage with the game of chess, or those who want to multitask, this game presents a great oppurtunity.
 
-![This is a screenshot.](images.png)
+![This is a screenshot.](static/images/chess_board_cyan.png)
 # How to run
 This game is entirely run in a web browser. Just click the link and you can play right away! 
 
 # How to contribute
-Follow this project board to know the latest status of the project: [http://...]([http://...])  
+Follow this project board to know the latest status of the project: [https://github.com/cis3296s26/final-project-01-speechchess]([https://github.com/cis3296s26/final-project-01-speechchess])  
 
-### How to build
+### How to build and run
+- Clone project using your preferred IDE
 
+- Install all libraries using:
 - python -m pip install chess SpeechRecognition sounddevice numpy pyttsx3 pygame jinja2 uvicorn fastapi
-- Use preferred IDE
 
-- Use this github repository: ... 
-- Specify what branch to use for a more stable release or for cutting edge development.  
-- Use InteliJ 11
-- Specify additional library to download if needed 
-- What file and target to compile and run. 
-- What is expected to happen when the app start. 
+- In terminal type:
+- python main.py
+- Click the Web Address Uvicorn gives
 
 # Sources
 YouTube
