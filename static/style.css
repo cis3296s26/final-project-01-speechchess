@@ -194,6 +194,10 @@ submenu should be shown. */
     padding: 0.9em;
 }
 
+#sidebar .sidebar-learn-btn {
+    
+}
+
 /* Main is a wrapper for the non-sidebar elements of the body on the homepage. All elements have a 20 pixel margin in all directions. */
 main {
     padding: 20px;
@@ -254,7 +258,8 @@ div.get_started .getStarted-btn {
     border-radius: 12px;
     font-size: 24px;
     display: block;
-    margin: 30px auto; /* centers it */
+    /* Centers button. */
+    margin: 30px auto; 
     width: 420px
 }
 
@@ -308,7 +313,8 @@ div.home_play .play-btn {
     border-radius: 12px;
     font-size: 24px;
     display: block;
-    margin: 30px auto; /* centers it */
+    /* Centers button. */
+    margin: 30px auto; 
     width: 420px
 }
 
@@ -365,8 +371,9 @@ div.home_learn .learn-btn {
     border: 40px solid var(--accent-clr);
     border-radius: 12px;
     font-size: 24px;
-    display: block;
-    margin: 30px auto; /* centers it */
+    display: block
+    /* Centers button. */;
+    margin: 30px auto;
     width: 420px
 }
 
@@ -427,7 +434,8 @@ div.home_puzzles .puzzles-btn {
     border-radius: 12px;
     font-size: 24px;
     display: block;
-    margin: 30px auto; /* centers it */
+    /* Centers button. */
+    margin: 30px auto; 
     width: 420px
 }
 

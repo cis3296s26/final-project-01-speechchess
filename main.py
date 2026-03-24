@@ -14,3 +14,30 @@ templates = Jinja2Templates(directory="templates")
 @app.get("/", response_class = HTMLResponse)
 def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+"""
+@app.get("/getstarted", response_class = HTMLResponse)
+def getStartedPage(request: Request):
+    return templates.TemplateResponse("getstarted.html", {"request": request})
+
+@app.get("/play", response_class = HTMLResponse)
+def playPage(request: Request):
+    return templates.TemplateResponse("play.html", {"request": request})
+    
+
+@app.get("/learn", response_class = HTMLResponse)
+def learnPage(request: Request):
+    return templates.TemplateResponse("learn.html", {"request": request})    
+    
+@app.get("/puzzles", response_class = HTMLResponse)
+def puzzlesPage(request: Request):
+    return templates.TemplateResponse("puzzles.html", {"request": request})
+    
+@app.get("/community", response_class = HTMLResponse)
+def community_page(request: Request):
+    return templates.TemplateResponse("community.html", {"request": request})
+
+@app.get("/settings", response_class = HTMLResponse)
+def settings_page(request: Request):
+    return templates.TemplateResponse("settings.html", {"request": request})
+"""
+

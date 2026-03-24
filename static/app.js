@@ -6,17 +6,28 @@ function toggleSubMenu(button){
 } 
 
 function getStarted(button){
-    // Access the next element sibling, which will be the redirection to sign up or log in. They should be the same hierarchy level within the same li element. 
-    button.redirectGetStarted
-    window.location.href = "http://www.w3schools.com"
+    window.location.href = "/getstarted"
 }
 
 function login(button){
-    button.redirectedLogin
-    window.location.href = "http://www.w3schools.com"
+    window.location.href = "/login"
 }
 
 function signUp(button){
-    button.redirectedSignUp
-    window.location.href = "http://www.w3schools.com"
+    window.location.href = "/signup"
 }
+
+function play(button){
+    window.location.href="/play"
+
+}
+
+function learn(button){
+    window.location.href="/learn"
+}
+
+function puzzles(button){
+    window.location.href="/puzzles"
+
+}
+

@@ -38,6 +38,9 @@ HTML
 CSS
 -Font family used; https://fonts.googleapis.com/css2?family=Poppins
 
+ChatGPT
+-Used ChatGPT to generate images used on the homepage. Provided the colors used for the homepage too so the images closely match the theme.
+
 # Requirements
 A modern web browser, microphone access enabled
 # How to contribute
