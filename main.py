@@ -21,11 +21,11 @@ def root(request: Request):
 def getStartedPage(request: Request):
     return templates.TemplateResponse("user_authentication/get_started.html", {"request": request})
 
-@app.get("/login", response_class = HTMLResponse)
+@app.get("/user_authentication/login", response_class = HTMLResponse)
 def settings_page(request: Request):
     return templates.TemplateResponse("user_authentication/login.html", {"request": request})
 
-@app.get("/signup", response_class = HTMLResponse)
+@app.get("/user_authentication/signup", response_class = HTMLResponse)
 def settings_page(request: Request):
     return templates.TemplateResponse("user_authentication/signup.html", {"request": request})
 
