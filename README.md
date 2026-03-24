@@ -37,6 +37,7 @@ HTML
 
 CSS
 -Font family used; https://fonts.googleapis.com/css2?family=Poppins
+-clamp() was used to dynamically allocate the gap between elements on the homepage depending on a user's screen size; https://css-tricks.com/almanac/functions/c/clamp/
 
 ChatGPT
 -Used ChatGPT to generate images used on the homepage. Provided the colors used for the homepage too so the images closely match the theme.
