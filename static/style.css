@@ -255,7 +255,7 @@ div.get_started p.second_line {
 }
 
 /* Styles the "Get Started" button. */
-div.get_started .getStarted-btn, div.home_play .play-btn, div.home_learn .learn-btn, div.home_{
+div.get_started .getStarted-btn, div.home_play .play-btn, div.home_learn .learn-btn, div.home_puzzles .puzzles-btn{
     background-color: var(--accent-clr);
     color: var(--text-clr);
     text-align: center;
@@ -271,7 +271,7 @@ div.get_started .getStarted-btn, div.home_play .play-btn, div.home_learn .learn-
     max-width: 420px;
 }
 
-div.get_started .getStarted-btn:hover, div.home_play .play-btn:hover, div.home_learn .learn-btn:hover, div.home_ {
+div.get_started .getStarted-btn:hover, div.home_play .play-btn:hover, div.home_learn .learn-btn:hover, div.home_puzzles .puzzles-btn:hover {
     background-color: var(--hover-accent-clr);
     border: none solid var(--hover-accent-clr);
 }
@@ -279,19 +279,13 @@ div.get_started .getStarted-btn:hover, div.home_play .play-btn:hover, div.home_l
 /* div.play for homepage. */
 div.play {
     margin-top: 75px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 30px;
 }
 
 div.home_play h1 {
-    position: relative;
-    top: 30px;
     font-size: 42px;
     text-align: center;
-    margin: 20px;
-    line-height: 1.5rem;
+    margin: 20px 0;
+    line-height: 1.2;
 }  
 
 
@@ -319,10 +313,6 @@ div.home_play .play-btn:hover {
 /* div.learn for homepage. */
 div.learn {
     margin-top: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 30px;
 }
 
 div.home_learn h1 {
@@ -356,7 +346,7 @@ div.home_learn .learn-btn {
     border: none;
     border-radius: 12px;
     font-size: 24px;
-    display: block
+    display: block;
     /* Centers button. */;
     margin: 30px auto;
     padding: 18px 32px;
@@ -372,10 +362,6 @@ div.home_learn .learn-btn:hover {
 /* div.puzzles for homepage. */
 div.puzzles {
     margin-top: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 30px;
 }
 
 div.home_puzzles h1, div.home_puzzles h2{
