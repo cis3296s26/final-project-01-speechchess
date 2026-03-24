@@ -17,17 +17,17 @@ templates = Jinja2Templates(directory="templates")
 def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/get_started", response_class = HTMLResponse)
+@app.get("/user_authentication/get_started", response_class = HTMLResponse)
 def getStartedPage(request: Request):
-    return templates.TemplateResponse("get_started.html", {"request": request})
+    return templates.TemplateResponse("user_authentication/get_started.html", {"request": request})
 
 @app.get("/login", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse("user_authentication/login.html", {"request": request})
 
 @app.get("/signup", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse("signup.html", {"request": request})
+    return templates.TemplateResponse("user_authentication/signup.html", {"request": request})
 
 # All the play directory html file returns
 @app.get("/play/play", response_class = HTMLResponse)
