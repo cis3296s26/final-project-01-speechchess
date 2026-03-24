@@ -5,8 +5,69 @@ function toggleSubMenu(button){
     button.classList.toggle('rotate')
 } 
 
+function home(button){
+    window.location.href ="/"
+}
+
 function getStarted(button){
-    // Access the next element sibling, which will be the redirection to sign up or log in. They should be the same hierarchy level within the same li element. 
-    button.redirectGetStarted
-    window.location.href = "http://www.w3schools.com";
+    window.location.href = "/get_started"
+}
+
+function login(button){
+    window.location.href = "/login"
+}
+
+function signUp(button){
+    window.location.href = "/signup"
+}
+
+// All the calls for window redirection to the play directory html files
+function play(button){
+    window.location.href="play/play"
+}
+
+function playOnline(button){
+    window.location.href="play/play_online"
+}
+
+function playAI(button){
+    window.location.href="play/play_ai"
+}
+
+function playFriends(button){
+    window.location.href="play/play_friends"
+}
+
+function stats(button){
+    window.location.href="play/stats"
+}
+
+function history(button){
+    window.location.href="play/history"
+}
+
+// All the calls for window redirection to the puzzles directory html files
+function puzzlesDaily(button){
+    window.location.href="puzzles/daily_puzzle"
+}
+
+function puzzlesAll(button){
+    window.location.href="puzzles/all_puzzles"
+}
+
+// Rest of the calls for window redirection to the sidebar html files
+function learn(button){
+    window.location.href="sidebar/learn"
+}
+
+function community(button){
+    window.location.href="sidebar/community"
+}
+
+function settings(button){
+    window.location.href="sidebar/settings"
+}
+
+function support(button){
+    window.location.href="sidebar/support"
 }
