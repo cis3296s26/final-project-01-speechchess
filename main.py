@@ -97,6 +97,10 @@ def state():
 def game(request: Request):
     return templates.TemplateResponse("game.html", {"request": request})
 
+@app.get("/board")
+def board():
+    return chess_logic.get_game_state()
+
 @app.post("/move")
 def move_piece(data: Move):
     return chess_logic.make_move(data.move)
