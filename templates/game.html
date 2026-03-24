@@ -1,35 +1,63 @@
-<!--uvicorn main:app --reload-->
 <!DOCTYPE html>
 <html>
+<head>
+    <title>Speech Chess</title>
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard.min.css" />
+
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial;
+        }
+
+        #board {
+            width: 400px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
 <body>
 
-<h1>Speech Chess Game</h1>
+<h1>Speech Chess</h1>
 
-<input id="moveInput" placeholder="e2e4" />
-<button onclick="sendMove()">Make Move</button>
+<div id="board"></div>
 
-<pre id="board"></pre>
-
+<br>
 <a href="/">Back</a>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard.min.js"></script>
+
 <script>
-async function sendMove() {
-    const move = document.getElementById("moveInput").value;
+let board = Chessboard('board', {
+    draggable: true,
+    position: 'start',
 
-    const res = await fetch("/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ move: move })
-    });
+    onDrop: async function (source, target) {
+        const move = source + target;
 
-    const data = await res.json();
+        const res = await fetch("/move", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ move: move })
+        });
 
-    if (data.success) {
-        document.getElementById("board").innerText = data.board;
-    } else {
-        alert(data.error);
+        const data = await res.json();
+
+        if (data.success) {
+            board.position(data.fen);
+        } else {
+            return 'snapback'; // illegal move → piece returns
+        }
+    },
+
+    onSnapEnd: async function () {
+        const res = await fetch("/board");
+        const data = await res.json();
+        board.position(data.fen);
     }
-}
+});
 </script>
 
 </body>

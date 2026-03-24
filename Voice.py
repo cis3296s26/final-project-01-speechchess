@@ -1,84 +1,139 @@
-import speech_recognition as sr
-import datetime
-import sounddevice as sd
-import numpy as np
-import wave
-import tempfile
-import os
+# Voice.py
 
-def record_audio(duration=10, sample_rate=16000):
-    """Record audio using sounddevice"""
-    print(f"Recording for up to {duration} seconds... Speak now!")
-    
-    # Record audio
-    recording = sd.rec(int(duration * sample_rate), 
-                      samplerate=sample_rate, 
-                      channels=1, 
-                      dtype=np.int16)
-    sd.wait()
-    
-    return recording, sample_rate
+import re
+import chess
+import chess_logic
 
-def save_temp_wav(recording, sample_rate):
-    """Save recording to temporary WAV file"""
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.wav')
-    
-    with wave.open(temp_file.name, 'wb') as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)
-        wf.setframerate(sample_rate)
-        wf.writeframes(recording.tobytes())
-    
-    return temp_file.name
+PIECE_NAMES = {
+    "pawn": chess.PAWN,
+    "knight": chess.KNIGHT,
+    "bishop": chess.BISHOP,
+    "rook": chess.ROOK,
+    "queen": chess.QUEEN,
+    "king": chess.KING,
+}
 
-def record_and_export():
-    """Main function to record voice and export text"""
-    print("Speech Recognition - Voice to Text Converter")
-    print("=" * 50)
-    
-    try:
-        # Record audio
-        recording, sample_rate = record_audio(duration=10)
-        
-        # Save to temporary WAV file
-        temp_wav = save_temp_wav(recording, sample_rate)
-        
-        print("\nProcessing your speech...\n")
-        
-        # Initialize recognizer
-        recognizer = sr.Recognizer()
-        
-        # Load audio file
-        with sr.AudioFile(temp_wav) as source:
-            audio = recognizer.record(source)
-        
-        # Recognize speech using Google Speech Recognition
-        text = recognizer.recognize_google(audio)
-        
-        print("Transcribed Text:")
-        print("-" * 50)
-        print(text)
-        print("-" * 50)
-        
-        # Generate filename with timestamp
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"transcription_{timestamp}.txt"
-        
-        # Export to text file
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(text)
-        
-        print(f"\n✓ Text exported successfully to: {filename}")
-        
-        # Clean up temporary file
-        os.unlink(temp_wav)
-        
-    except sr.UnknownValueError:
-        print("Error: Could not understand the audio. Please speak clearly.")
-    except sr.RequestError as e:
-        print(f"Error: Could not request results from speech recognition service; {e}")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
 
-if __name__ == "__main__":
-    record_and_export()
+def normalize(text):
+    text = text.lower().strip()
+
+    replacements = {
+        "night": "knight",
+        "nite": "knight",
+        "see": "c",
+        "sea": "c",
+        "bee": "b",
+        "be": "b",
+        "dee": "d",
+        "gee": "g",
+        "eight": "8",
+        "ate": "8",
+        "one": "1",
+        "two": "2",
+        "three": "3",
+        "four": "4",
+        "for": "4",
+        "five": "5",
+        "six": "6",
+        "seven": "7",
+    }
+
+    for source, target in replacements.items():
+        text = re.sub(rf"\b{re.escape(source)}\b", target, text)
+
+    text = re.sub(r"\b(move|to|on|please|the|a|an)\b", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"\b([a-h])\s+([1-8])\b", r"\1\2", text)
+
+    return text
+
+
+def extract_target_square(text):
+    squares = re.findall(r"\b([a-h][1-8])\b", text)
+    if not squares:
+        return None
+    return squares[-1]
+
+
+def extract_piece_type(text):
+    for name, piece_type in PIECE_NAMES.items():
+        if re.search(rf"\b{name}\b", text):
+            return piece_type
+    return None
+
+
+def castle_side(text):
+    if "castle" not in text:
+        return None
+    if "queenside" in text or "queen side" in text or "long" in text:
+        return "queenside"
+    if "kingside" in text or "king side" in text or "short" in text:
+        return "kingside"
+    return "kingside"
+
+
+def castle_move(board, side):
+    legal_moves = list(board.legal_moves)
+
+    for move in legal_moves:
+        if not board.is_castling(move):
+            continue
+
+        target_file = chess.square_file(move.to_square)
+
+        if side == "kingside" and target_file == 6:
+            return move.uci()
+        if side == "queenside" and target_file == 2:
+            return move.uci()
+
+    return None
+
+
+def match_legal_moves(board, target_square, piece_type):
+    target_index = chess.parse_square(target_square)
+    candidates = []
+
+    for move in board.legal_moves:
+        if move.to_square != target_index:
+            continue
+
+        piece = board.piece_at(move.from_square)
+        if piece is None:
+            continue
+
+        if piece_type is not None and piece.piece_type != piece_type:
+            continue
+
+        candidates.append(move.uci())
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    return None
+
+
+def speech_to_move(text):
+    text = normalize(text)
+    print("TEXT:", text)
+
+    board = chess_logic.board
+
+    side = castle_side(text)
+    if side is not None:
+        move = castle_move(board, side)
+        print("CASTLE:", move)
+        return move
+
+    target_square = extract_target_square(text)
+    print("TARGET:", target_square)
+
+    if target_square is None:
+        return None
+
+    piece_type = extract_piece_type(text)
+    print("PIECE TYPE:", piece_type)
+
+    move = match_legal_moves(board, target_square, piece_type)
+    print("MATCH:", move)
+
+    return move
