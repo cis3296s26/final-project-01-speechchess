@@ -1,16 +1,70 @@
+<!--uvicorn main:app --reload-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
-    <script type="text/javascript" src="/static/app.js" defer></script>
-    <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <title>Play</title>
 
+    <link rel="stylesheet" href="/static/style.css">
+
+    <link rel="stylesheet" href="/static/chess/chessboard.min.css">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script src="/static/chess/chessboard.min.js"></script>
 </head>
+
 <body>
+
+    <h2 style="text-align:center;">Speech Chess</h2>
+
+    <div id="board" style="width: 400px; margin: 20px auto;"></div>
+
+    <script>
+    window.onload = function () {
+
+        let board = Chessboard('board', {
+            draggable: true,
+            position: 'start',
+
+            pieceTheme: '/static/chess/img/chesspieces/wikipedia/{piece}.png',
+
+            onDrop: async function (source, target, piece) {
+                let move = source + target;
+
+                if (
+                    (piece === 'wP' && target[1] === '8') ||
+                    (piece === 'bP' && target[1] === '1')
+                ) {
+                    move += 'q';
+                }
+
+                const res = await fetch("/move", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ move: move })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    board.position(data.fen);
+                } else {
+                    return 'snapback';
+                }
+            },
+
+            onSnapEnd: async function () {
+                const res = await fetch("/state");
+                const data = await res.json();
+                board.position(data.fen);
+            }
+        });
+
+    };
+    </script>
+
     <aside id="sidebar">
         <ul>
             <li>

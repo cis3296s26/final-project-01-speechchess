@@ -185,6 +185,10 @@ def game(request: Request):
 def voice(request: Request):
     return templates.TemplateResponse(request=request, name="voice.html", context={"request": request})
 
+@app.get("/board")
+def board():
+    return chess_logic.get_game_state()
+
 @app.post("/move")
 def move_piece(data: Move):
     return chess_logic.make_move(data.move)
