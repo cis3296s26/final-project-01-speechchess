@@ -1,0 +1,36 @@
+<!--uvicorn main:app --reload-->
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Speech Chess Game</h1>
+
+<input id="moveInput" placeholder="e2e4" />
+<button onclick="sendMove()">Make Move</button>
+
+<pre id="board"></pre>
+
+<a href="/">Back</a>
+
+<script>
+async function sendMove() {
+    const move = document.getElementById("moveInput").value;
+
+    const res = await fetch("/move", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ move: move })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+        document.getElementById("board").innerText = data.board;
+    } else {
+        alert(data.error);
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,3 +1,5 @@
+import chess_logic
+from pydantic import BaseModel
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -84,3 +86,21 @@ def settings_page(request: Request):
 
 
 
+class Move(BaseModel):
+    move: str
+
+@app.get("/state")
+def state():
+    return chess_logic.get_game_state()
+
+@app.get("/game", response_class=HTMLResponse)
+def game(request: Request):
+    return templates.TemplateResponse("game.html", {"request": request})
+
+@app.post("/move")
+def move_piece(data: Move):
+    return chess_logic.make_move(data.move)
+
+@app.post("/reset")
+def reset():
+    return chess_logic.reset_game()

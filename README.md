@@ -5,14 +5,14 @@ Speech Chess is a web application that allows users to interract with a chess ga
 # How to run
 This game is entirely run in a web browser. Just click the link and you can play right away! 
 
-pip install fastapi
-pip install uvicorn
-pip install jinja2
-
 # How to contribute
 Follow this project board to know the latest status of the project: [http://...]([http://...])  
 
 ### How to build
+
+- python -m pip install chess SpeechRecognition sounddevice numpy pyttsx3 pygame jinja2 uvicorn fastapi
+- Use preferred IDE
+
 - Use this github repository: ... 
 - Specify what branch to use for a more stable release or for cutting edge development.  
 - Use InteliJ 11
@@ -42,7 +42,39 @@ ChatGPT
 -Used ChatGPT to generate images used on the homepage. Provided the colors used for the homepage too so the images closely match the theme.
 
 # Requirements
+# Player Requirements
 A modern web browser, microphone access enabled
+
+# Dev Requirements
+- Python 3.8+
+- Windows 10/11
+- Microphone and speakers
+
+# Test Usage
+
+**Chess Demo:**
+
+python Chess.py
+
+**Alternative Webpage Demp:**
+
+python -m uvicorn main:app --reload
+Then proceed to the link generated in the terminal.
+
+**Voice to Text:**
+
+python Voice.py
+
+Speak for 10 seconds. Text saves to `transcription_YYYYMMDD_HHMMSS.txt`
+
+**Text to Speech:**
+
+python TTS.py filename.txt
+
+## Troubleshooting
+- Module not found: Make sure packages are installed and VS Code is using the correct Python interpreter
+- Voice.py errors: Speak clearly, reduce background noise, check microphone is working in Windows settings
+
 # How to contribute
 Follow this project board to know the latest status of the project: [https://github.com/orgs/cis3296s26/projects/29/views/1] 
  
