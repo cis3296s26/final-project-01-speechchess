@@ -194,8 +194,6 @@ submenu should be shown. */
     padding: 0.9em;
 }
 
-
-
 /* Main is a wrapper for the non-sidebar elements of the body on the homepage. All elements have a 20 pixel margin in all directions. */
 main {
     padding: 20px;
@@ -451,3 +449,15 @@ div.puzzles img {
 }
 
 /* Get started page styling. */
+div.signup_or_login p{
+    display: inline;
+    border: 2px var(--accent-clr);
+    border-radius: 12px;
+}
+
+div.signup_or_login h1{
+    color: var(--accent-clr);
+    text-align: center;
+}
+
+
