@@ -208,7 +208,8 @@ div.chess_board, div.play, div.learn, div.puzzles {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 40px;
+    /* 40px gap, preferrably 6% of screen width and max of 80 pixels. */
+    gap: clamp(40px, 6vw, 80px);
     flex-wrap: nowrap;
 }
 
