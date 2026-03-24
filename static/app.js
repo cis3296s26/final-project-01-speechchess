@@ -5,6 +5,10 @@ function toggleSubMenu(button){
     button.classList.toggle('rotate')
 } 
 
+function home(button){
+    window.location.href ="/"
+}
+
 function getStarted(button){
     window.location.href = "/get_started"
 }
@@ -43,10 +47,6 @@ function history(button){
 }
 
 // All the calls for window redirection to the puzzles directory html files
-function puzzles(button){
-    window.location.href="puzzles/puzzles"
-}
-
 function puzzlesDaily(button){
     window.location.href="puzzles/daily_puzzle"
 }
