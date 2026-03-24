@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Chess</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/voice.js" defer></script>
+</head>
+<body>
+    <main>
+        <h1>Voice Chess Input</h1>
+        <p>Press record and say a move like "e4" or "knight f3".</p>
+        <button type="button" onclick="startVoiceInput()">Record Move</button>
+        <button type="button" onclick="submitVoiceMove()">Submit Move</button>
+        <pre id="voiceMove">Your transcript and move result will appear here.</pre>
+        <a href="/game">Back to Game</a>
+    </main>
+</body>
+</html>
