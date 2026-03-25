@@ -148,12 +148,12 @@ submenu should be shown. */
 }
 
 /* Sidebar login button. */
-#sidebar .login-btn {
+#sidebar a.login-btn {
     background-color: var(--secondary-text-clr);
     color: var(--text-clr);
     text-align: center;
     cursor: pointer;
-    border: 12px solid var(--secondary-text-clr);
+    border: none;
     border-radius: 12px;
     font-size: 18px;
     display: block;
@@ -161,18 +161,19 @@ submenu should be shown. */
     width: 225px;
 }
 
-#sidebar .login-btn:hover {
+/* Sidebar login button when hovering over with cursor. */
+#sidebar a.login-btn:hover {
     background-color: var(--hover-base-clr);
-    border: 12px solid var(--hover-base-clr);
+    border: none var(--hover-base-clr);
 }
 
 /* Sidebar signup button. */
-#sidebar .signup-btn {
+#sidebar a.signup-btn {
     background-color: var(--accent-clr);
     color: var(--text-clr);
     text-align: center;
     cursor: pointer;
-    border: 12px solid var(--accent-clr);
+    border: none;
     border-radius: 12px;
     font-size: 18px;
     display: block;
@@ -180,9 +181,10 @@ submenu should be shown. */
     width: 225px;
 }
 
-#sidebar .signup-btn:hover {
-    background-color: var(--hover-accent-clr);
-    border: 12px solid var(--hover-accent-clr);
+/* Sidebar signup button when hovering over with cursor. */
+#sidebar a.signup-btn:hover {
+    background: var(--hover-accent-clr);
+    border: none var(--hover-accent-clr)
 }
 
 /* Styles the toggle btn, may change logo text to a picture logo later. */
