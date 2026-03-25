@@ -2,6 +2,15 @@ import sys
 import pyttsx3
 
 
+engine = pyttsx3.init()
+engine.setProperty('rate', 150)
+engine.setProperty('volume', 0.9)
+
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+
+"""
 def read_file(filename):
     ## Read from a file and return TTS voice
     try:
@@ -16,7 +25,7 @@ def read_file(filename):
 
 
 def text_to_speech(text):
-    """Convert text to speech using pyttsx3."""
+    #Convert text to speech using pyttsx3.
     try:
         # Initialize the TTS
         engine = pyttsx3.init()
@@ -41,7 +50,6 @@ def opponent_move_tts(txt):
 
 
 def main():
-    """Main function."""
     if len(sys.argv) < 2:
         print("Usage: python TTS.py <filename>")
         print("Example: python TTS.py text.txt")
@@ -59,3 +67,4 @@ def main():
 if __name__ == "__main__":
     opponent_move_tts("Knight to f3 This is a test")
     main()
+    """
