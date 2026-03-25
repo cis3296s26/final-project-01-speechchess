@@ -1,4 +1,5 @@
 import chess
+import TTS
 """
 WILL DELETE LATER BUT FOR YOU GUYS RIGHT NOW
 Methods and attributes from chess import:
@@ -115,6 +116,8 @@ def make_move(move_str): #ex: e2e4
         }
     san = board.san(move)
     board.push(move)
+
+    TTS.speak(f"Played {san}")
     return {
         "success": True,
         "message": f"Played{san}",
