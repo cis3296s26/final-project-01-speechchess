@@ -6,23 +6,27 @@ function toggleSubMenu(button){
 } 
 
 function home(button){
-    window.location.href ="/"
+    window.location.href="/"
 }
 
 // All the calls for window redireciton to the user_authentication directory html files
 function getStarted(button){
-    window.location.href = "user_authentication/get_started"
+    window.location.href="user_authentication/get_started"
 }
 
 function login(button){
-    window.location.href = "user_authentication/login"
+    window.location.href="user_authentication/login"
 }
 
 function signUp(button){
-    window.location.href = "user_authentication/signup"
+    window.location.href="user_authentication/signup"
 }
 
 // All the calls for window redirection to the play directory html files
+function playExample(button){
+    window.location.href="play/play"
+}
+
 function playOnline(button){
     window.location.href="play/play_online"
 }
