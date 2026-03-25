@@ -29,17 +29,18 @@ app.add_middleware(
 def root(request: Request):
     return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
 
-@app.get("/get_started", response_class = HTMLResponse)
+# All the user_authentication directory html file returns
+@app.get("/user_authentication/get_started", response_class = HTMLResponse)
 def getStartedPage(request: Request):
-    return templates.TemplateResponse(request=request, name="get_started.html", context={"request": request})
+    return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context={"request": request})
 
-@app.get("/login", response_class = HTMLResponse)
+@app.get("/user_authentication/login", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="login.html", context={"request": request})
+    return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request})
 
-@app.get("/signup", response_class = HTMLResponse)
+@app.get("/user_authentication/signup", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="signup.html", context={"request": request})
+    return templates.TemplateResponse(request=request, name="user_authentication/signup.html", context={"request": request})
 
 # All the play directory html file returns
 @app.get("/play/play", response_class = HTMLResponse)
@@ -67,10 +68,6 @@ def settings_page(request: Request):
     return templates.TemplateResponse(request=request, name="play/history.html", context={"request": request})
 
 # All the puzzle directory html file returns
-@app.get("/puzzles/puzzles", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="puzzles/puzzles.html", context={"request": request})
-
 @app.get("/puzzles/daily_puzzle", response_class = HTMLResponse)
 def settings_page(request: Request):
     return templates.TemplateResponse(request=request, name="puzzles/daily_puzzle.html", context={"request": request})
@@ -95,75 +92,6 @@ def settings_page(request: Request):
 @app.get("/sidebar/support", response_class = HTMLResponse)
 def settings_page(request: Request):
     return templates.TemplateResponse(request=request, name="sidebar/support.html", context={"request": request})
-
-
-
-@app.get("/user_authentication/get_started", response_class = HTMLResponse)
-def getStartedPage(request: Request):
-    return templates.TemplateResponse("user_authentication/get_started.html", {"request": request})
-
-@app.get("/user_authentication/login", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("user_authentication/login.html", {"request": request})
-
-@app.get("/user_authentication/signup", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("user_authentication/signup.html", {"request": request})
-
-# All the play directory html file returns
-@app.get("/play/play", response_class = HTMLResponse)
-def playPage(request: Request):
-    return templates.TemplateResponse("play/play.html", {"request": request})
-    
-@app.get("/play/play_online", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("play/play_online.html", {"request": request})
-
-@app.get("/play/play_ai", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("play/play_ai.html", {"request": request})
-
-@app.get("/play/play_friends", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("play/play_friends.html", {"request": request})
-
-@app.get("/play/stats", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("play/stats.html", {"request": request})
-
-@app.get("/play/history", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("play/history.html", {"request": request})
-
-# All the puzzle directory html file returns
-@app.get("/puzzles/puzzles", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("puzzles/puzzles.html", {"request": request})
-
-@app.get("/puzzles/daily_puzzle", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("puzzles/daily_puzzle.html", {"request": request})
-
-@app.get("/puzzles/all_puzzles", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("puzzles/all_puzzles.html", {"request": request})
-
-# Rest of the sidebar html file returns
-@app.get("/sidebar/learn", response_class = HTMLResponse)
-def learnPage(request: Request):
-    return templates.TemplateResponse("sidebar/learn.html", {"request": request})    
-    
-@app.get("/sidebar/community", response_class = HTMLResponse)
-def community_page(request: Request):
-    return templates.TemplateResponse("sidebar/community.html", {"request": request})
-
-@app.get("/sidebar/settings", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("sidebar/settings.html", {"request": request})
-
-@app.get("/sidebar/support", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse("sidebar/support.html", {"request": request})
 
 #Chess Logic
 

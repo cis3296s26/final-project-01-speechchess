@@ -198,7 +198,6 @@ submenu should be shown. */
 main {
     padding: 20px;
     margin-top: 40px;
-
 }
 
 /* Flex puts the elements of this container, div chess_board horizontally. So, the img in chess_board is on the left in one column, and
@@ -213,15 +212,20 @@ div.chess_board, div.play, div.learn, div.puzzles {
     flex-wrap: nowrap;
 }
 
-/* Provided a max width so text doesn't stretch across different displays. */
+
+/* Below is the condensed CSS functions for homepage body tags all together as opposed to initially having them as separate functions.
+Forgot/didn't realize that the text wrapping is automatic in html, so the h2s and p.second_line were deleted for certain divs. Corresponding lines in
+the html file have also been removed.*/
+
+
+/* Provided a max width for every homepage body div so text doesn't stretch across different displays. */
 div.get_started, div.home_play, div.home_learn, div.home_puzzles {
     text-align: center;
     width: 100%;
     max-width: 500px;
 }
 
-/* Addressed all the homepage images here to condense code. These new attributes have them scale better and they don't have hardcoded pixel
-dimensions like I had before. */
+/* Styles the images for each homepage body div. */
 div.chess_board img, div.play img, div.learn img, div.puzzles img {
     width: 100%;
     max-width: 400px;
@@ -230,32 +234,24 @@ div.chess_board img, div.play img, div.learn img, div.puzzles img {
     display: block;
 }
 
-/* Consistent spacing for headers on the homepage. */
-div.get_started h1, div.get_started h2, div.home_play h1, div.home_learn h1, div.home_puzzles h1, div.home_puzzles h2{
+/* Styles the headers for each homepage body header. */
+div.get_started h1, div.home_play h1, div.home_learn h1, div.home_puzzles h1{
     text-align: center;
     font-size: 42px;
     margin: 20px 0;
     line-height: 1.2;
 }
 
-
-div.get_started p.first_line {
-    margin-top: 60px;
+/* Styles <p> tag of each homepage body div. */
+div.get_started p.first_line, div.home_play p.first_line, div.home_learn p.first_line, div.home_puzzles p.first_line {
+    margin-top: 24px;
     color: var(--secondary-text-clr);
     text-align: center;
     font-size: 18px;
-    line-height: 1rem;
+    line-height: 1.3;
 }
 
-div.get_started p.second_line {
-    margin-top: 15px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-/* Styles the "Get Started" button. */
+/* Styles all homepage body buttons. */
 div.get_started .getStarted-btn, div.home_play .play-btn, div.home_learn .learn-btn, div.home_puzzles .puzzles-btn{
     background-color: var(--accent-clr);
     color: var(--text-clr);
@@ -272,140 +268,21 @@ div.get_started .getStarted-btn, div.home_play .play-btn, div.home_learn .learn-
     max-width: 420px;
 }
 
+/* Styles all homepage body buttons when hovering over them with cursor. */
 div.get_started .getStarted-btn:hover, div.home_play .play-btn:hover, div.home_learn .learn-btn:hover, div.home_puzzles .puzzles-btn:hover {
     background-color: var(--hover-accent-clr);
     border: none solid var(--hover-accent-clr);
 }
 
-/* div.play for homepage. */
+/* Set a top margin of 40px for each homepage div to match the top margin of the get_started div. */
 div.play {
-    margin-top: 75px;
+    margin-top: 40px;
 }
 
-div.home_play h1 {
-    font-size: 42px;
-    text-align: center;
-    margin: 20px 0;
-    line-height: 1.2;
-}  
-
-
-div.home_play p.first_line {
-    margin-top: 60px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_play p.second_line {
-    margin-top: 15px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_play .play-btn:hover {
-    background-color: var(--hover-accent-clr);
-    border: none solid var(--hover-accent-clr);
-}
-
-/* div.learn for homepage. */
 div.learn {
-    margin-top: 100px;
+    margin-top: 40px;
 }
 
-div.home_learn h1 {
-    position: relative;
-    font-size: 42px;
-    text-align: center;
-    line-height: 1.5rem;
-}
-
-div.home_learn p.first_line{
-    margin-top: 30px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_learn p.second_line{
-    margin-top: 15px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_learn .learn-btn {
-    background-color: var(--accent-clr);
-    color: var(--text-clr);
-    text-align: center;
-    cursor: pointer;
-    border: none;
-    border-radius: 12px;
-    font-size: 24px;
-    display: block;
-    /* Centers button. */;
-    margin: 30px auto;
-    padding: 18px 32px;
-    width: 100%;
-    max-width: 420px;
-}
-
-div.home_learn .learn-btn:hover {
-    background-color: var(--hover-accent-clr);
-    border: none solid var(--hover-accent-clr);
-}
-
-/* div.puzzles for homepage. */
 div.puzzles {
-    margin-top: 100px;
-}
-
-div.home_puzzles h1, div.home_puzzles h2{
-    position: relative;
-    font-size: 42px;
-    text-align: center;
-    margin: 20px;
-    line-height: 1.5rem;
-}
-
-div.home_puzzles p.first_line{
-    margin-top: 30px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_puzzles p.second_line{
-    margin-top: 15px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_puzzles .puzzles-btn {
-    background-color: var(--accent-clr);
-    color: var(--text-clr);
-    text-align: center;
-    cursor: pointer;
-    border: none;
-    border-radius: 12px;
-    font-size: 24px;
-    display: block;
-    /* Centers button. */
-    margin: 30px auto; 
-    padding: 18px 32px;
-    width: 100%;
-    max-width: 420px;
-}
-
-div.home_puzzles .puzzles-btn:hover {
-    background-color: var(--hover-accent-clr);
-    border: none solid var(--hover-accent-clr);
+    margin-top: 40px;
 }
