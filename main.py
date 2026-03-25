@@ -29,17 +29,18 @@ app.add_middleware(
 def root(request: Request):
     return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
 
-@app.get("/get_started", response_class = HTMLResponse)
+# All the user_authentication directory html file returns
+@app.get("/user_authentication/get_started", response_class = HTMLResponse)
 def getStartedPage(request: Request):
-    return templates.TemplateResponse(request=request, name="get_started.html", context={"request": request})
+    return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context={"request": request})
 
-@app.get("/login", response_class = HTMLResponse)
+@app.get("/user_authentication/login", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="login.html", context={"request": request})
+    return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request})
 
-@app.get("/signup", response_class = HTMLResponse)
+@app.get("/user_authentication/signup", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="signup.html", context={"request": request})
+    return templates.TemplateResponse(request=request, name="user_authentication/signup.html", context={"request": request})
 
 # All the play directory html file returns
 @app.get("/play/play", response_class = HTMLResponse)
@@ -67,10 +68,6 @@ def settings_page(request: Request):
     return templates.TemplateResponse(request=request, name="play/history.html", context={"request": request})
 
 # All the puzzle directory html file returns
-@app.get("/puzzles/puzzles", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="puzzles/puzzles.html", context={"request": request})
-
 @app.get("/puzzles/daily_puzzle", response_class = HTMLResponse)
 def settings_page(request: Request):
     return templates.TemplateResponse(request=request, name="puzzles/daily_puzzle.html", context={"request": request})
@@ -95,6 +92,7 @@ def settings_page(request: Request):
 @app.get("/sidebar/support", response_class = HTMLResponse)
 def settings_page(request: Request):
     return templates.TemplateResponse(request=request, name="sidebar/support.html", context={"request": request})
+
 #Chess Logic
 
 class Move(BaseModel):

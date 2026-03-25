@@ -82,10 +82,13 @@ sidebar stays in place when scrolling.*/
     border-radius: 1em;
     padding: 0.65em;
     text-decoration: none;
-    color: var(--text-clr);
     display: flex;
     align-items: center;
     gap: 1em;
+}
+
+#sidebar a, #sidebar .dropdown-btn {
+    color: var(--text-clr);
 }
 
 /* .dropdown-btn buttons are not anchor tags so they need additional information so that they remain the same. */
@@ -148,12 +151,12 @@ submenu should be shown. */
 }
 
 /* Sidebar login button. */
-#sidebar .login-btn {
+#sidebar a.login-btn {
     background-color: var(--secondary-text-clr);
     color: var(--text-clr);
     text-align: center;
     cursor: pointer;
-    border: 12px solid var(--secondary-text-clr);
+    border: none;
     border-radius: 12px;
     font-size: 18px;
     display: block;
@@ -161,18 +164,19 @@ submenu should be shown. */
     width: 225px;
 }
 
-#sidebar .login-btn:hover {
+/* Sidebar login button when hovering over with cursor. */
+#sidebar a.login-btn:hover {
     background-color: var(--hover-base-clr);
-    border: 12px solid var(--hover-base-clr);
+    border: none var(--hover-base-clr);
 }
 
 /* Sidebar signup button. */
-#sidebar .signup-btn {
+#sidebar a.signup-btn {
     background-color: var(--accent-clr);
     color: var(--text-clr);
     text-align: center;
     cursor: pointer;
-    border: 12px solid var(--accent-clr);
+    border: none;
     border-radius: 12px;
     font-size: 18px;
     display: block;
@@ -180,9 +184,10 @@ submenu should be shown. */
     width: 225px;
 }
 
-#sidebar .signup-btn:hover {
-    background-color: var(--hover-accent-clr);
-    border: 12px solid var(--hover-accent-clr);
+/* Sidebar signup button when hovering over with cursor. */
+#sidebar a.signup-btn:hover {
+    background: var(--hover-accent-clr);
+    border: none var(--hover-accent-clr)
 }
 
 /* Styles the toggle btn, may change logo text to a picture logo later. */
@@ -194,258 +199,95 @@ submenu should be shown. */
     padding: 0.9em;
 }
 
-
-
 /* Main is a wrapper for the non-sidebar elements of the body on the homepage. All elements have a 20 pixel margin in all directions. */
 main {
     padding: 20px;
     margin-top: 40px;
-
 }
 
 /* Flex puts the elements of this container, div chess_board horizontally. So, the img in chess_board is on the left in one column, and
-the get_started class is on the right side as it's also in the container. */
-div.chess_board {
+the get_started class is on the right side as it's also in the container. flex-wrap: nowrap forces elements to stay on the same line, and
+justify-content: center; to center elements in the display, the pair of display: flex, for each div.*/
+div.chess_board, div.play, div.learn, div.puzzles {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 30px;
+    justify-content: center;
+    /* 40px gap, preferrably 6% of screen width and max of 80 pixels. */
+    gap: clamp(40px, 6vw, 80px);
+    flex-wrap: nowrap;
 }
 
-div.chess_board img {
-    margin-top: 20px;
-    width: 400px;
-    max-width: 100%;
-    height: 325px;
+
+/* Below is the condensed CSS functions for homepage body tags all together as opposed to initially having them as separate functions.
+Forgot/didn't realize that the text wrapping is automatic in html, so the h2s and p.second_line were deleted for certain divs. Corresponding lines in
+the html file have also been removed.*/
+
+
+/* Provided a max width for every homepage body div so text doesn't stretch across different displays. */
+div.get_started, div.home_play, div.home_learn, div.home_puzzles {
+    text-align: center;
+    width: 100%;
+    max-width: 500px;
+}
+
+/* Styles the images for each homepage body div. */
+div.chess_board img, div.play img, div.learn img, div.puzzles img {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
     border-radius: 12px;
+    display: block;
 }
 
-div.get_started h1, div.get_started h2 {
-    position: relative;
-    top: 30px;
+/* Styles the headers for each homepage body header. */
+div.get_started h1, div.home_play h1, div.home_learn h1, div.home_puzzles h1{
+    text-align: center;
     font-size: 42px;
-    text-align: center;
-    margin: 20px;
-    line-height: 1.5rem;
+    margin: 20px 0;
+    line-height: 1.2;
 }
 
-div.get_started p.first_line {
-    margin-top: 60px;
+/* Styles <p> tag of each homepage body div. */
+div.get_started p.first_line, div.home_play p.first_line, div.home_learn p.first_line, div.home_puzzles p.first_line {
+    margin-top: 24px;
     color: var(--secondary-text-clr);
     text-align: center;
     font-size: 18px;
-    line-height: 1rem;
+    line-height: 1.3;
 }
 
-div.get_started p.second_line {
-    margin-top: 15px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-/* Styles the "Get Started" button. */
-div.get_started .getStarted-btn {
+/* Styles all homepage body buttons. */
+div.get_started .getStarted-btn, div.home_play .play-btn, div.home_learn .learn-btn, div.home_puzzles .puzzles-btn{
     background-color: var(--accent-clr);
     color: var(--text-clr);
     text-align: center;
     cursor: pointer;
-    /* px first in border changes the margins between the border and the text inside the button. */
-    border: 40px solid var(--accent-clr);
+    border: none;
     border-radius: 12px;
     font-size: 24px;
     display: block;
     /* Centers button. */
     margin: 30px auto; 
-    width: 420px
+    padding: 18px 32px;
+    width: 100%;
+    max-width: 420px;
 }
 
-div.get_started .getStarted-btn:hover {
+/* Styles all homepage body buttons when hovering over them with cursor. */
+div.get_started .getStarted-btn:hover, div.home_play .play-btn:hover, div.home_learn .learn-btn:hover, div.home_puzzles .puzzles-btn:hover {
     background-color: var(--hover-accent-clr);
-    border: 40px solid var(--hover-accent-clr);
+    border: none solid var(--hover-accent-clr);
 }
 
-/* div.play for homepage. */
+/* Set a top margin of 40px for each homepage div to match the top margin of the get_started div. */
 div.play {
-    margin-top: 75px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 30px;
-}
-
-div.home_play h1 {
-    position: relative;
-    top: 30px;
-    font-size: 42px;
-    text-align: center;
-    margin: 20px;
-    line-height: 1.5rem;
-}  
-
-
-div.home_play p.first_line {
-    margin-top: 60px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_play p.second_line {
-    margin-top: 15px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_play .play-btn {
-    background-color: var(--accent-clr);
-    color: var(--text-clr);
-    text-align: center;
-    cursor: pointer;
-    /* px first in border changes the margins between the border and the text inside the button. */
-    border: 40px solid var(--accent-clr);
-    border-radius: 12px;
-    font-size: 24px;
-    display: block;
-    /* Centers button. */
-    margin: 30px auto; 
-    width: 420px
-}
-
-div.home_play .home_play-btn:hover {
-    background-color: var(--hover-accent-clr);
-    border: 40px solid var(--hover-accent-clr);
-}
-
-div.play img {
-    width: 400px;
-    max-width: 100%;
-    height: 325px;
-    border-radius: 12px;
-}
-
-/* div.learn for homepage. */
-div.learn {
-    margin-top: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 30px;
-}
-
-div.home_learn h1 {
-    position: relative;
-    font-size: 42px;
-    text-align: center;
-    line-height: 1.5rem;
-}
-
-div.home_learn p.first_line{
-    margin-top: 30px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_learn p.second_line{
-    margin-top: 15px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_learn .learn-btn {
-    background-color: var(--accent-clr);
-    color: var(--text-clr);
-    text-align: center;
-    cursor: pointer;
-    /* px first in border changes the margins between the border and the text inside the button. */
-    border: 40px solid var(--accent-clr);
-    border-radius: 12px;
-    font-size: 24px;
-    display: block
-    /* Centers button. */;
-    margin: 30px auto;
-    width: 420px
-}
-
-div.home_learn .home_learn-btn:hover {
-    background-color: var(--hover-accent-clr);
-    border: 40px solid var(--hover-accent-clr);
-}
-
-div.learn img {
-    width: 400px;
-    max-width: 100%;
-    height: 325px;
-    border-radius: 12px;
-}
-
-/* div.puzzles for homepage. */
-div.puzzles {
-    margin-top: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 30px;
-}
-
-
-
-div.home_puzzles h1, div.home_puzzles h2{
-    position: relative;
-    font-size: 42px;
-    text-align: center;
-    margin: 20px;
-    line-height: 1.5rem;
-}
-
-div.home_puzzles p.first_line{
-    margin-top: 30px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_puzzles p.second_line{
-    margin-top: 15px;
-    color: var(--secondary-text-clr);
-    text-align: center;
-    font-size: 18px;
-    line-height: 1rem;
-}
-
-div.home_puzzles .puzzles-btn {
-    background-color: var(--accent-clr);
-    color: var(--text-clr);
-    text-align: center;
-    cursor: pointer;
-    /* px first in border changes the margins between the border and the text inside the button. */
-    border: 40px solid var(--accent-clr);
-    border-radius: 12px;
-    font-size: 24px;
-    display: block;
-    /* Centers button. */
-    margin: 30px auto; 
-    width: 420px
-}
-
-div.home_puzzles .puzzles-btn:hover {
-    background-color: var(--hover-accent-clr);
-    border: 40px solid var(--hover-accent-clr);
-}
-
-div.puzzles img {
     margin-top: 40px;
-    width: 400px;
-    max-width: 100%;
-    height: 325px;
-    border-radius: 12px;
+}
+
+div.learn {
+    margin-top: 40px;
+}
+
+div.puzzles {
+    margin-top: 40px;
 }
