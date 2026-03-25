@@ -82,10 +82,13 @@ sidebar stays in place when scrolling.*/
     border-radius: 1em;
     padding: 0.65em;
     text-decoration: none;
-    color: var(--text-clr);
     display: flex;
     align-items: center;
     gap: 1em;
+}
+
+#sidebar a, #sidebar .dropdown-btn {
+    color: var(--text-clr);
 }
 
 /* .dropdown-btn buttons are not anchor tags so they need additional information so that they remain the same. */
