@@ -9,10 +9,9 @@ This game is entirely run in a web browser. Just click the link and you can play
 Follow this project board to know the latest status of the project: [http://...]([http://...])  
 
 ### How to build
-
+Option 1
 - python -m pip install chess SpeechRecognition sounddevice numpy pyttsx3 pygame jinja2 uvicorn fastapi
 - Use preferred IDE
-
 - Use this github repository: ... 
 - Specify what branch to use for a more stable release or for cutting edge development.  
 - Use InteliJ 11
@@ -20,27 +19,14 @@ Follow this project board to know the latest status of the project: [http://...]
 - What file and target to compile and run. 
 - What is expected to happen when the app start. 
 
-# Sources
-YouTube
--Used to help setup a navigatable sidebar menu for the homepage; https://www.youtube.com/watch?v=R7b3OlEyqug.
-
-Useful FastAPI Info
--Simple FastAPI intro with examples and more information; https://fastapi.tiangolo.com/tutorial/first-steps/?utm_source=chatgpt.com#interactive-api-docs
--Information about template engines and the syntax to use Jinja2. This link is very helpful!; https://fastapi.tiangolo.com/advanced/templates/?utm_source=chatgpt.com
--Really helped to understand static files and the purpose of mounting; https://fastapi.tiangolo.com/tutorial/static-files/?utm_source=chatgpt.com#what-is-mounting
--Very useful with learning how to initially setup and structure main.py and index.html. Unfortunately, had already structured a lot of both files before finding this page; https://www.geeksforgeeks.org/python/fastapi-templates/
-
-HTML
--Helpful to refer to general html document structure; https://www.w3schools.com/html/html_intro.asp
--Learned about containers; https://www.w3schools.com/w3css/w3css_containers.asp
--Used as a temporary container; https://www.w3schools.com/w3css/4/w3.css
-
-CSS
--Font family used; https://fonts.googleapis.com/css2?family=Poppins
--clamp() was used to dynamically allocate the gap between elements on the homepage depending on a user's screen size; https://css-tricks.com/almanac/functions/c/clamp/
-
-ChatGPT
--Used ChatGPT to generate images used on the homepage. Provided the colors used for the homepage too so the images closely match the theme.
+Option 2
+- Download python
+- Open Windows PowerShell
+- Enter: python -m pip install chess SpeechRecognition sounddevice numpy pyttsx3 pygame jinja2 uvicorn fastapi
+- Download our repository as a zip file and extract it to desktop or desired location
+- Navigate to directory where the extracted folder for this project is located
+- Enter: python -m uvicorn main:app --reload
+- Proceed to the link generated
 
 # Requirements
 # Player Requirements
@@ -79,3 +65,24 @@ python TTS.py filename.txt
 # How to contribute
 Follow this project board to know the latest status of the project: [https://github.com/orgs/cis3296s26/projects/29/views/1] 
  
+# Sources & References
+Useful FastAPI Info
+-Simple FastAPI intro with examples and more information; https://fastapi.tiangolo.com/tutorial/first-steps/?utm_source=chatgpt.com#interactive-api-docs
+-Information about template engines and the syntax to use Jinja2. This link is very helpful!; https://fastapi.tiangolo.com/advanced/templates/?utm_source=chatgpt.com
+-Understand static files and the purpose of mounting; https://fastapi.tiangolo.com/tutorial/static-files/?utm_source=chatgpt.com#what-is-mounting
+-Very useful with learning how to read setup and structure main.py and index.html; https://www.geeksforgeeks.org/python/fastapi-templates/
+
+HTML
+-Helpful to refer to general html document structure; https://www.w3schools.com/html/html_intro.asp
+-Containers; https://www.w3schools.com/w3css/w3css_containers.asp
+-Used as a temporary container; https://www.w3schools.com/w3css/4/w3.css
+
+CSS
+-Font family used; https://fonts.googleapis.com/css2?family=Poppins
+-clamp() was used to dynamically allocate the gap between elements on the homepage depending on a user's screen size; https://css-tricks.com/almanac/functions/c/clamp/
+
+YouTube
+-Used to help setup a navigatable sidebar menu for the homepage; https://www.youtube.com/watch?v=R7b3OlEyqug.
+
+ChatGPT
+-Used ChatGPT to generate images used on the homepage. Provided the colors used for the homepage too so the images closely match the theme.
