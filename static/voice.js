@@ -60,6 +60,10 @@ async function submitVoiceMove() {
         } else {
             updateVoiceMessage(`Heard: ${lastTranscript}\nError: ${data.error}`);
         }
+
+        if (typeof window.onVoiceMoveResult === "function") {
+            window.onVoiceMoveResult(data, lastTranscript);
+        }
     } catch (error) {
         updateVoiceMessage(`Request failed: ${error.message}`);
     }
