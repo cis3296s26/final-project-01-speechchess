@@ -13,6 +13,7 @@
     <div class="get_started_page">
         <div class="get_started_signup_or_login">
             <h1>Create Your <a class="get_started_homepage_redirect" href="/">SpeechChess</a> Account</h1>
+            <!--Indicates to user there is an error with one of the fields. Fill out the field.-->
             {% if error %}
                 <p class="authentication-error">{{ error }}</p>
             {% endif %}
@@ -22,7 +23,7 @@
                 <button class="button get-started-create-account-btn" type="submit">Create Account</button>          
             </form>
             <!--Need to insert a button like "Create Account" to add and commit what the user entered to the database.-->
-            <p><a href="/user_authentication/login">Already Have an Account?</a></p>      
+            <p><a href="/user_authentication/login">Already Have An Account?</a></p>      
         </div>
     </div>
 </body>
