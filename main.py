@@ -6,15 +6,27 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+from user_authentication import router as authentication_router, create_db_and_tables
+from contextlib import asynccontextmanager
+from starlette.middleware.sessions import SessionMiddleware
 import uuid
 import json
 
-# Creates a fastapi instance
-app = FastAPI()
+# Create database and tables during startup. App runs after yield.
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+
+# Creates a fastapi instance, pass lifespan function so it runs when app starts and creates the database and tables during startup.
+app = FastAPI(lifespan=lifespan)
 # Mounted to the /static path, refers to the "static directory", referred by FastAPI as static. If a there is a request to a file with /static, serve it from the static/ folder directly with FastAPI.
 app.mount("/static", StaticFiles(directory="static"), name="static")
 # Create an instance, templates, to later render and return a TemplateResponse. All html files are in templates directory.
 templates = Jinja2Templates(directory="templates")
+
+# Reads session cookie before and after every request and verifies the key. Then grants access to the request.session. request.session is a dictionary that stores the fields, fastapi middleware saves it to a cookie.
+app.add_middleware(SessionMiddleware, secret_key="secret-key")
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,6 +36,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add all routes from authentication_router to app.
+app.include_router(authentication_router)
+
 # root() runs whenever "/" path occurs. Route returns HTML. root() passes an instance of the Request object named request. Returns template instance.
 @app.get("/", response_class = HTMLResponse)
 def root(request: Request):
@@ -31,54 +46,54 @@ def root(request: Request):
 
 # All the user_authentication directory html file returns
 @app.get("/user_authentication/get_started", response_class = HTMLResponse)
-def getStartedPage(request: Request):
+def get_started_page(request: Request):
     return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context={"request": request})
 
 @app.get("/user_authentication/login", response_class = HTMLResponse)
-def settings_page(request: Request):
+def login_page(request: Request):
     return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request})
 
 @app.get("/user_authentication/signup", response_class = HTMLResponse)
-def settings_page(request: Request):
+def signup_page(request: Request):
     return templates.TemplateResponse(request=request, name="user_authentication/signup.html", context={"request": request})
 
 # All the play directory html file returns
 @app.get("/play/play", response_class = HTMLResponse)
-def playPage(request: Request):
+def play_page(request: Request):
     return templates.TemplateResponse(request=request, name="play/play.html", context={"request": request})
     
 @app.get("/play/play_online", response_class = HTMLResponse)
-def settings_page(request: Request):
+def play_online_page(request: Request):
     return templates.TemplateResponse(request=request, name="play/play_online.html", context={"request": request})
 
 @app.get("/play/play_ai", response_class = HTMLResponse)
-def settings_page(request: Request):
+def play_ai_page(request: Request):
     return templates.TemplateResponse(request=request, name="play/play_ai.html", context={"request": request})
 
 @app.get("/play/play_friends", response_class = HTMLResponse)
-def settings_page(request: Request):
+def play_friends_page(request: Request):
     return templates.TemplateResponse(request=request, name="play/play_friends.html", context={"request": request})
 
 @app.get("/play/stats", response_class = HTMLResponse)
-def settings_page(request: Request):
+def stats_page(request: Request):
     return templates.TemplateResponse(request=request, name="play/stats.html", context={"request": request})
 
 @app.get("/play/history", response_class = HTMLResponse)
-def settings_page(request: Request):
+def history_page(request: Request):
     return templates.TemplateResponse(request=request, name="play/history.html", context={"request": request})
 
 # All the puzzle directory html file returns
 @app.get("/puzzles/daily_puzzle", response_class = HTMLResponse)
-def settings_page(request: Request):
+def daily_puzzle_page(request: Request):
     return templates.TemplateResponse(request=request, name="puzzles/daily_puzzle.html", context={"request": request})
 
 @app.get("/puzzles/all_puzzles", response_class = HTMLResponse)
-def settings_page(request: Request):
+def all_puzzles_page(request: Request):
     return templates.TemplateResponse(request=request, name="puzzles/all_puzzles.html", context={"request": request})
 
 # Rest of the sidebar html file returns
 @app.get("/sidebar/learn", response_class = HTMLResponse)
-def learnPage(request: Request):
+def learn_page(request: Request):
     return templates.TemplateResponse(request=request, name="sidebar/learn.html", context={"request": request})    
     
 @app.get("/sidebar/community", response_class = HTMLResponse)
@@ -90,7 +105,7 @@ def settings_page(request: Request):
     return templates.TemplateResponse(request=request, name="sidebar/settings.html", context={"request": request})
 
 @app.get("/sidebar/support", response_class = HTMLResponse)
-def settings_page(request: Request):
+def support_page(request: Request):
     return templates.TemplateResponse(request=request, name="sidebar/support.html", context={"request": request})
 
 #Chess Logic

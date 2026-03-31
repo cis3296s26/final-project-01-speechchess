@@ -13,9 +13,77 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script src="/static/chess/chessboard.min.js"></script>
+    <script src="/static/voice.js" defer></script>
 </head>
 
 <body>
+
+    <h2 style="text-align:center;">Speech Chess</h2>
+
+    <div id="board" style="width: 400px; margin: 20px auto;"></div>
+    <div style="text-align: center;">
+        <button type="button" onclick="startVoiceInput()">Record Move</button>
+        <button type="button" onclick="submitVoiceMove()">Submit Voice Move</button>
+        <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Voice transcript and move result will appear here.</pre>
+    </div>
+
+    <script>
+    let board;
+
+    async function refreshBoard() {
+        const res = await fetch("/state");
+        const data = await res.json();
+        board.position(data.fen);
+    }
+
+    window.onload = function () {
+        board = Chessboard('board', {
+            draggable: true,
+            position: 'start',
+
+            pieceTheme: '/static/chess/img/chesspieces/wikipedia/{piece}.png',
+
+            onDrop: async function (source, target, piece) {
+                let move = source + target;
+
+                if (
+                    (piece === 'wP' && target[1] === '8') ||
+                    (piece === 'bP' && target[1] === '1')
+                ) {
+                    move += 'q';
+                }
+
+                const res = await fetch("/move", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ move: move })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    board.position(data.fen);
+                } else {
+                    return 'snapback';
+                }
+            },
+
+            onSnapEnd: async function () {
+                await refreshBoard();
+            }
+        });
+
+        window.onVoiceMoveResult = async function (data) {
+            if (data.success) {
+                board.position(data.fen);
+                return;
+            }
+
+            await refreshBoard();
+        };
+    };
+    </script>
+
     <aside id="sidebar">
         <ul>
             <li>

@@ -311,7 +311,7 @@ div.puzzles {
     align-items: center;
 }
 
-div.get_started_container {
+div.get_started {
     /* This class fits to the entire width of the screen. */
     width: 100%;
     /*  Set minimum height to the full height of the user's screen. */
@@ -354,4 +354,19 @@ div.get_started_signup_or_login a {
     display: block;
     text-align: center;
     margin-top: 15px;
+}
+
+/* Start of login page styling. Login body class and other login classes follow. */
+.login_body {
+    background-color: var(--base-clr);
+    min-height: 100vh;
+}
+
+div.login_page {
+    
+}
+
+div.login_page p{
+    color: var(--text-clr);
+    margin-right: 300px;
 }
