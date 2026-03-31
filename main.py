@@ -123,17 +123,29 @@ def move_piece(data: Move):
 
 @app.post("/voice-move")
 def voice_move(data: VoiceInput):
-    move_text = Voice.speech_to_move(data.transcript)
+    parse_result = Voice.parse_speech(data.transcript)
 
-    if move_text is None:
+    if parse_result["status"] != "exact":
         return {
             "success": False,
-            "error": "Could not understand a legal move from that speech input.",
-            "transcript": data.transcript,
+            "error": parse_result["prompt"],
+            "transcript": parse_result["transcript"],
+            "status": parse_result["status"],
+            "options": parse_result.get("options", []),
             **chess_logic.get_game_state(),
         }
 
-    return chess_logic.make_move(move_text)
+    result = chess_logic.make_move(parse_result["move"]["uci"])
+    result["transcript"] = parse_result["transcript"]
+    result["parsed_move"] = parse_result["move"]
+    return result
+
+
+@app.post("/voice-parse")
+def voice_parse(data: VoiceInput):
+    result = Voice.parse_speech(data.transcript)
+    result["turn"] = chess_logic.get_game_state()["turn"]
+    return result
 
 @app.post("/reset")
 def reset():
