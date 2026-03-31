@@ -119,6 +119,11 @@
     let suppressNextAnnouncement = false;
     let promoResolve = null;
 
+    const moveSounds = [
+        new Audio('/static/sounds/ChessNoise1.mp3'),
+        new Audio('/static/sounds/ChessNoise2.mp3')
+    ];
+
     function askPromotion() {
         return new Promise(resolve => {
             promoResolve = resolve;
@@ -131,12 +136,20 @@
         if (promoResolve) promoResolve(piece);
     }
 
+    function playMoveSound() {
+        const sound = moveSounds[Math.floor(Math.random() * moveSounds.length)];
+        sound.currentTime = 0;
+        sound.play();
+    };
+
     async function refreshBoard() {
         const res = await fetch("/state");
         const data = await res.json();
         board.position(data.fen);
 
         if (data.history && data.history.length > lastHistoryLength) {
+            playMoveSound();
+
             const latestMove = data.history[data.history.length - 1];
 
             if (!suppressNextAnnouncement && typeof speakText === "function") {
