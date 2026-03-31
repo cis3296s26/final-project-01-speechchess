@@ -311,55 +311,115 @@ div.puzzles {
     align-items: center;
 }
 
-div.get_started {
+div.get_started_page {
     /* This class fits to the entire width of the screen. */
     width: 100%;
     /*  Set minimum height to the full height of the user's screen. */
     min-height: 100vh;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: clamp(24px, 4vw, 48px);
 }
 
 div.get_started_signup_or_login {
     /* This class fits to the entire width of the screen. */
     width: 100%;
-    /* Sets a limit on the width of the element to fit all screen sizes. */
+    /* Sets a limit on the width of the element to fit all screen sizes. */   
     max-width: 400px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;  
+    gap: 12px;   
 }
 
 div.get_started_signup_or_login h1 {
     color: var(--text-clr);
-    font-size: 48px;
+    font-size: clamp(2rem, 3vw, 2.5rem);
+    text-align: center;
     line-height: 1.2;
-    text-align: center;
-    margin-bottom: 20px;
 }
 
-.get_started_header_different_color {
+div.get_started_signup_or_login h1 a.get_started_homepage_redirect{
     color: var(--accent-clr);
+    text-decoration: none;
+    font: inherit;
 }
 
-div.get_started_signup_or_login a {
-    color: var(--secondary-text-clr);
-    font-size: 12px;
-    border-radius: 12px;
-    padding: 0.65em;
+div.get_started_signup_or_login h1 a.get_started_homepage_redirect:hover{
+    color: var(--hover-accent-clr);
     text-decoration: none;
-    display: block;
+}
+
+
+div.get_started_signup_or_login form {
+    
+    display: flex;
+    flex-direction: column;
+    gap: 10px;   /* 🔥 smaller, cleaner spacing */
+    
+}
+
+div.get_started_signup_or_login input {
+    width: 100%;
+    padding: 10px 12px;     
+    border-radius: 10px;
+    border: 1px solid var(--line-clr);
+    background-color: var(--hover-base-clr);
+    color: var(--text-clr);
+    font-size: 0.95rem;
+}
+
+div.get_started_signup_or_login input::placeholder {
+    color: var(--secondary-text-clr);
+}
+
+.get-started-create-account-btn {
+    width: 100%;
+    padding: 14px 18px;
+    background-color: var(--accent-clr);
+    color: var(--text-clr);
+    border: none;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.get-started-create-account-btn:hover {
+    background-color: var(--hover-accent-clr);
+    border: none var(--hover-accent-clr);    
+}
+
+div.get_started_signup_or_login p {
     text-align: center;
-    margin-top: 15px;
+}
+
+div.get_started_signup_or_login p, div.get_started_signup_or_login a {
+    color: var(--secondary-text-clr);
+    font-size: 0.95rem;
+    text-decoration: none;
+}
+
+div.get_started_signup_or_login p a:hover {
+    color: var(--text-clr);
+}
+
+.authentication-error {
+    color: #ff6b6b;
+    text-align: center;
+    font-size: 0.95rem;
 }
 
 /* Start of login page styling. Login body class and other login classes follow. */
 .login_body {
     background-color: var(--base-clr);
+    color: var(--text-clr);
+    /*  Set minimum height to the full height of the user's screen. */
     min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 div.login_page {

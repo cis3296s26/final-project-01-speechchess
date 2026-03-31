@@ -88,7 +88,13 @@
         </ul>
     </aside>
     <div class="login_page">
-        <p>Login page</p>
-    </div>
+    <h1>Login to SpeechChess</h1>
+    <form action="/login" method="post">
+        <input type="text" id="email" name="email" placeholder="Email">
+        <input type="password" id="password" name="password" placeholder="Password">
+        <button type="submit">Login</button>
+    </form>
+    <p><a href="/user_authentication/signup">Dont Have an Account?</a></p>
+</div>
 </body>
 </html>

@@ -10,19 +10,19 @@
     <link href="https://fonts.googleapis.com" rel="stylesheet">
 </head>
 <body class="get_started_body">
-    <div class="get_started">
-        <div class="get_started_top">
-        </div>
+    <div class="get_started_page">
         <div class="get_started_signup_or_login">
-            <h1>Create Your <span style: class="get_started_header_different_color">SpeechChess</span> Account</h1>
-            <form>
-                <!--May need to change these types so that I can check the validity of user entries.-->
-                <label for="email"></label><br>
-                <input type="text" id="email" name="email" placeholder="Email"><br>
-                <label for="password"></label><br>
-                <input type="password" id="password" name="password" placeholder="Password">            
+            <h1>Create Your <a class="get_started_homepage_redirect" href="/">SpeechChess</a> Account</h1>
+            {% if error %}
+                <p class="authentication-error">{{ error }}</p>
+            {% endif %}
+            <form action="/signup" method="post">
+                <input type="text" id="email" name="email" placeholder="Email" required>
+                <input type="password" id="password" name="password" placeholder="Password" required>  
+                <button class="button get-started-create-account-btn" type="submit">Create Account</button>          
             </form>
-            <p><a href="/user_authentication/login">Login</a></p>      
+            <!--Need to insert a button like "Create Account" to add and commit what the user entered to the database.-->
+            <p><a href="/user_authentication/login">Already Have an Account?</a></p>      
         </div>
     </div>
 </body>
