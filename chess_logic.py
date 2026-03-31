@@ -35,6 +35,16 @@ Front End is not implemented yet.
 """
 
 board = chess.Board()
+RANK_WORDS = {
+    "1": "one",
+    "2": "two",
+    "3": "three",
+    "4": "four",
+    "5": "five",
+    "6": "six",
+    "7": "seven",
+    "8": "eight",
+}
 
 def serialize_board():
     rows = []
@@ -98,6 +108,22 @@ def get_game_state():
         "legal_moves": legal_moves_list,
     }
 
+def spoken_square(square):
+    name = chess.square_name(square)
+    return f"{name[0].upper()} {RANK_WORDS[name[1]]}"
+
+def spoken_move_text(move):
+    piece = board.piece_at(move.from_square)
+    from_square = spoken_square(move.from_square)
+    to_square = spoken_square(move.to_square)
+
+    if piece is None:
+        return f"Played from {from_square} to {to_square}"
+
+    color = "White" if piece.color == chess.WHITE else "Black"
+    piece_name = chess.piece_name(piece.piece_type)
+    return f"{color} {piece_name} played from {from_square} to {to_square}"
+
 def make_move(move_str): #ex: e2e4
     move_text = move_str.strip().lower().replace(" ", "")
     try:
@@ -114,10 +140,11 @@ def make_move(move_str): #ex: e2e4
             "error": "Illegal move",
             **get_game_state(),
         }
+    spoken_text = spoken_move_text(move)
     san = board.san(move)
     board.push(move)
 
-    TTS.speak(f"Played {san}")
+    TTS.speak(spoken_text)
     return {
         "success": True,
         "message": f"Played{san}",
