@@ -10,9 +10,10 @@
 <body>
     <main>
         <h1>Voice Chess Input</h1>
-        <p>Press record and say a move like "e4" or "knight f3".</p>
-        <button type="button" onclick="startVoiceInput()">Record Move</button>
-        <button type="button" onclick="submitVoiceMove()">Submit Move</button>
+        <p>Click once to enable voice mode. Then say "Speech Chess", say your move, say "submit move", and finally say "confirm".</p>
+        <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Enable Voice Mode</button>
+        <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
+        <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
         <pre id="voiceMove">Your transcript and move result will appear here.</pre>
         <a href="/game">Back to Game</a>
     </main>
