@@ -17,73 +17,6 @@
 </head>
 
 <body>
-
-    <h2 style="text-align:center;">Speech Chess</h2>
-
-    <div id="board" style="width: 400px; margin: 20px auto;"></div>
-    <div style="text-align: center;">
-        <button type="button" onclick="startVoiceInput()">Record Move</button>
-        <button type="button" onclick="submitVoiceMove()">Submit Voice Move</button>
-        <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Voice transcript and move result will appear here.</pre>
-    </div>
-
-    <script>
-    let board;
-
-    async function refreshBoard() {
-        const res = await fetch("/state");
-        const data = await res.json();
-        board.position(data.fen);
-    }
-
-    window.onload = function () {
-        board = Chessboard('board', {
-            draggable: true,
-            position: 'start',
-
-            pieceTheme: '/static/chess/img/chesspieces/wikipedia/{piece}.png',
-
-            onDrop: async function (source, target, piece) {
-                let move = source + target;
-
-                if (
-                    (piece === 'wP' && target[1] === '8') ||
-                    (piece === 'bP' && target[1] === '1')
-                ) {
-                    move += 'q';
-                }
-
-                const res = await fetch("/move", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ move: move })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    board.position(data.fen);
-                } else {
-                    return 'snapback';
-                }
-            },
-
-            onSnapEnd: async function () {
-                await refreshBoard();
-            }
-        });
-
-        window.onVoiceMoveResult = async function (data) {
-            if (data.success) {
-                board.position(data.fen);
-                return;
-            }
-
-            await refreshBoard();
-        };
-    };
-    </script>
-
     <aside id="sidebar">
         <ul>
             <li>
@@ -167,50 +100,146 @@
             </li>
         </ul>
     </aside>
-    <div id="board" style="width: 400px; margin: 20px auto;"></div>
+
+    <main>
+        <h2>Speech Chess</h2>
+        <div id="board" style="width: 400px; margin: 20px auto;"></div>
+        <div style="text-align: center;">
+            <button type="button" onclick="startVoiceInput()">Record Move</button>
+            <button type="button" onclick="submitVoiceMove()">Submit Voice Move</button>
+            <pre id="voiceMove" ...>Voice transcript and move result will appear here.</pre>
+        </div>
+    </main>
 
     <script>
-    window.onload = function () {
+        let board;
 
-        let board = Chessboard('board', {
-            draggable: true,
-            position: 'start',
+        async function refreshBoard() {
+            const res = await fetch("/state");
+            const data = await res.json();
+            board.position(data.fen);
+        }
 
-            pieceTheme: '/static/chess/img/chesspieces/wikipedia/{piece}.png',
+        window.onload = function () {
+            board = Chessboard('board', {
+                draggable: true,
+                position: 'start',
 
-            onDrop: async function (source, target, piece) {
-                let move = source + target;
+                pieceTheme: '/static/chess/img/chesspieces/wikipedia/{piece}.png',
 
-                if (
-                    (piece === 'wP' && target[1] === '8') ||
-                    (piece === 'bP' && target[1] === '1')
-                ) {
-                    move += 'q';
+                onDrop: async function (source, target, piece) {
+                    let move = source + target;
+
+                    if (
+                        (piece === 'wP' && target[1] === '8') ||
+                        (piece === 'bP' && target[1] === '1')
+                    ) {
+                        const choice = await askPromotion();
+                        move += choice;
+                    }
+
+                    const res = await fetch("/move", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ move: move })
+                    });
+
+                    const data = await res.json();
+
+                    if (data.success) {
+                        board.position(data.fen);
+                    } else {
+                        return 'snapback';
+                    }
+                },
+
+                onSnapEnd: async function () {
+                    await refreshBoard();
                 }
+            });
 
-                const res = await fetch("/move", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ move: move })
-                });
-
-                const data = await res.json();
-
+            window.onVoiceMoveResult = async function (data) {
                 if (data.success) {
                     board.position(data.fen);
-                } else {
-                    return 'snapback';
+                    return;
                 }
-            },
 
-            onSnapEnd: async function () {
-                const res = await fetch("/state");
-                const data = await res.json();
-                board.position(data.fen);
-            }
-        });
-
-    };
+                await refreshBoard();
+            };
+        };
     </script>
+
+<!--    <script>-->
+<!--    window.onload = function () {-->
+
+<!--        let board = Chessboard('board', {-->
+<!--            draggable: true,-->
+<!--            position: 'start',-->
+
+<!--            pieceTheme: '/static/chess/img/chesspieces/wikipedia/{piece}.png',-->
+
+<!--            onDrop: async function (source, target, piece) {-->
+<!--                let move = source + target;-->
+
+<!--                if (-->
+<!--                    (piece === 'wP' && target[1] === '8') ||-->
+<!--                    (piece === 'bP' && target[1] === '1')-->
+<!--                ) {-->
+<!--                    move += 'q';-->
+<!--                }-->
+
+<!--                const res = await fetch("/move", {-->
+<!--                    method: "POST",-->
+<!--                    headers: { "Content-Type": "application/json" },-->
+<!--                    body: JSON.stringify({ move: move })-->
+<!--                });-->
+
+<!--                const data = await res.json();-->
+
+<!--                if (data.success) {-->
+<!--                    board.position(data.fen);-->
+<!--                } else {-->
+<!--                    return 'snapback';-->
+<!--                }-->
+<!--            },-->
+
+<!--            onSnapEnd: async function () {-->
+<!--                const res = await fetch("/state");-->
+<!--                const data = await res.json();-->
+<!--                board.position(data.fen);-->
+<!--            }-->
+<!--        });-->
+
+<!--    };-->
+<!--    </script>-->
+
+    <script>
+    let promoResolve = null;
+
+    function askPromotion() {
+        return new Promise(resolve => {
+            promoResolve = resolve;
+            document.getElementById('promo-overlay').style.display = 'flex';
+        });
+    }
+
+    function resolvePromotion(piece) {
+        document.getElementById('promo-overlay').style.display = 'none';
+        if (promoResolve) promoResolve(piece);
+    }
+    </script>
+
+    <div id="promo-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:black; border-radius:12px; padding:1.5rem 2rem; text-align:center;">
+            <p style="font-weight:500; margin:0 0 1rem;">Promote pawn to:</p>
+            <div style="display:flex; gap:12px; justify-content:center;">
+                <button onclick="resolvePromotion('q')"><img src="/static/chess/img/chesspieces/alpha/wQ.png" width="40"><br>Queen</button>
+                <button onclick="resolvePromotion('r')"><img src="/static/chess/img/chesspieces/alpha/wR.png" width="40"><br>Rook</button>
+                <button onclick="resolvePromotion('b')"><img src="/static/chess/img/chesspieces/alpha/wB.png" width="40"><br>Bishop</button>
+                <button onclick="resolvePromotion('n')"><img src="/static/chess/img/chesspieces/alpha/wN.png" width="40"><br>Knight</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

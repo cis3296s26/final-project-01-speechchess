@@ -10,7 +10,7 @@ Follow this project board to know the latest status of the project: [http://...]
 
 ### How to build
 Option 1
-- python -m pip install chess SpeechRecognition sounddevice numpy pyttsx3 pygame jinja2 uvicorn fastapi
+- python -m pip install chess SpeechRecognition sounddevice numpy pyttsx3 pygame jinja2 uvicorn fastapi pydantic
 - Use preferred IDE
 - Use this github repository: ... 
 - Specify what branch to use for a more stable release or for cutting edge development.  
