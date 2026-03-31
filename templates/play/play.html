@@ -102,12 +102,14 @@
     </aside>
 
     <main>
-        <h2>Speech Chess</h2>
+        <h2 style="text-align:center;">Speech Chess</h2>
+
         <div id="board" style="width: 400px; margin: 20px auto;"></div>
         <div style="text-align: center;">
-            <button type="button" onclick="startVoiceInput()">Record Move</button>
-            <button type="button" onclick="submitVoiceMove()">Submit Voice Move</button>
-            <pre id="voiceMove" ...>Voice transcript and move result will appear here.</pre>
+            <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
+            <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
+            <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
+            <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Click Start Voice Session, then say "Speech Chess", then your move, then "submit move", then "confirm".</pre>
         </div>
     </main>
 
@@ -212,6 +214,83 @@
 
 <!--    };-->
 <!--    </script>-->
+
+    <script>
+        let board;
+        let lastHistoryLength = 0;
+        let suppressNextAnnouncement = false;
+
+        async function refreshBoard() {
+            const res = await fetch("/state");
+            const data = await res.json();
+            board.position(data.fen);
+
+            if (data.history && data.history.length > lastHistoryLength) {
+                const latestMove = data.history[data.history.length - 1];
+
+                if (!suppressNextAnnouncement && typeof speakText === "function") {
+                    speakText(`Latest move ${latestMove}. ${data.turn} to move.`);
+                }
+
+                suppressNextAnnouncement = false;
+            }
+
+            lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
+        }
+
+        window.onload = function () {
+            board = Chessboard('board', {
+                draggable: true,
+                position: 'start',
+
+                pieceTheme: '/static/chess/img/chesspieces/wikipedia/{piece}.png',
+
+                onDrop: async function (source, target, piece) {
+                    let move = source + target;
+
+                    if (
+                        (piece === 'wP' && target[1] === '8') ||
+                        (piece === 'bP' && target[1] === '1')
+                    ) {
+                        move += 'q';
+                    }
+
+                    const res = await fetch("/move", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ move: move })
+                    });
+
+                    const data = await res.json();
+
+                    if (data.success) {
+                        suppressNextAnnouncement = true;
+                        board.position(data.fen);
+                        lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
+                    } else {
+                        return 'snapback';
+                    }
+                },
+
+                onSnapEnd: async function () {
+                    await refreshBoard();
+                }
+            });
+
+            window.onVoiceMoveResult = async function (data) {
+                if (data.success) {
+                    suppressNextAnnouncement = true;
+                    board.position(data.fen);
+                    lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
+                    return;
+                }
+
+                await refreshBoard();
+            };
+
+            refreshBoard();
+        };
+    </script>
 
     <script>
     let promoResolve = null;
