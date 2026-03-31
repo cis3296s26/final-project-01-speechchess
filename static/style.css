@@ -22,11 +22,12 @@ html{
     line-height: 1.5rem;
 }
 
-body {
+/* Body for the homepage. */
+.homepage_body {
     background-color: var(--base-clr);
     color: var(--text-clr);
+    /*  Set minimum height to the full height of the user's screen. */
     min-height: 100vh;
-    min-height: 100dvh;
     /* Grid will have two columns, one of automatic size, the other grows and shrinks depending on how much space there is.*/
     display: grid;
     grid-template-columns: auto 1fr;
@@ -93,6 +94,7 @@ sidebar stays in place when scrolling.*/
 
 /* .dropdown-btn buttons are not anchor tags so they need additional information so that they remain the same. */
 .dropdown-btn{
+    /* This class fits to the entire width of the screen. */
     width: 100%;
     text-align: left;
     background: none;
@@ -213,7 +215,7 @@ div.chess_board, div.play, div.learn, div.puzzles {
     align-items: center;
     justify-content: center;
     /* 40px gap, preferrably 6% of screen width and max of 80 pixels. */
-    gap: clamp(40px, 6vw, 80px);
+    gap: clamp(40px, 6vw, 120px);
     flex-wrap: nowrap;
 }
 
@@ -226,13 +228,17 @@ the html file have also been removed.*/
 /* Provided a max width for every homepage body div so text doesn't stretch across different displays. */
 div.get_started, div.home_play, div.home_learn, div.home_puzzles {
     text-align: center;
+    /* This class fits to the entire width of the screen. */
     width: 100%;
+    /* Sets a limit on the width of the element to fit all screen sizes. */
     max-width: 500px;
 }
 
 /* Styles the images for each homepage body div. */
 div.chess_board img, div.play img, div.learn img, div.puzzles img {
+    /* This class fits to the entire width of the screen. */
     width: 100%;
+    /* Sets a limit on the width of the element to fit all screen sizes. */
     max-width: 400px;
     height: auto;
     border-radius: 12px;
@@ -269,7 +275,9 @@ div.get_started .getStarted-btn, div.home_play .play-btn, div.home_learn .learn-
     /* Centers button. */
     margin: 30px auto; 
     padding: 18px 32px;
+    /* This class fits to the entire width of the screen. */
     width: 100%;
+    /* Sets a limit on the width of the element to fit all screen sizes. */
     max-width: 420px;
 }
 
@@ -290,4 +298,60 @@ div.learn {
 
 div.puzzles {
     margin-top: 40px;
+}
+
+/* Needed to create classes for the bodies of different pages so they may have different layouts. */
+.get_started_body {
+    background-color: var(--base-clr);
+    color: var(--text-clr);
+    /*  Set minimum height to the full height of the user's screen. */
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+div.get_started_container {
+    /* This class fits to the entire width of the screen. */
+    width: 100%;
+    /*  Set minimum height to the full height of the user's screen. */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+div.get_started_signup_or_login {
+    /* This class fits to the entire width of the screen. */
+    width: 100%;
+    /* Sets a limit on the width of the element to fit all screen sizes. */
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+div.get_started_signup_or_login h1 {
+    color: var(--text-clr);
+    font-size: 48px;
+    line-height: 1.2;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.get_started_header_different_color {
+    color: var(--accent-clr);
+}
+
+div.get_started_signup_or_login a {
+    color: var(--secondary-text-clr);
+    font-size: 12px;
+    border-radius: 12px;
+    padding: 0.65em;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    margin-top: 15px;
 }
