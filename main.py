@@ -253,6 +253,11 @@ def delete_room(room_id: str):
     connections.pop(room_id, None)
     return {"detail": f"Room '{room_id}' deleted"}
 
+@app.post("/undo")
+def undo_move():
+    if len(board.move_stack) > 0:
+        board.pop()
+    return {"success": True}
 
 @app.websocket("/ws/{room_id}")
 async def websocket_endpoint(websocket: WebSocket, room_id: str):
