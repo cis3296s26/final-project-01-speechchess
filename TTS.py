@@ -1,12 +1,20 @@
 import sys
-import pyttsx3
+try:
+    import pyttsx3
+except ImportError:
+    pyttsx3 = None
 
 
-engine = pyttsx3.init()
-engine.setProperty('rate', 150)
-engine.setProperty('volume', 0.9)
+if pyttsx3 is not None:
+    engine = pyttsx3.init()
+    engine.setProperty('rate', 150)
+    engine.setProperty('volume', 0.9)
+else:
+    engine = None
 
 def speak(text):
+    if engine is None:
+        return
     engine.say(text)
     engine.runAndWait()
 

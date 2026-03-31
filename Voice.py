@@ -13,6 +13,14 @@ PIECE_NAMES = {
     "king": chess.KING,
 }
 
+PIECE_ALIASES = {
+    "n": chess.KNIGHT,
+    "b": chess.BISHOP,
+    "r": chess.ROOK,
+    "q": chess.QUEEN,
+    "k": chess.KING,
+}
+
 
 def normalize(text):
     text = text.lower().strip()
@@ -20,120 +28,255 @@ def normalize(text):
     replacements = {
         "night": "knight",
         "nite": "knight",
+        "horse": "knight",
+        "look": "rook",
+        "brook": "rook",
         "see": "c",
         "sea": "c",
+        "cee": "c",
         "bee": "b",
         "be": "b",
         "dee": "d",
         "gee": "g",
-        "eight": "8",
-        "ate": "8",
+        "jay": "j",
+        "aitch": "h",
+        "age": "h",
+        "won": "1",
         "one": "1",
         "two": "2",
+        "too": "2",
         "three": "3",
+        "free": "3",
         "four": "4",
         "for": "4",
         "five": "5",
         "six": "6",
         "seven": "7",
+        "eight": "8",
+        "ate": "8",
+        "takes": "capture",
+        "take": "capture",
+        "captures": "capture",
+        "x": "capture",
+        "checkmate": "mate",
+        "king side": "kingside",
+        "queen side": "queenside",
     }
 
     for source, target in replacements.items():
         text = re.sub(rf"\b{re.escape(source)}\b", target, text)
 
-    text = re.sub(r"\b(move|to|on|please|the|a|an)\b", " ", text)
+    text = re.sub(r"\b(move|on|please|the|a|an|my|from)\b", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     text = re.sub(r"\b([a-h])\s+([1-8])\b", r"\1\2", text)
+    text = re.sub(r"\b([nbrqk])\s+([a-h][1-8])\b", r"\1\2", text)
 
     return text
 
 
-def extract_target_square(text):
-    squares = re.findall(r"\b([a-h][1-8])\b", text)
-    if not squares:
-        return None
-    return squares[-1]
+def board():
+    return chess_logic.board
+
+
+def spoken_move_label(move):
+    piece = board().piece_at(move.from_square)
+    from_square = chess.square_name(move.from_square)
+    to_square = chess.square_name(move.to_square)
+
+    if piece is None:
+        return f"{from_square} to {to_square}"
+
+    piece_name = chess.piece_name(piece.piece_type)
+    return f"{piece_name} from {from_square} to {to_square}"
+
+
+def move_payload(move):
+    return {
+        "uci": move.uci(),
+        "from_square": chess.square_name(move.from_square),
+        "to_square": chess.square_name(move.to_square),
+        "spoken": spoken_move_label(move),
+        "san": board().san(move),
+    }
+
+
+def extract_squares(text):
+    return re.findall(r"\b([a-h][1-8])\b", text)
 
 
 def extract_piece_type(text):
     for name, piece_type in PIECE_NAMES.items():
         if re.search(rf"\b{name}\b", text):
             return piece_type
+
+    match = re.search(r"\b([nbrqk])([a-h][1-8])\b", text)
+    if match:
+        return PIECE_ALIASES.get(match.group(1))
+
     return None
 
 
 def castle_side(text):
     if "castle" not in text:
         return None
-    if "queenside" in text or "queen side" in text or "long" in text:
+    if "queenside" in text or "long" in text:
         return "queenside"
-    if "kingside" in text or "king side" in text or "short" in text:
+    if "kingside" in text or "short" in text:
         return "kingside"
     return "kingside"
 
 
-def castle_move(board, side):
-    legal_moves = list(board.legal_moves)
+def wants_capture(text):
+    return "capture" in text
 
-    for move in legal_moves:
-        if not board.is_castling(move):
-            continue
 
-        target_file = chess.square_file(move.to_square)
+def san_candidate(text):
+    compact = text.replace(" ", "")
+    if re.fullmatch(r"[nbrqk]?[a-h][1-8]", compact):
+        return compact.upper()
+    return None
 
-        if side == "kingside" and target_file == 6:
-            return move.uci()
-        if side == "queenside" and target_file == 2:
-            return move.uci()
+
+def exact_square_move(text):
+    squares = extract_squares(text)
+    if len(squares) < 2:
+        return None
+
+    candidate = squares[0] + squares[1]
+
+    try:
+        move = chess.Move.from_uci(candidate)
+    except ValueError:
+        return None
+
+    if move in board().legal_moves:
+        return move
 
     return None
 
 
-def match_legal_moves(board, target_square, piece_type):
-    target_index = chess.parse_square(target_square)
-    candidates = []
+def exact_castle_move(text):
+    side = castle_side(text)
+    if side is None:
+        return None
 
-    for move in board.legal_moves:
+    for move in board().legal_moves:
+        if not board().is_castling(move):
+            continue
+
+        target_file = chess.square_file(move.to_square)
+        if side == "kingside" and target_file == 6:
+            return move
+        if side == "queenside" and target_file == 2:
+            return move
+
+    return None
+
+
+def exact_san_move(text):
+    candidate = san_candidate(text)
+    if candidate is None:
+        return None
+
+    for move in board().legal_moves:
+        san = board().san(move).replace("+", "").replace("#", "")
+        if san.lower() == candidate.lower():
+            return move
+
+    return None
+
+
+def matching_moves(text):
+    squares = extract_squares(text)
+    if not squares:
+        return []
+
+    target_index = chess.parse_square(squares[-1])
+    piece_type = extract_piece_type(text)
+    capture_only = wants_capture(text)
+    matches = []
+
+    for move in board().legal_moves:
         if move.to_square != target_index:
             continue
 
-        piece = board.piece_at(move.from_square)
+        piece = board().piece_at(move.from_square)
         if piece is None:
             continue
 
         if piece_type is not None and piece.piece_type != piece_type:
             continue
 
-        candidates.append(move.uci())
+        if capture_only and not board().is_capture(move):
+            continue
 
-    if len(candidates) == 1:
-        return candidates[0]
+        matches.append(move)
 
-    return None
+    return matches
+
+
+def parse_speech(text):
+    normalized = normalize(text)
+    print("TEXT:", normalized)
+
+    move = exact_square_move(normalized)
+    if move is not None:
+        return {
+            "status": "exact",
+            "transcript": normalized,
+            "move": move_payload(move),
+            "prompt": f"I heard {spoken_move_label(move)}.",
+        }
+
+    move = exact_castle_move(normalized)
+    if move is not None:
+        return {
+            "status": "exact",
+            "transcript": normalized,
+            "move": move_payload(move),
+            "prompt": f"I heard {spoken_move_label(move)}.",
+        }
+
+    move = exact_san_move(normalized)
+    if move is not None:
+        return {
+            "status": "exact",
+            "transcript": normalized,
+            "move": move_payload(move),
+            "prompt": f"I heard {spoken_move_label(move)}.",
+        }
+
+    matches = matching_moves(normalized)
+    if len(matches) == 1:
+        move = matches[0]
+        return {
+            "status": "exact",
+            "transcript": normalized,
+            "move": move_payload(move),
+            "prompt": f"I heard {spoken_move_label(move)}.",
+        }
+
+    if len(matches) > 1:
+        options = [move_payload(move) for move in matches]
+        prompts = ", or ".join(
+            f"{option['from_square']} to {option['to_square']}" for option in options
+        )
+        return {
+            "status": "ambiguous",
+            "transcript": normalized,
+            "options": options,
+            "prompt": f"That move is ambiguous. Say {prompts}.",
+        }
+
+    return {
+        "status": "invalid",
+        "transcript": normalized,
+        "prompt": "I could not match that to a legal move.",
+    }
 
 
 def speech_to_move(text):
-    text = normalize(text)
-    print("TEXT:", text)
-
-    board = chess_logic.board
-
-    side = castle_side(text)
-    if side is not None:
-        move = castle_move(board, side)
-        print("CASTLE:", move)
-        return move
-
-    target_square = extract_target_square(text)
-    print("TARGET:", target_square)
-
-    if target_square is None:
+    result = parse_speech(text)
+    if result["status"] != "exact":
         return None
-
-    piece_type = extract_piece_type(text)
-    print("PIECE TYPE:", piece_type)
-
-    move = match_legal_moves(board, target_square, piece_type)
-    print("MATCH:", move)
-
-    return move
+    return result["move"]["uci"]
