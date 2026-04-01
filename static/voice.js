@@ -304,7 +304,7 @@ async function playPendingMove() {
             await window.refreshVoiceBoard();
         }
 
-        const playedMove = pendingMove.spoken;
+        const playedMove = data.spoken_text || pendingMove.spoken;
         clearPendingMove();
         speakText(`Played ${playedMove}. ${data.turn} to move.`);
         return;

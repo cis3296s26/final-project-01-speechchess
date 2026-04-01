@@ -228,6 +228,14 @@
                     suppressNextAnnouncement = true;
                     board.position(boardPosition(data.fen));
                     lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
+
+                    if (typeof speakText === "function") {
+                        const latestMove = data.history && data.history.length
+                            ? data.history[data.history.length - 1]
+                            : "that move";
+                        const announcement = data.spoken_text || `Latest move ${latestMove}`;
+                        speakText(`${announcement}. ${data.turn} to move.`);
+                    }
                 } else {
                     return "snapback";
                 }
