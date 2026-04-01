@@ -8,10 +8,10 @@
 
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
-    <script type="text/javascript" src="/static/app.js" defer></script>
+    <script type="text/javascript" src="/static/app.js?v=20260331b" defer></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/chess/chessboard.min.js"></script>
-    <script src="/static/voice.js" defer></script>
+    <script src="/static/voice.js?v=20260331b" defer></script>
 </head>
 
 <body>
@@ -22,7 +22,7 @@
         <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
         <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
         <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
-        <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Click Start Voice Session, then say "Speech Chess", then your move, then "submit move", then "confirm".</pre>
+        <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Click Start Voice Session, then say "Speech Chess", then your move, then "submit move".</pre>
     </div>
 
     <script>
@@ -30,10 +30,22 @@
     let lastHistoryLength = 0;
     let suppressNextAnnouncement = false;
 
+    function boardPosition(position) {
+        if (!position) {
+            return "start";
+        }
+
+        if (position.includes(" ")) {
+            return position.split(" ")[0];
+        }
+
+        return position;
+    }
+
     async function refreshBoard() {
         const res = await fetch("/state");
         const data = await res.json();
-        board.position(data.fen);
+        board.position(boardPosition(data.fen));
 
         if (data.history && data.history.length > lastHistoryLength) {
             const latestMove = data.history[data.history.length - 1];
@@ -75,7 +87,7 @@
 
                 if (data.success) {
                     suppressNextAnnouncement = true;
-                    board.position(data.fen);
+                    board.position(boardPosition(data.fen));
                     lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
                 } else {
                     return 'snapback';
@@ -90,7 +102,7 @@
         window.onVoiceMoveResult = async function (data) {
             if (data.success) {
                 suppressNextAnnouncement = true;
-                board.position(data.fen);
+                board.position(boardPosition(data.fen));
                 lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
                 return;
             }
@@ -99,6 +111,15 @@
         };
 
         refreshBoard();
+
+        if (sessionStorage.getItem("speechChessAutoStart") === "1") {
+            sessionStorage.removeItem("speechChessAutoStart");
+            setTimeout(function () {
+                if (typeof beginAutoIntroSession === "function") {
+                    beginAutoIntroSession();
+                }
+            }, 150);
+        }
     };
     </script>
 

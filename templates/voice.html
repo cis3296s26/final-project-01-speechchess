@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Chess</title>
     <link rel="stylesheet" href="/static/style.css">
-    <script src="/static/voice.js" defer></script>
+    <script src="/static/voice.js?v=20260331b" defer></script>
 </head>
 <body>
     <main>
         <h1>Voice Chess Input</h1>
-        <p>Click once to enable voice mode. Then say "Speech Chess", say your move, say "submit move", and finally say "confirm".</p>
+        <p>Click once to enable voice mode. Then say "Speech Chess", say your move, and say "submit move".</p>
         <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Enable Voice Mode</button>
         <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
         <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>

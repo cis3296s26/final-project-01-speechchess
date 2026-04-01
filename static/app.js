@@ -24,6 +24,7 @@ function signUp(button){
 
 // All the calls for window redirection to the play directory html files
 function playExample(button){
+    sessionStorage.setItem("speechChessAutoStart", "1")
     window.location.href="play/play"
 }
 

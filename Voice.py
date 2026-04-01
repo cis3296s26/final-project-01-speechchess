@@ -66,6 +66,9 @@ def normalize(text):
     for source, target in replacements.items():
         text = re.sub(rf"\b{re.escape(source)}\b", target, text)
 
+    text = re.sub(r"\b([a-h][1-8])\s*(?:to|2)\s*([a-h][1-8])\b", r"\1 \2", text)
+    text = re.sub(r"\b([a-h][1-8])2([a-h][1-8])\b", r"\1 \2", text)
+    text = re.sub(r"\b([a-h][1-8])([a-h][1-8])\b", r"\1 \2", text)
     text = re.sub(r"\b(move|on|please|the|a|an|my|from)\b", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     text = re.sub(r"\b([a-h])\s+([1-8])\b", r"\1\2", text)
