@@ -298,7 +298,7 @@ div.puzzles {
 }
 
 /* Get Started Page (Sign-Up) and Login Page styling. Combined the CSS styling for each page's html. Needed to create classes for the bodies of different pages so they may have different layouts. */
-.get_started_body{
+.get_started_body, .login_body {
     background-color: var(--base-clr);
     color: var(--text-clr);
     /*  Set minimum height to the full height of the user's screen. */
@@ -319,7 +319,7 @@ div.get_started_page, div.login_page {
     padding: clamp(24px, 4vw, 48px);
 }
 
-div.get_started_signup_or_login, div.login_page {
+div.get_started_signup_or_login, div.login_form {
     /* This class fits to the entire width of the screen. */
     width: 100%;
     /* Sets a limit on the width of the element to fit all screen sizes. */   
@@ -330,31 +330,31 @@ div.get_started_signup_or_login, div.login_page {
     gap: 12px;   
 }
 
-div.get_started_signup_or_login h1, div.login_page h1, div.profile_page h1{
+div.get_started_signup_or_login h1, div.login_form h1, div.profile_page h1{
     color: var(--text-clr);
     font-size: clamp(2rem, 3vw, 2.5rem);
     text-align: center;
     line-height: 1.2;
 }
 
-div.get_started_signup_or_login h1 a.get_started_homepage_redirect, div.login_page h1 a.login_homepage_redirect{
+div.get_started_signup_or_login h1 a.get_started_homepage_redirect, div.login_form h1 a.login_homepage_redirect{
     color: var(--accent-clr);
     text-decoration: none;
     font: inherit;
 }
 
-div.get_started_signup_or_login h1 a.get_started_homepage_redirect:hover, div.login_page h1 a.login_homepage_redirect:hover{
+div.get_started_signup_or_login h1 a.get_started_homepage_redirect:hover, div.login_form h1 a.login_homepage_redirect:hover{
     color: var(--hover-accent-clr);
     text-decoration: none;
 }
 
-div.get_started_signup_or_login form, div.login_page form {
+div.get_started_signup_or_login form, div.login_form form {
     display: flex;
     flex-direction: column;
     gap: 10px; 
 }
 
-div.get_started_signup_or_login input, div.login_page input {
+div.get_started_signup_or_login input, div.login_form input {
     width: 100%;
     padding: 10px 12px;     
     border-radius: 10px;
@@ -364,11 +364,11 @@ div.get_started_signup_or_login input, div.login_page input {
     font-size: 0.95rem;
 }
 
-div.get_started_signup_or_login input::placeholder, div.login_page input::placeholder {
+div.get_started_signup_or_login input::placeholder, div.login_form input::placeholder {
     color: var(--secondary-text-clr);
 }
 
-.get-started-create-account-btn, .login-page-btn {
+.get-started-create-account-btn, .login-form-btn {
     width: 100%;
     padding: 14px 18px;
     background-color: var(--accent-clr);
@@ -380,22 +380,22 @@ div.get_started_signup_or_login input::placeholder, div.login_page input::placeh
     cursor: pointer;
 }
 
-.get-started-create-account-btn:hover, .login-page-btn:hover {
+.get-started-create-account-btn:hover, .login-form-btn:hover {
     background-color: var(--hover-accent-clr);
     border: none var(--hover-accent-clr);    
 }
 
-div.get_started_signup_or_login p, div.login_page p {
+div.get_started_signup_or_login p, div.login_form p {
     text-align: center;
 }
 
-div.get_started_signup_or_login p, div.get_started_signup_or_login a, div.login_page p, div.login_page a {
+div.get_started_signup_or_login p, div.get_started_signup_or_login a, div.login_form p, div.login_form a {
     color: var(--secondary-text-clr);
     font-size: 0.95rem;
     text-decoration: none;
 }
 
-div.get_started_signup_or_login p, div.get_started_signup_or_login a:hover, div.login_page p, div.login_page a:hover {
+div.get_started_signup_or_login p, div.get_started_signup_or_login a:hover, div.login_form p, div.login_form a:hover {
     color: var(--text-clr);
 }
 
