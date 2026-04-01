@@ -1,5 +1,4 @@
 import chess
-import TTS
 """
 WILL DELETE LATER BUT FOR YOU GUYS RIGHT NOW
 Methods and attributes from chess import:
@@ -14,28 +13,20 @@ https://python-chess.readthedocs.io/en/latest/core.html
     .is_game_over()
     .san(move)
 """
-"""
-Testing - Run the server 
-http://127.0.0.1:8000/state - shows everything
 
-Copy paste(legal move): 
-curl -X POST http://127.0.0.1:8000/move \
-  -H "Content-Type: application/json" \
-  -d '{"move":"e2e4"}'
-
-(illegal move -- Pawn can't go 4 spots):  
-curl -X POST http://127.0.0.1:8000/move \
-  -H "Content-Type: application/json" \
-  -d '{"move":"e2e5"}' 
-  
-curl -X POST http://127.0.0.1:8000/reset
-
-Front End is not implemented yet.
-
-"""
 
 # chess_logic.py — add this class at the bottom
 board = chess.Board()
+RANK_WORDS = {
+    "1": "one",
+    "2": "two",
+    "3": "three",
+    "4": "four",
+    "5": "five",
+    "6": "six",
+    "7": "seven",
+    "8": "eight",
+}
 
 class GameBoard:
     def __init__(self):
@@ -162,6 +153,42 @@ def get_game_state():
         "legal_moves": legal_moves_list,
     }
 
+def spoken_square(square):
+    name = chess.square_name(square)
+    return f"{name[0].upper()} {RANK_WORDS[name[1]]}"
+
+def captured_piece_for_move(move):
+    if not board.is_capture(move):
+        return None
+
+    if board.is_en_passant(move):
+        offset = -8 if board.turn == chess.WHITE else 8
+        return board.piece_at(move.to_square + offset)
+
+    return board.piece_at(move.to_square)
+
+def spoken_move_text(move):
+    piece = board.piece_at(move.from_square)
+    captured_piece = captured_piece_for_move(move)
+    from_square = spoken_square(move.from_square)
+    to_square = spoken_square(move.to_square)
+
+    if piece is None:
+        return f"Played from {from_square} to {to_square}"
+
+    color = "White" if piece.color == chess.WHITE else "Black"
+    piece_name = chess.piece_name(piece.piece_type)
+
+    if captured_piece is not None:
+        captured_color = "White" if captured_piece.color == chess.WHITE else "Black"
+        captured_name = chess.piece_name(captured_piece.piece_type)
+        return (
+            f"{color} {piece_name} played from {from_square} to {to_square} "
+            f"and took the {captured_color} {captured_name}"
+        )
+
+    return f"{color} {piece_name} played from {from_square} to {to_square}"
+
 def make_move(move_str): #ex: e2e4
     move_text = move_str.strip().lower().replace(" ", "")
     try:
@@ -178,13 +205,14 @@ def make_move(move_str): #ex: e2e4
             "error": "Illegal move",
             **get_game_state(),
         }
+    spoken_text = spoken_move_text(move)
     san = board.san(move)
     board.push(move)
 
-    TTS.speak(f"Played {san}")
     return {
         "success": True,
         "message": f"Played{san}",
+        "spoken_text": spoken_text,
         **get_game_state(),
     }
 
