@@ -152,8 +152,8 @@ submenu should be shown. */
     padding-left: 2em;
 }
 
-/* Sidebar login button. */
-#sidebar a.login-btn {
+/* Sidebar buttom two buttons styling, no matter if user is logged in or not. */
+#sidebar a.profile-btn, #sidebar a.login-btn {
     background-color: var(--secondary-text-clr);
     color: var(--text-clr);
     text-align: center;
@@ -166,14 +166,12 @@ submenu should be shown. */
     width: 225px;
 }
 
-/* Sidebar login button when hovering over with cursor. */
-#sidebar a.login-btn:hover {
+#sidebar a.profile-btn:hover,  #sidebar a.login-btn:hover {
     background-color: var(--hover-base-clr);
     border: none var(--hover-base-clr);
 }
 
-/* Sidebar signup button. */
-#sidebar a.signup-btn {
+#sidebar a.logout-btn, #sidebar a.signup-btn {
     background-color: var(--accent-clr);
     color: var(--text-clr);
     text-align: center;
@@ -185,12 +183,11 @@ submenu should be shown. */
     margin: 5px auto;
     width: 225px;
 }
-
-/* Sidebar signup button when hovering over with cursor. */
-#sidebar a.signup-btn:hover {
-    background: var(--hover-accent-clr);
-    border: none var(--hover-accent-clr)
+#sidebar a.logout-btn:hover, #sidebar a.signup-btn {
+    background-color: var(--accent-clr);
+    border: none var(--hover-accent-clr);
 }
+
 
 /* Styles the toggle btn, may change logo text to a picture logo later. */
 #toggle-btn{

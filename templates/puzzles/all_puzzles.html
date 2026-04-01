@@ -86,12 +86,21 @@
                     <span>Support</span>
                 </a>
             </li>
+            {% if user_email %}
+            <li>
+                <a href="/profile" class="button profile-btn">Profile</a>
+            </li>
+            <li>
+                <a href="/logout" class="button logout-btn">Logout</a>
+            </li>
+            {% else %}
             <li>
                 <a href="/user_authentication/login" class="button login-btn">Login</a>
             </li>
             <li>
-                <a href="/user_authentication/signup" class="button signup-btn">Sign-Up</a>
+                <a href="/user_authentication/get_started" class="button signup-btn">Sign-Up</a>
             </li>
+            {% endif %}
         </ul>
     </aside>
     <p>All puzzles page</p>
