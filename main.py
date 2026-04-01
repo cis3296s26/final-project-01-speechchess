@@ -64,6 +64,10 @@ def login_page(request: Request):
 def signup_page(request: Request):
     return templates.TemplateResponse(request=request, name="user_authentication/signup.html", context={"request": request})
 
+@app.get("/user_authentication/profile",  response_class = HTMLResponse)
+def profile_page(request: Request):
+    return templates.TemplateResponse(request=request, name="user_authentication/profile.html", context={"request": request})
+
 # All the play directory html file returns
 @app.get("/play/play", response_class = HTMLResponse)
 def play_page(request: Request):

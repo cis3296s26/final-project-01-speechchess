@@ -52,16 +52,11 @@
                 <ul class="sub-menu">
                     <!--Use a div container around the list items in the submenu-->
                     <div>
-                        <li><a href="/play/play">Play Example</a></li>
                         <li><a href="/play/play_online">Play Online</a></li>
-                        <li><a href="/play/play_ai">Play AI</a></li>
                         <!--This class holds the current website link. Depending on where we are on the website, a different link will be highlighted
                         using this class.-->
-                        <li class="active">
-                            <a href="/play/play_friends">
-                                <span>Play a Friend</span>
-                            </a>
-                        </li>
+                        <li><a href="/play/play_ai"><span>Play AI</span></a></li>
+                        <li class="active"><a href="/play/play_friends">Play a Friend</a></li>
                         <li><a href="/play/stats">Statistics</a></li>
                         <li><a href="/play/history">History</a></li>  
                     </div>                       
@@ -109,7 +104,7 @@
             </li>
             {% if user_email %}
             <li>
-                <a href="/profile" class="button profile-btn">Profile</a>
+                <a href="/user_authentication/profile" class="button profile-btn">Profile</a>
             </li>
             <li>
                 <a href="/logout" class="button logout-btn">Logout</a>
