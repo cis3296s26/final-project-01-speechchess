@@ -182,7 +182,11 @@
         const data = await res.json();
         board.position(boardPosition(data.fen));
 
+        playMoveSound();
+
         if (data.history && data.history.length > lastHistoryLength) {
+            playMoveSound();
+
             const latestMove = data.history[data.history.length - 1];
 
             if (!suppressNextAnnouncement && typeof speakText === "function") {
