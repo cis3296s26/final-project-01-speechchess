@@ -23,7 +23,7 @@ html{
 }
 
 /* Body for the homepage. */
-.homepage_body, .settings_body, .profile_body {
+.homepage_body{
     background-color: var(--base-clr);
     color: var(--text-clr);
     /*  Set minimum height to the full height of the user's screen. */
@@ -198,7 +198,7 @@ submenu should be shown. */
     padding: 0.9em;
 }
 
-/* Main is a wrapper for the non-sidebar elements of the body on the homepage. All elements have a 20 pixel margin in all directions. */
+/* Main is a wrapper for the non-sidebar elements of the body in pages with a sidebar. All elements have a 20 pixel margin in all directions. */
 main {
     padding: 20px;
     margin-top: 40px;
@@ -298,7 +298,7 @@ div.puzzles {
 }
 
 /* Get Started Page (Sign-Up) and Login Page styling. Combined the CSS styling for each page's html. Needed to create classes for the bodies of different pages so they may have different layouts. */
-.get_started_body, .login_body {
+.get_started_body{
     background-color: var(--base-clr);
     color: var(--text-clr);
     /*  Set minimum height to the full height of the user's screen. */
@@ -308,7 +308,7 @@ div.puzzles {
     align-items: center;
 }
 
-div.get_started_page, div.login_page{
+div.get_started_page, div.login_page {
     /* This class fits to the entire width of the screen. */
     width: 100%;
     /*  Set minimum height to the full height of the user's screen. */
@@ -330,7 +330,7 @@ div.get_started_signup_or_login, div.login_page {
     gap: 12px;   
 }
 
-div.get_started_signup_or_login h1, div.login_page h1{
+div.get_started_signup_or_login h1, div.login_page h1, div.profile_page h1{
     color: var(--text-clr);
     font-size: clamp(2rem, 3vw, 2.5rem);
     text-align: center;
@@ -403,4 +403,27 @@ div.get_started_signup_or_login p, div.get_started_signup_or_login a:hover, div.
     color: #ff6b6b;
     text-align: center;
     font-size: 0.95rem;
+}
+
+/* Body for pages with column elements and a sidebar. */
+.settings_body, .profile_body {
+    background-color: var(--base-clr);
+    color: var(--text-clr);
+    /*  Set minimum height to the full height of the user's screen. */
+}
+/* Styling for pages with column elements and a sidebar. */
+div.settings_page, div.profile_page {
+    /* This class fits to the entire width of the screen. */
+    width: 100%;
+    /* Sets a limit on the width of the element to fit all screen sizes. */   
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;   
+    /* THIS NEEDS CONFIGURATION */
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
