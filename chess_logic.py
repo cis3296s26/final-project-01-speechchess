@@ -1,5 +1,4 @@
 import chess
-import TTS
 """
 WILL DELETE LATER BUT FOR YOU GUYS RIGHT NOW
 Methods and attributes from chess import:
@@ -14,25 +13,7 @@ https://python-chess.readthedocs.io/en/latest/core.html
     .is_game_over()
     .san(move)
 """
-"""
-Testing - Run the server 
-http://127.0.0.1:8000/state - shows everything
 
-Copy paste(legal move): 
-curl -X POST http://127.0.0.1:8000/move \
-  -H "Content-Type: application/json" \
-  -d '{"move":"e2e4"}'
-
-(illegal move -- Pawn can't go 4 spots):  
-curl -X POST http://127.0.0.1:8000/move \
-  -H "Content-Type: application/json" \
-  -d '{"move":"e2e5"}' 
-  
-curl -X POST http://127.0.0.1:8000/reset
-
-Front End is not implemented yet.
-
-"""
 
 board = chess.Board()
 RANK_WORDS = {
@@ -112,8 +93,19 @@ def spoken_square(square):
     name = chess.square_name(square)
     return f"{name[0].upper()} {RANK_WORDS[name[1]]}"
 
+def captured_piece_for_move(move):
+    if not board.is_capture(move):
+        return None
+
+    if board.is_en_passant(move):
+        offset = -8 if board.turn == chess.WHITE else 8
+        return board.piece_at(move.to_square + offset)
+
+    return board.piece_at(move.to_square)
+
 def spoken_move_text(move):
     piece = board.piece_at(move.from_square)
+    captured_piece = captured_piece_for_move(move)
     from_square = spoken_square(move.from_square)
     to_square = spoken_square(move.to_square)
 
@@ -122,6 +114,15 @@ def spoken_move_text(move):
 
     color = "White" if piece.color == chess.WHITE else "Black"
     piece_name = chess.piece_name(piece.piece_type)
+
+    if captured_piece is not None:
+        captured_color = "White" if captured_piece.color == chess.WHITE else "Black"
+        captured_name = chess.piece_name(captured_piece.piece_type)
+        return (
+            f"{color} {piece_name} played from {from_square} to {to_square} "
+            f"and took the {captured_color} {captured_name}"
+        )
+
     return f"{color} {piece_name} played from {from_square} to {to_square}"
 
 def make_move(move_str): #ex: e2e4
@@ -144,10 +145,10 @@ def make_move(move_str): #ex: e2e4
     san = board.san(move)
     board.push(move)
 
-    TTS.speak(spoken_text)
     return {
         "success": True,
         "message": f"Played{san}",
+        "spoken_text": spoken_text,
         **get_game_state(),
     }
 
