@@ -77,12 +77,15 @@ def normalize(text):
     return text
 
 
-def board():
+def board(board_obj=None):
+    if board_obj is not None:
+        return board_obj
     return chess_logic.board
 
 
-def spoken_move_label(move):
-    piece = board().piece_at(move.from_square)
+def spoken_move_label(move, board_obj=None):
+    current_board = board(board_obj)
+    piece = current_board.piece_at(move.from_square)
     from_square = chess.square_name(move.from_square)
     to_square = chess.square_name(move.to_square)
 
@@ -93,13 +96,14 @@ def spoken_move_label(move):
     return f"{piece_name} from {from_square} to {to_square}"
 
 
-def move_payload(move):
+def move_payload(move, board_obj=None):
+    current_board = board(board_obj)
     return {
         "uci": move.uci(),
         "from_square": chess.square_name(move.from_square),
         "to_square": chess.square_name(move.to_square),
-        "spoken": spoken_move_label(move),
-        "san": board().san(move),
+        "spoken": spoken_move_label(move, current_board),
+        "san": current_board.san(move),
     }
 
 
@@ -140,7 +144,8 @@ def san_candidate(text):
     return None
 
 
-def exact_square_move(text):
+def exact_square_move(text, board_obj=None):
+    current_board = board(board_obj)
     squares = extract_squares(text)
     if len(squares) < 2:
         return None
@@ -152,19 +157,20 @@ def exact_square_move(text):
     except ValueError:
         return None
 
-    if move in board().legal_moves:
+    if move in current_board.legal_moves:
         return move
 
     return None
 
 
-def exact_castle_move(text):
+def exact_castle_move(text, board_obj=None):
+    current_board = board(board_obj)
     side = castle_side(text)
     if side is None:
         return None
 
-    for move in board().legal_moves:
-        if not board().is_castling(move):
+    for move in current_board.legal_moves:
+        if not current_board.is_castling(move):
             continue
 
         target_file = chess.square_file(move.to_square)
@@ -176,20 +182,22 @@ def exact_castle_move(text):
     return None
 
 
-def exact_san_move(text):
+def exact_san_move(text, board_obj=None):
+    current_board = board(board_obj)
     candidate = san_candidate(text)
     if candidate is None:
         return None
 
-    for move in board().legal_moves:
-        san = board().san(move).replace("+", "").replace("#", "")
+    for move in current_board.legal_moves:
+        san = current_board.san(move).replace("+", "").replace("#", "")
         if san.lower() == candidate.lower():
             return move
 
     return None
 
 
-def matching_moves(text):
+def matching_moves(text, board_obj=None):
+    current_board = board(board_obj)
     squares = extract_squares(text)
     if not squares:
         return []
@@ -199,18 +207,18 @@ def matching_moves(text):
     capture_only = wants_capture(text)
     matches = []
 
-    for move in board().legal_moves:
+    for move in current_board.legal_moves:
         if move.to_square != target_index:
             continue
 
-        piece = board().piece_at(move.from_square)
+        piece = current_board.piece_at(move.from_square)
         if piece is None:
             continue
 
         if piece_type is not None and piece.piece_type != piece_type:
             continue
 
-        if capture_only and not board().is_capture(move):
+        if capture_only and not current_board.is_capture(move):
             continue
 
         matches.append(move)
@@ -218,49 +226,51 @@ def matching_moves(text):
     return matches
 
 
-def parse_speech(text):
+def parse_speech(text, board_obj=None):
     normalized = normalize(text)
     print("TEXT:", normalized)
 
-    move = exact_square_move(normalized)
+    current_board = board(board_obj)
+
+    move = exact_square_move(normalized, current_board)
     if move is not None:
         return {
             "status": "exact",
             "transcript": normalized,
-            "move": move_payload(move),
-            "prompt": f"I heard {spoken_move_label(move)}.",
+            "move": move_payload(move, current_board),
+            "prompt": f"I heard {spoken_move_label(move, current_board)}.",
         }
 
-    move = exact_castle_move(normalized)
+    move = exact_castle_move(normalized, current_board)
     if move is not None:
         return {
             "status": "exact",
             "transcript": normalized,
-            "move": move_payload(move),
-            "prompt": f"I heard {spoken_move_label(move)}.",
+            "move": move_payload(move, current_board),
+            "prompt": f"I heard {spoken_move_label(move, current_board)}.",
         }
 
-    move = exact_san_move(normalized)
+    move = exact_san_move(normalized, current_board)
     if move is not None:
         return {
             "status": "exact",
             "transcript": normalized,
-            "move": move_payload(move),
-            "prompt": f"I heard {spoken_move_label(move)}.",
+            "move": move_payload(move, current_board),
+            "prompt": f"I heard {spoken_move_label(move, current_board)}.",
         }
 
-    matches = matching_moves(normalized)
+    matches = matching_moves(normalized, current_board)
     if len(matches) == 1:
         move = matches[0]
         return {
             "status": "exact",
             "transcript": normalized,
-            "move": move_payload(move),
-            "prompt": f"I heard {spoken_move_label(move)}.",
+            "move": move_payload(move, current_board),
+            "prompt": f"I heard {spoken_move_label(move, current_board)}.",
         }
 
     if len(matches) > 1:
-        options = [move_payload(move) for move in matches]
+        options = [move_payload(move, current_board) for move in matches]
         prompts = ", or ".join(
             f"{option['from_square']} to {option['to_square']}" for option in options
         )
