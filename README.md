@@ -9,26 +9,14 @@ This game is entirely run in a web browser. Just click the link and you can play
 Follow this project board to know the latest status of the project: [http://...]([http://...])  
 
 ### How to build
-Option 1
-- python -m pip install chess SpeechRecognition sounddevice numpy pyttsx3 pygame jinja2 uvicorn fastapi pydantic
-- Use preferred IDE
-- Use this github repository: ... 
-- Specify what branch to use for a more stable release or for cutting edge development.  
-- Use InteliJ 11
-- Specify additional library to download if needed 
-- What file and target to compile and run. 
-- What is expected to happen when the app start. 
+1. Download our repository as a zip file and extract it to desktop or desired location
+2. Download python
+3. Open Windows PowerShell
+4. Enter: python -m pip install chess SpeechRecognition sounddevice numpy pyttsx3 pygame jinja2 uvicorn fastapi sqlmodel "pwdlib[argon2]" python-multipart
+5. Navigate to directory where the extracted folder for this project is located
+6. Enter: python -m uvicorn main:app --reload
+7. Proceed to the link generated
 
-Option 2
-- Download python
-- Open Windows PowerShell
-- Enter: python -m pip install chess SpeechRecognition sounddevice numpy pyttsx3 pygame jinja2 uvicorn fastapi
-- Download our repository as a zip file and extract it to desktop or desired location
-- Navigate to directory where the extracted folder for this project is located
-- Enter: python -m uvicorn main:app --reload
-- Proceed to the link generated
-
-# Requirements
 # Player Requirements
 A modern web browser, microphone access enabled
 
