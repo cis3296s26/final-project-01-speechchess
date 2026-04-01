@@ -11,6 +11,7 @@
 </head>
 <body class="login_body">
     <div class="login_page">
+        <div class="login_form">
             <h1>Login To Your <a class="login_homepage_redirect" href="/">SpeechChess</a> Account</h1>
             <!--Indicates to user there is an error with one of the fields. Fill out the field.-->
             {% if error %}
@@ -19,10 +20,11 @@
             <form action="/login" method="post">
                 <input type="text" id="email" name="email" placeholder="Email" required>
                 <input type="password" id="password" name="password" placeholder="Password" required>  
-                <button class="button login-page-btn" type="submit">Sign-In</button>          
+                <button class="button login-form-btn" type="submit">Sign-In</button>          
             </form>
             <!--Need to insert a button like "Create Account" to add and commit what the user entered to the database.-->
             <p><a href="/user_authentication/get_started">Don't Have An Account Yet?</a></p>      
+        </div>
     </div>
 </body>
 </html>
