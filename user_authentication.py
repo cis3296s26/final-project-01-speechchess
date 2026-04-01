@@ -28,12 +28,12 @@ def create_db_and_tables():
 def signup(request: Request, email: str = Form(...), password: str = Form(...)):
     # If email or password fields empty, return the same page and print the error message to the screen.
     if not email or not password:
-        return templates.TemplateResponse("user_authentication/signup.html", {"request": request, "error": "Email and password are required"})
+        return templates.TemplateResponse("user_authentication/get_started.html", {"request": request, "error": "Email and password are required"})
     with Session(engine) as session:
         existing_user = session.exec(select(User).where(User.email == email)).first()
         # Fail if email is used already and return the same page, print the error message to the screen.
         if existing_user:
-            return templates.TemplateResponse("user_authentication/signup.html", {"request": request,"error": "Email already registered"})
+            return templates.TemplateResponse("user_authentication/get_started.html", {"request": request,"error": "Email already registered"})
         # Create new user and hash the password before adding and committing to the database.
         new_user = User(email=email, hashed_password=password_hash.hash(password))
         session.add(new_user)
