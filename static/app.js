@@ -22,6 +22,10 @@ function signUp(button){
     window.location.href="user_authentication/signup"
 }
 
+function profile(button){
+    window.location.href="user_authentication/profile"
+}
+
 // All the calls for window redirection to the play directory html files
 function playExample(button){
     window.location.href="play/play"

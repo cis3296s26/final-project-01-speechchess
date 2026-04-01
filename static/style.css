@@ -23,7 +23,7 @@ html{
 }
 
 /* Body for the homepage. */
-.homepage_body {
+.homepage_body, .settings_body, .profile_body {
     background-color: var(--base-clr);
     color: var(--text-clr);
     /*  Set minimum height to the full height of the user's screen. */
