@@ -1,5 +1,4 @@
 import chess
-import TTS
 """
 WILL DELETE LATER BUT FOR YOU GUYS RIGHT NOW
 Methods and attributes from chess import:
@@ -14,27 +13,83 @@ https://python-chess.readthedocs.io/en/latest/core.html
     .is_game_over()
     .san(move)
 """
-"""
-Testing - Run the server 
-http://127.0.0.1:8000/state - shows everything
 
-Copy paste(legal move): 
-curl -X POST http://127.0.0.1:8000/move \
-  -H "Content-Type: application/json" \
-  -d '{"move":"e2e4"}'
 
-(illegal move -- Pawn can't go 4 spots):  
-curl -X POST http://127.0.0.1:8000/move \
-  -H "Content-Type: application/json" \
-  -d '{"move":"e2e5"}' 
-  
-curl -X POST http://127.0.0.1:8000/reset
-
-Front End is not implemented yet.
-
-"""
-
+# chess_logic.py — add this class at the bottom
 board = chess.Board()
+RANK_WORDS = {
+    "1": "one",
+    "2": "two",
+    "3": "three",
+    "4": "four",
+    "5": "five",
+    "6": "six",
+    "7": "seven",
+    "8": "eight",
+}
+
+class GameBoard:
+    def __init__(self):
+        self.board = chess.Board()
+
+    def serialize_board(self):
+        rows = []
+        for rank in range(7, -1, -1):
+            row = []
+            for file_index in range(8):
+                square = chess.square(file_index, rank)
+                piece = self.board.piece_at(square)
+                row.append({
+                    "square": chess.square_name(square),
+                    "piece": piece.symbol() if piece else None,
+                })
+            rows.append(row)
+        return rows
+
+    def move_history(self):
+        replay_board = chess.Board()
+        history = []
+        for move in self.board.move_stack:
+            history.append(replay_board.san(move))
+            replay_board.push(move)
+        return history
+
+    def winner(self):
+        if not self.board.is_checkmate():
+            return None
+        return "black" if self.board.turn == chess.WHITE else "white"
+
+    def get_game_state(self):
+        return {
+            "board": self.serialize_board(),
+            "turn": "white" if self.board.turn == chess.WHITE else "black",
+            "check": self.board.is_check(),
+            "checkmate": self.board.is_checkmate(),
+            "stalemate": self.board.is_stalemate(),
+            "game_over": self.board.is_game_over(),
+            "winner": self.winner(),
+            "result": self.board.result() if self.board.is_game_over() else None,
+            "fen": self.board.fen(),
+            "history": self.move_history(),
+            "legal_moves": [m.uci() for m in self.board.legal_moves],
+        }
+
+    def make_move(self, move_str):
+        move_text = move_str.strip().lower().replace(" ", "")
+        try:
+            move = chess.Move.from_uci(move_text)
+        except ValueError:
+            return {"success": False, "error": "Use correct move like e2e4", **self.get_game_state()}
+        if move not in self.board.legal_moves:
+            return {"success": False, "error": "Illegal move", **self.get_game_state()}
+        san = self.board.san(move)
+        self.board.push(move)
+        TTS.speak(f"Played {san}")
+        return {"success": True, "message": f"Played {san}", **self.get_game_state()}
+
+    def reset_game(self):
+        self.board.reset()
+        return {"success": True, "message": "Reset game", **self.get_game_state()}
 
 def serialize_board():
     rows = []
@@ -98,6 +153,42 @@ def get_game_state():
         "legal_moves": legal_moves_list,
     }
 
+def spoken_square(square):
+    name = chess.square_name(square)
+    return f"{name[0].upper()} {RANK_WORDS[name[1]]}"
+
+def captured_piece_for_move(move):
+    if not board.is_capture(move):
+        return None
+
+    if board.is_en_passant(move):
+        offset = -8 if board.turn == chess.WHITE else 8
+        return board.piece_at(move.to_square + offset)
+
+    return board.piece_at(move.to_square)
+
+def spoken_move_text(move):
+    piece = board.piece_at(move.from_square)
+    captured_piece = captured_piece_for_move(move)
+    from_square = spoken_square(move.from_square)
+    to_square = spoken_square(move.to_square)
+
+    if piece is None:
+        return f"Played from {from_square} to {to_square}"
+
+    color = "White" if piece.color == chess.WHITE else "Black"
+    piece_name = chess.piece_name(piece.piece_type)
+
+    if captured_piece is not None:
+        captured_color = "White" if captured_piece.color == chess.WHITE else "Black"
+        captured_name = chess.piece_name(captured_piece.piece_type)
+        return (
+            f"{color} {piece_name} played from {from_square} to {to_square} "
+            f"and took the {captured_color} {captured_name}"
+        )
+
+    return f"{color} {piece_name} played from {from_square} to {to_square}"
+
 def make_move(move_str): #ex: e2e4
     move_text = move_str.strip().lower().replace(" ", "")
     try:
@@ -114,13 +205,14 @@ def make_move(move_str): #ex: e2e4
             "error": "Illegal move",
             **get_game_state(),
         }
+    spoken_text = spoken_move_text(move)
     san = board.san(move)
     board.push(move)
 
-    TTS.speak(f"Played {san}")
     return {
         "success": True,
         "message": f"Played{san}",
+        "spoken_text": spoken_text,
         **get_game_state(),
     }
 

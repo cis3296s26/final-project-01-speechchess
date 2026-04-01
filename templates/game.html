@@ -48,7 +48,7 @@ let board = Chessboard('board', {
         if (data.success) {
             board.position(data.fen);
         } else {
-            return 'snapback'; // illegal move → piece returns
+            return 'snapback';
         }
     },
 

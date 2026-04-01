@@ -321,9 +321,9 @@ async function confirmPendingMove() {
             window.onVoiceMoveResult(data, pendingMove.spoken);
         }
 
-        const playedMove = pendingMove.spoken;
+        const playedMove = data.spoken_text || pendingMove.spoken;
         clearPendingMove();
-        speakText(`Played ${playedMove}. ${data.turn} to move.`);
+        speakText(`${playedMove}. ${data.turn} to move.`);
         return;
     }
 
@@ -405,6 +405,11 @@ async function handleTranscript(transcript) {
             return;
         }
 
+        if (typeof window.onVoiceMoveResult === "function") {
+            window.onVoiceMoveResult(data, lastTranscript);
+        }
+    } catch (error) {
+        updateVoiceMessage(`Request failed: ${error.message}`);
         speakText("There is nothing waiting for confirmation.");
         return;
     }

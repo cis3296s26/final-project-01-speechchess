@@ -1,0 +1,5 @@
+# Cache Folder
+/__pycache__/
+
+# Database file
+speechchess.db
