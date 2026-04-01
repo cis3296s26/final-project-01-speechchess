@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/chess/chessboard.min.js"></script>
-    <script src="/static/app.js" defer></script>
+    <script src="/static/app.js?v=20260401b" defer></script>
+    <script src="/static/voice.js?v=20260401b" defer></script>
     <style>
         #game-area { display: none; }
         #lobby { max-width: 420px; margin: 40px auto; padding: 24px; }
@@ -196,6 +197,12 @@
     </div>
     <div id="turn-indicator">Waiting...</div>
     <div id="board"></div>
+    <div style="margin-top: 12px;">
+        <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
+        <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
+        <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
+        <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Say "Speech Chess", then your move, then "submit move".</pre>
+    </div>
     <div id="game-log"></div>
     <button onclick="resignGame()" style="margin-top:12px;">Resign</button>
 </div>
@@ -211,6 +218,19 @@
     let timeLeft = { white: 60, black: 60 };
     let timerInterval = null;
     let gameOver = false;
+    let lastAnnouncedHistoryLength = 0;
+
+    function boardPosition(position) {
+        if (!position) {
+            return "start";
+        }
+
+        if (position.includes(" ")) {
+            return position.split(" ")[0];
+        }
+
+        return position;
+    }
 
     function createRoom() {
         myName = document.getElementById("player-name").value.trim();
@@ -289,14 +309,50 @@
 
         board = Chessboard("board", {
             draggable: true,
-            position: state.fen || "start",
+            position: boardPosition(state.fen),
             orientation: myColor,
             pieceTheme: "/static/chess/img/chesspieces/wikipedia/{piece}.png",
             onDrop: onDrop,
-            onSnapEnd: () => board.position(currentFen)
+            onSnapEnd: () => board.position(boardPosition(currentFen))
         });
 
         applyState(state);
+
+        window.voiceParseTranscript = async function (transcript) {
+            const response = await fetch("/rooms/voice-parse", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    room_id: roomId,
+                    player: myColor,
+                    transcript: transcript
+                })
+            });
+
+            return response.json();
+        };
+
+        window.voiceSubmitPendingMove = async function (pendingMove) {
+            const response = await fetch("/rooms/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    room_id: roomId,
+                    player: myColor,
+                    move: pendingMove.uci
+                })
+            });
+
+            return response.json();
+        };
+
+        window.onVoiceMoveResult = async function (data) {
+            applyState(data);
+        };
+
+        window.refreshVoiceBoard = async function () {
+            return;
+        };
     }
 
     let currentFen = "start";
@@ -304,7 +360,7 @@
     function applyState(state) {
         currentFen = state.fen;
         currentTurn = state.turn;
-        board.position(state.fen);
+        board.position(boardPosition(state.fen));
         updateTimerDisplay();
 
         if (state.game_over) {
@@ -317,9 +373,17 @@
             isMyTurn ? "Your turn" : "Opponent's turn";
 
         startTimer();
-        if (state.history && state.history.length) {
-            logMove(state.history[state.history.length - 1]);
+        if (state.history && state.history.length > lastAnnouncedHistoryLength) {
+            const latestMove = state.history[state.history.length - 1];
+            logMove(latestMove);
+
+            if (typeof speakText === "function") {
+                const speaker = currentTurn === "white" ? "Black" : "White";
+                speakText(`${speaker} played ${latestMove}. ${state.turn} to move.`);
+            }
         }
+
+        lastAnnouncedHistoryLength = state.history ? state.history.length : lastAnnouncedHistoryLength;
     }
 
     function onDrop(source, target, piece) {

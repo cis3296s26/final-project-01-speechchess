@@ -194,6 +194,12 @@ class LeaveRequest(BaseModel):
     player: str
 
 
+class RoomVoiceInput(BaseModel):
+    room_id: str
+    player: str
+    transcript: str
+
+
 rooms: dict[str, dict] = {} 
 connections: dict[str, list] = {} 
 
@@ -248,6 +254,31 @@ async def submit_move(req: MoveRequest):
     rooms[req.room_id].update(result)
     await broadcast(req.room_id, {"event": "move", "data": room_data(rooms[req.room_id])})
     return room_data(rooms[req.room_id])
+
+
+@app.post("/rooms/voice-parse", summary="Parse a voice move for a room")
+def parse_room_voice(req: RoomVoiceInput):
+    room = get_room_or_404(req.room_id)
+
+    if room["game_over"]:
+        return {
+            "status": "invalid",
+            "transcript": req.transcript,
+            "prompt": "This game is already over.",
+            "turn": room["turn"],
+        }
+
+    if room["turn"] != req.player:
+        return {
+            "status": "invalid",
+            "transcript": req.transcript,
+            "prompt": f"It is {room['turn']}'s turn.",
+            "turn": room["turn"],
+        }
+
+    result = Voice.parse_speech(req.transcript, room["game"].board)
+    result["turn"] = room["turn"]
+    return result
 
 @app.post("/rooms/reset", summary="Reset the board in a room")
 async def reset_room(room_id: str):

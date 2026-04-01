@@ -3,8 +3,11 @@ let voiceModeEnabled = false;
 let suspendedForSpeech = false;
 let pendingMove = null;
 let awaitingMove = false;
-let awaitingConfirmation = false;
+let parsingMove = false;
 let lastPrompt = "";
+let transcriptQueue = Promise.resolve();
+
+const pendingMoveStorageKey = "speechChessPendingMove";
 
 function updateVoiceMessage(message) {
     const output = document.getElementById("voiceMove");
@@ -26,10 +29,11 @@ function updateTranscriptField(text) {
 
 function currentTranscript() {
     const field = transcriptField();
-    if (field && field.value.trim()) {
-        return field.value.trim();
+    if (!field) {
+        return "";
     }
-    return "";
+
+    return field.value.trim();
 }
 
 function updateVoiceModeButton() {
@@ -38,7 +42,72 @@ function updateVoiceModeButton() {
         return;
     }
 
-    button.innerText = voiceModeEnabled ? "Disable Voice Mode" : "Enable Voice Mode";
+    button.innerText = voiceModeEnabled ? "Stop Voice Session" : "Start Voice Session";
+}
+
+function savePendingMove() {
+    if (pendingMove) {
+        sessionStorage.setItem(pendingMoveStorageKey, JSON.stringify(pendingMove));
+        return;
+    }
+
+    sessionStorage.removeItem(pendingMoveStorageKey);
+}
+
+function restorePendingMove() {
+    if (pendingMove) {
+        return pendingMove;
+    }
+
+    const stored = sessionStorage.getItem(pendingMoveStorageKey);
+    if (!stored) {
+        return null;
+    }
+
+    try {
+        pendingMove = JSON.parse(stored);
+        return pendingMove;
+    } catch (error) {
+        sessionStorage.removeItem(pendingMoveStorageKey);
+        return null;
+    }
+}
+
+function clearPendingMove() {
+    pendingMove = null;
+    awaitingMove = false;
+    parsingMove = false;
+    savePendingMove();
+}
+
+function normalizeCommand(text) {
+    return text
+        .toLowerCase()
+        .replace(/[^\w\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function isWakePhrase(text) {
+    return normalizeCommand(text).includes("speech chess");
+}
+
+function isSubmitCommand(text) {
+    const normalized = normalizeCommand(text);
+    return normalized.includes("submit move") || normalized === "submit";
+}
+
+function isCancelCommand(text) {
+    const normalized = normalizeCommand(text);
+    return normalized === "no" || normalized.includes("cancel");
+}
+
+function isRepeatCommand(text) {
+    return normalizeCommand(text) === "repeat";
+}
+
+function isHelpCommand(text) {
+    return normalizeCommand(text) === "help";
 }
 
 function speakText(text) {
@@ -64,48 +133,45 @@ function speakText(text) {
             startRecognition();
         }
     };
+    utterance.onerror = utterance.onend;
     window.speechSynthesis.speak(utterance);
 }
 
-function clearPendingMove() {
-    pendingMove = null;
-    awaitingMove = false;
-    awaitingConfirmation = false;
-}
+function speakStartupIntro() {
+    const intro = "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move.";
+    updateVoiceMessage(intro);
 
-function normalizeCommand(text) {
-    return text.toLowerCase().trim();
-}
+    if (!("speechSynthesis" in window)) {
+        return Promise.resolve();
+    }
 
-function isWakePhrase(text) {
-    return normalizeCommand(text).includes("speech chess");
-}
+    window.speechSynthesis.cancel();
 
-function isSubmitCommand(text) {
-    const normalized = normalizeCommand(text);
-    return normalized.includes("submit move") || normalized === "submit";
-}
+    return new Promise(function (resolve) {
+        const utterance = new SpeechSynthesisUtterance(intro);
+        let settled = false;
 
-function isConfirmCommand(text) {
-    const normalized = normalizeCommand(text);
-    return normalized === "confirm" || normalized === "yes";
-}
+        const finish = function () {
+            if (settled) {
+                return;
+            }
 
-function isCancelCommand(text) {
-    const normalized = normalizeCommand(text);
-    return normalized === "cancel" || normalized === "no";
-}
+            settled = true;
+            resolve();
+        };
 
-function isRepeatCommand(text) {
-    return normalizeCommand(text) === "repeat";
-}
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        utterance.onend = finish;
+        utterance.onerror = finish;
 
-function isHelpCommand(text) {
-    return normalizeCommand(text) === "help";
+        window.speechSynthesis.speak(utterance);
+        setTimeout(finish, 6000);
+    });
 }
 
 function startRecognition() {
-    if (!voiceModeEnabled || recognition || !window.SpeechRecognition && !window.webkitSpeechRecognition) {
+    if (!voiceModeEnabled || recognition || (!window.SpeechRecognition && !window.webkitSpeechRecognition)) {
         return;
     }
 
@@ -116,7 +182,7 @@ function startRecognition() {
     recognition.continuous = true;
     recognition.maxAlternatives = 3;
 
-    recognition.onresult = async function (event) {
+    recognition.onresult = function (event) {
         for (let i = event.resultIndex; i < event.results.length; i += 1) {
             if (!event.results[i].isFinal) {
                 continue;
@@ -124,7 +190,13 @@ function startRecognition() {
 
             const transcript = event.results[i][0].transcript.trim();
             updateTranscriptField(transcript);
-            await handleTranscript(transcript);
+            transcriptQueue = transcriptQueue
+                .then(function () {
+                    return handleTranscript(transcript);
+                })
+                .catch(function () {
+                    updateVoiceMessage("There was a problem handling that voice command.");
+                });
         }
     };
 
@@ -146,28 +218,47 @@ function stopRecognition() {
     if (recognition) {
         recognition.stop();
     }
+
     recognition = null;
 }
 
-function toggleVoiceMode() {
-    voiceModeEnabled = !voiceModeEnabled;
+function enableVoiceMode(announce = true) {
+    if (voiceModeEnabled) {
+        return;
+    }
+
+    voiceModeEnabled = true;
+    clearPendingMove();
     updateVoiceModeButton();
 
-    if (voiceModeEnabled) {
-        clearPendingMove();
-        startRecognition();
+    if (announce) {
         speakText("Voice mode enabled. Say Speech Chess to begin your move.");
         return;
     }
 
+    startRecognition();
+    updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
+}
+
+function disableVoiceMode() {
+    if (!voiceModeEnabled) {
+        return;
+    }
+
+    voiceModeEnabled = false;
     stopRecognition();
     suspendedForSpeech = false;
     window.speechSynthesis.cancel();
     clearPendingMove();
+    updateVoiceModeButton();
     updateVoiceMessage("Voice mode disabled.");
 }
 
 async function parseMoveTranscript(transcript) {
+    if (typeof window.voiceParseTranscript === "function") {
+        return window.voiceParseTranscript(transcript);
+    }
+
     const response = await fetch("/voice-parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -177,38 +268,45 @@ async function parseMoveTranscript(transcript) {
     return response.json();
 }
 
-async function submitPendingMove() {
+async function playPendingMove() {
+    restorePendingMove();
+
     if (!pendingMove) {
         speakText("There is no pending move to submit.");
         return;
     }
 
-    awaitingConfirmation = true;
-    speakText(`Confirm move ${pendingMove.spoken}. Say confirm to play it, or cancel.`);
-}
+    updateVoiceMessage(`Playing ${pendingMove.spoken}...`);
 
-async function confirmPendingMove() {
-    if (!pendingMove) {
-        speakText("There is no pending move to confirm.");
+    let data;
+    try {
+        if (typeof window.voiceSubmitPendingMove === "function") {
+            data = await window.voiceSubmitPendingMove(pendingMove);
+        } else {
+            const response = await fetch("/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ move: pendingMove.uci })
+            });
+            data = await response.json();
+        }
+    } catch (error) {
+        speakText("I could not send that move to the server.");
         return;
     }
 
-    const response = await fetch("/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ move: pendingMove.uci })
-    });
-
-    const data = await response.json();
-
     if (data.success) {
         if (typeof window.onVoiceMoveResult === "function") {
-            window.onVoiceMoveResult(data, pendingMove.spoken);
+            await window.onVoiceMoveResult(data, pendingMove.spoken);
         }
 
-        const playedMove = data.spoken_text || pendingMove.spoken;
+        if (typeof window.refreshVoiceBoard === "function") {
+            await window.refreshVoiceBoard();
+        }
+
+        const playedMove = pendingMove.spoken;
         clearPendingMove();
-        speakText(`${playedMove}. ${data.turn} to move.`);
+        speakText(`Played ${playedMove}. ${data.turn} to move.`);
         return;
     }
 
@@ -217,27 +315,23 @@ async function confirmPendingMove() {
 }
 
 async function handleMoveTranscript(transcript) {
+    parsingMove = true;
+    updateVoiceMessage(`Parsing move: ${transcript}`);
+
     const result = await parseMoveTranscript(transcript);
+    parsingMove = false;
 
     if (result.status === "exact") {
         pendingMove = result.move;
+        savePendingMove();
         awaitingMove = false;
-        awaitingConfirmation = false;
-        speakText(`I heard ${result.move.spoken}. Say submit move when you are ready.`);
-        return;
-    }
-
-    if (result.status === "ambiguous") {
-        pendingMove = null;
-        awaitingMove = true;
-        awaitingConfirmation = false;
-        speakText(result.prompt);
+        speakText(`I heard ${result.move.spoken}. Say submit move to play it, or cancel.`);
         return;
     }
 
     pendingMove = null;
-    awaitingMove = true;
-    awaitingConfirmation = false;
+    savePendingMove();
+    awaitingMove = result.status !== "invalid";
     speakText(result.prompt);
 }
 
@@ -253,7 +347,7 @@ async function handleTranscript(transcript) {
     }
 
     if (isHelpCommand(normalized)) {
-        speakText("Say Speech Chess, then say your move. Then say submit move, and finally say confirm.");
+        speakText("Say Speech Chess, then say your move. Then say submit move to play it, or cancel.");
         return;
     }
 
@@ -271,22 +365,12 @@ async function handleTranscript(transcript) {
     }
 
     if (isSubmitCommand(normalized)) {
-        await submitPendingMove();
-        return;
-    }
-
-    if (isConfirmCommand(normalized)) {
-        if (awaitingConfirmation) {
-            await confirmPendingMove();
+        if (parsingMove) {
+            speakText("I am still processing your move. Please wait a moment.");
             return;
         }
 
-        if (typeof window.onVoiceMoveResult === "function") {
-            window.onVoiceMoveResult(data, lastTranscript);
-        }
-    } catch (error) {
-        updateVoiceMessage(`Request failed: ${error.message}`);
-        speakText("There is nothing waiting for confirmation.");
+        await playPendingMove();
         return;
     }
 
@@ -295,20 +379,18 @@ async function handleTranscript(transcript) {
         return;
     }
 
-    if (pendingMove && !awaitingConfirmation) {
-        speakText("You already have a pending move. Say submit move, confirm, or cancel.");
-        return;
+    if (pendingMove) {
+        speakText(`I still have ${pendingMove.spoken}. Say submit move to play it, or cancel.`);
     }
 }
 
 function startVoiceInput() {
     if (!voiceModeEnabled) {
-        enableVoiceMode();
-        speakText("Welcome to Speech Chess. Say Speech Chess, then your move, then submit move, then confirm.");
+        enableVoiceMode(true);
         return;
     }
 
-    toggleVoiceMode();
+    disableVoiceMode();
 }
 
 async function submitVoiceMove() {
@@ -319,4 +401,22 @@ async function submitVoiceMove() {
     }
 
     await handleMoveTranscript(transcript);
+}
+
+async function beginAutoIntroSession() {
+    if (voiceModeEnabled) {
+        return;
+    }
+
+    voiceModeEnabled = true;
+    clearPendingMove();
+    updateVoiceModeButton();
+    await speakStartupIntro();
+
+    if (!voiceModeEnabled) {
+        return;
+    }
+
+    startRecognition();
+    updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
 }
