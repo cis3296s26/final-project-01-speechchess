@@ -24,7 +24,36 @@ function signUp(button){
 
 // All the calls for window redirection to the play directory html files
 function playExample(button){
-    window.location.href="play/play"
+    const destination = "play/play"
+    sessionStorage.setItem("speechChessAutoStart", "1")
+    sessionStorage.setItem("speechChessPlayIntro", "1")
+    sessionStorage.setItem("speechChessPlayMusic", "1")
+
+    if (!("speechSynthesis" in window)) {
+        window.location.href = destination
+        return
+    }
+
+    const intro = new SpeechSynthesisUtterance(
+        "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move."
+    )
+
+    let redirected = false
+    const goToPlayPage = function () {
+        if (redirected) {
+            return
+        }
+
+        redirected = true
+        window.location.href = destination
+    }
+
+    intro.onend = goToPlayPage
+    intro.onerror = goToPlayPage
+
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(intro)
+    setTimeout(goToPlayPage, 6000)
 }
 
 function playOnline(button){
