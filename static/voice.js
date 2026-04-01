@@ -281,6 +281,11 @@ async function handleTranscript(transcript) {
             return;
         }
 
+        if (typeof window.onVoiceMoveResult === "function") {
+            window.onVoiceMoveResult(data, lastTranscript);
+        }
+    } catch (error) {
+        updateVoiceMessage(`Request failed: ${error.message}`);
         speakText("There is nothing waiting for confirmation.");
         return;
     }
