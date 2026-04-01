@@ -168,9 +168,11 @@ class LeaveRequest(BaseModel):
     player: str
 
 
-rooms: dict[str, dict] = {}  # room_id > room state
-connections: dict[str, list] = {}  # room_id > WebSocket, ...
+rooms: dict[str, dict] = {} 
+connections: dict[str, list] = {} 
 
+def room_data(room: dict) -> dict:
+    return {k: v for k, v in room.items() if k != "game"}
 
 def get_room_or_404(room_id: str) -> dict:
     room = rooms.get(room_id)
@@ -188,9 +190,9 @@ def create_room(req: CreateRoomRequest):
         "player_two": req.player_two,
         **chess_logic.get_game_state(),
     }
+    rooms[room_id]["game"] = chess_logic.GameBoard()
     connections[room_id] = []
-    return rooms[room_id]
-
+    return room_data(rooms[room_id])
 
 @app.get("/rooms", summary="List all rooms")
 def list_rooms():
@@ -212,24 +214,22 @@ async def submit_move(req: MoveRequest):
     if room["turn"] != req.player:
         raise HTTPException(status_code=400, detail=f"It is {room['turn']}'s turn")
 
-    result = chess_logic.make_move(req.move)
+    result = room["game"].make_move(req.move)
 
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["error"])
 
     rooms[req.room_id].update(result)
-    await broadcast(req.room_id, {"event": "move", "data": rooms[req.room_id]})
-    return rooms[req.room_id]
-
+    await broadcast(req.room_id, {"event": "move", "data": room_data(rooms[req.room_id])})
+    return room_data(rooms[req.room_id])
 
 @app.post("/rooms/reset", summary="Reset the board in a room")
 async def reset_room(room_id: str):
     get_room_or_404(room_id)
     result = chess_logic.reset_game()
     rooms[room_id].update(result)
-    await broadcast(room_id, {"event": "reset", "data": rooms[room_id]})
-    return rooms[room_id]
-
+    await broadcast(room_id, {"event": "reset", "data": room_data(rooms[room_id])})
+    return room_data(rooms[room_id])
 
 @app.post("/rooms/leave", summary="Player leaves a room")
 async def leave_room(req: LeaveRequest):
@@ -242,9 +242,8 @@ async def leave_room(req: LeaveRequest):
     room["winner"] = (
         room["player_two"] if req.player == room["player_one"] else room["player_one"]
     )
-    await broadcast(req.room_id, {"event": "leave", "data": room})
-    return room
-
+    await broadcast(req.room_id, {"event": "leave", "data": room_data(room)})
+    return room_data(room)
 
 @app.delete("/rooms/{room_id}", summary="Delete a room")
 def delete_room(room_id: str):
@@ -267,7 +266,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
 
     await websocket.accept()
     connections[room_id].append(websocket)
-    await websocket.send_text(json.dumps({"event": "state", "data": rooms[room_id]}))
+    await websocket.send_text(json.dumps({"event": "state", "data": {k: v for k, v in rooms[room_id].items() if k != "game"}}))
 
     try:
         while True:
@@ -275,13 +274,32 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
             msg = json.loads(raw)
 
             if msg.get("type") == "move":
-                move_req = MoveRequest(
-                    room_id=room_id,
-                    player=msg["player"],
-                    move=msg["move"],
-                )
-                await submit_move(move_req)
+                room = rooms.get(room_id)
+                if not room or room.get("game_over"):
+                    continue
+                if room["turn"] != msg["player"]:
+                    await websocket.send_text(json.dumps({"event": "error", "detail": "Not your turn"}))
+                    continue
+                result = room["game"].make_move(msg["move"])
+                if not result["success"]:
+                    await websocket.send_text(json.dumps({"event": "error", "detail": result["error"]}))
+                    continue
+                room.update(result)
+                await broadcast(room_id, {"event": "move", "data": room_data(room)})
 
+            elif msg.get("type") == "join":
+                if msg.get("player") == "black":
+                    rooms[room_id]["player_two"] = msg.get("name", "Player 2")
+                    await broadcast(room_id, {"event": "join", "data": room_data(rooms[room_id])})
+
+            elif msg.get("type") == "leave":
+                room = rooms.get(room_id)
+                if room and not room.get("game_over"):
+                    room["game_over"] = True
+                    room["winner"] = "black" if msg.get("player") == "white" else "white"
+                    await broadcast(room_id, {"event": "leave", "data": room_data(room)})
+
+                
     except WebSocketDisconnect:
         connections[room_id].remove(websocket)
 
@@ -295,7 +313,6 @@ async def broadcast(room_id: str, payload: dict):
             dead.append(ws)
     for ws in dead:
         connections[room_id].remove(ws)
-
 
 if __name__ == "__main__":
     import uvicorn

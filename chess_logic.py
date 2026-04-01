@@ -34,7 +34,71 @@ Front End is not implemented yet.
 
 """
 
+# chess_logic.py — add this class at the bottom
 board = chess.Board()
+
+class GameBoard:
+    def __init__(self):
+        self.board = chess.Board()
+
+    def serialize_board(self):
+        rows = []
+        for rank in range(7, -1, -1):
+            row = []
+            for file_index in range(8):
+                square = chess.square(file_index, rank)
+                piece = self.board.piece_at(square)
+                row.append({
+                    "square": chess.square_name(square),
+                    "piece": piece.symbol() if piece else None,
+                })
+            rows.append(row)
+        return rows
+
+    def move_history(self):
+        replay_board = chess.Board()
+        history = []
+        for move in self.board.move_stack:
+            history.append(replay_board.san(move))
+            replay_board.push(move)
+        return history
+
+    def winner(self):
+        if not self.board.is_checkmate():
+            return None
+        return "black" if self.board.turn == chess.WHITE else "white"
+
+    def get_game_state(self):
+        return {
+            "board": self.serialize_board(),
+            "turn": "white" if self.board.turn == chess.WHITE else "black",
+            "check": self.board.is_check(),
+            "checkmate": self.board.is_checkmate(),
+            "stalemate": self.board.is_stalemate(),
+            "game_over": self.board.is_game_over(),
+            "winner": self.winner(),
+            "result": self.board.result() if self.board.is_game_over() else None,
+            "fen": self.board.fen(),
+            "history": self.move_history(),
+            "legal_moves": [m.uci() for m in self.board.legal_moves],
+        }
+
+    def make_move(self, move_str):
+        move_text = move_str.strip().lower().replace(" ", "")
+        try:
+            move = chess.Move.from_uci(move_text)
+        except ValueError:
+            return {"success": False, "error": "Use correct move like e2e4", **self.get_game_state()}
+        if move not in self.board.legal_moves:
+            return {"success": False, "error": "Illegal move", **self.get_game_state()}
+        san = self.board.san(move)
+        self.board.push(move)
+        TTS.speak(f"Played {san}")
+        return {"success": True, "message": f"Played {san}", **self.get_game_state()}
+
+    def reset_game(self):
+        self.board.reset()
+        return {"success": True, "message": "Reset game", **self.get_game_state()}
 
 def serialize_board():
     rows = []
