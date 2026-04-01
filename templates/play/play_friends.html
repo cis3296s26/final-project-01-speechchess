@@ -378,8 +378,8 @@
             logMove(latestMove);
 
             if (typeof speakText === "function") {
-                const speaker = currentTurn === "white" ? "Black" : "White";
-                speakText(`${speaker} played ${latestMove}. ${state.turn} to move.`);
+                const announcement = state.spoken_text || `Latest move ${latestMove}`;
+                speakText(`${announcement}. ${state.turn} to move.`);
             }
         }
 
