@@ -27,6 +27,14 @@ python Chess.py
 python -m uvicorn main:app --reload
 Then proceed to the link generated in the terminal.
 
+#Multiplayer
+
+Click sidebar, play, play with a friend
+
+Host clicks create room, sets name and timer, send code to friend
+
+Attending player clicks join room, enters name, enters received code
+
 
 **Voice to Text:**
 
