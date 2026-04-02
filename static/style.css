@@ -199,9 +199,9 @@ submenu should be shown. */
 }
 
 /* Main is a wrapper for the non-sidebar elements of the body in pages with a sidebar. All elements have a 20 pixel margin in all directions. */
-main {
-    padding: 20px;
-    margin-top: 40px;
+.homepage_body main {
+    padding: 50px;
+    margin-top: 20px;
 }
 
 /* Flex puts the elements of this container, div chess_board horizontally. This works as there is a div class for each preview of the 
@@ -413,53 +413,56 @@ div.get_started_signup_or_login p, div.get_started_signup_or_login a:hover, div.
     color: var(--text-clr);
     /*  Set minimum height to the full height of the user's screen. */
     min-height: 100vh;
-    /* Grid will have two columns, one of automatic size, the other grows and shrinks depending on how much space there is.*/
+    /* Grid will have two columns, one of automatic size, the other grows and shrinks depending on how much space there is. 
+    One is the sidebar, the other is the rest of the content of the page. */
     display: grid;
     grid-template-columns: auto 1fr;
     font-family: inherit;
 }
 
+/* Turns the settings body to a flex display and aligns the items horizontally. */
 .settings_body main {
     display: flex;
     justify-content: center;
-    padding: 10px;
-    margin-top: 20px;
 }
 
+/* Fill the container, don't go past 700px. */
 div.settings_page {
     width: 100%;
     max-width: 700px;
 }
 
-div.settings_page h1, div.settings_page h2{
+/* > ensures only that div's element, in this case header, is affected by this css. */
+div.settings_page > h1, div.settings_page > h2{
     text-align: center;
-    padding: 20px;
+    padding: 30px;
     font-size: 36px;
 }
 
+/* Puts the following divs inside of this div in column form, so the setting rows are stacked vertically with 10px gaps in between them. */
 div.settings_page_content {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-
-div.settings_header_narrator {
-    color: var(--text-clr);
-    font-size: 24px;
-    text-align: left;
-}
+/* Styling for the setting_row div headers, so the header for each setting. */
 div.settings_option_narrator h1, div.settings_option_voice_input h1, div.settings_option_master_volume h1, div.settings_option_narrator_volume h1, div.settings_option_music_volume h1, div.settings_option_sound_effects_volume h1 {
     color: var(--text-clr);
     font-size: 24px;
     text-align: left;
 }
 
+/* Style the rows of each actual setting, so the header and p and button. */
 div.settings_row {
+    /* Turns this div into a one dimensional container. justify-content is used horizontally, align-items is used vertically. */
     display: flex;
+    /* Aligns the items horizontally to have space-between them. So there's a space between the buttons and the contents of this div. */
     justify-content: space-between;
-    align-items: flex-start;
+    /* Aligns the items of the display to the center of it. */
+    align-items: center;
     padding: 20px;
+    gap: 10px;
     background-color: var(--hover-base-clr);
     border-radius: 12px;
 }
@@ -469,6 +472,7 @@ div.settings_option_narrator p, div.settings_option_voice_input p, div.settings_
     text-align: left;
 }
 
+/* Styles the toggle buttons. */
 div.settings_row .settings_option_narrator_btn, div.settings_row .settings_option_voice_input_btn, div.settings_row .settings_option_master_volume_btn, div.settings_row .settings_option_narrator_volume_btn, div.settings_row .settings_option_music_volume_btn, div.settings_row .settings_option_sound_effects_volume_btn {
     background-color: var(--accent-clr);
     color: var(--text-clr);
@@ -477,7 +481,7 @@ div.settings_row .settings_option_narrator_btn, div.settings_row .settings_optio
     padding: 20px;
     font-size: 16px;
     cursor: pointer;
-    min-width: 110px;
+    min-width: 100px;
     align-items: right;
 }
 
@@ -485,6 +489,16 @@ div.settings_row .settings_option_narrator_btn.enabled, div.settings_row .settin
     background-color: var(--accent-clr);
 }
 
-div.settings_row .settings_option_narrator_btn.disabled, div.settings_row .settings_option_voice_input_btn.disabled, div.settings_row .settings_option_master_volume_btn.disabled, div.settings_row .settings_option_narrator_volume_btn.disabled, div.settings_row .settings_option_music_volume_btn.disabled, div.settings_row .settings_option_sound_effects_volume_btn.disabled{
+div.settings_row .settings_option_narrator_btn.enabled:hover, div.settings_row .settings_option_voice_input_btn.enabled:hover, div.settings_row .settings_option_master_volume_btn.enabled:hover, div.settings_row .settings_option_narrator_volume_btn.enabled:hover, div.settings_row .settings_option_music_volume_btn.enabled:hover, div.settings_row .settings_option_sound_effects_volume_btn.enabled:hover {
+    background-color: var(--hover-accent-clr);
+    border: none var(--hover-base-clr);
+}
+
+div.settings_row .settings_option_narrator_btn.disabled, div.settings_row .settings_option_voice_input_btn.disabled, div.settings_row .settings_option_master_volume_btn.disabled, div.settings_row .settings_option_narrator_volume_btn.disabled, div.settings_row .settings_option_music_volume_btn.disabled, div.settings_row .settings_option_sound_effects_volume_btn.disabled {
     background-color: var(--base-clr)
+}
+
+div.settings_row .settings_option_narrator_btn.disabled:hover, div.settings_row .settings_option_voice_input_btn.disabled:hover, div.settings_row .settings_option_master_volume_btn.disabled:hover, div.settings_row .settings_option_narrator_volume_btn.disabled:hover, div.settings_row .settings_option_music_volume_btn.disabled:hover, div.settings_row .settings_option_sound_effects_volume_btn.disabled:hover {
+    background-color: var(--hover-base-clr);
+    border: none var(--hover-base-clr);
 }
