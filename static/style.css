@@ -183,7 +183,7 @@ submenu should be shown. */
     margin: 5px auto;
     width: 225px;
 }
-#sidebar a.logout-btn:hover, #sidebar a.signup-btn {
+#sidebar a.logout-btn:hover, #sidebar a.signup-btn:hover {
     background-color: var(--accent-clr);
     border: none var(--hover-accent-clr);
 }
@@ -204,9 +204,11 @@ main {
     margin-top: 40px;
 }
 
-/* Flex puts the elements of this container, div chess_board horizontally. So, the img in chess_board is on the left in one column, and
-the get_started class is on the right side as it's also in the container. flex-wrap: nowrap forces elements to stay on the same line, and
-justify-content: center; to center elements in the display, the pair of display: flex, for each div.*/
+/* Flex puts the elements of this container, div chess_board horizontally. This works as there is a div class for each preview of the 
+features on the homepage. Since each div comes one after the other in the html, the horizontal divs are stacked on top of each other. The 
+img in chess_board is on the left in one column, and the get_started class is on the right side as it's also in the container. 
+flex-wrap: nowrap forces elements to stay on the same line, and justify-content: center; to center elements in the display, the pair of 
+display: flex, for each div.*/
 div.chess_board, div.play, div.learn, div.puzzles {
     display: flex;
     align-items: center;
@@ -228,7 +230,7 @@ div.get_started, div.home_play, div.home_learn, div.home_puzzles {
     /* This class fits to the entire width of the screen. */
     width: 100%;
     /* Sets a limit on the width of the element to fit all screen sizes. */
-    max-width: 500px;
+    max-width: 700px;
 }
 
 /* Styles the images for each homepage body div. */
@@ -405,25 +407,84 @@ div.get_started_signup_or_login p, div.get_started_signup_or_login a:hover, div.
     font-size: 0.95rem;
 }
 
-/* Body for pages with column elements and a sidebar. */
+/* Styling for settings and profile pages start here. Body for pages with column elements and a sidebar. */
 .settings_body, .profile_body {
     background-color: var(--base-clr);
     color: var(--text-clr);
     /*  Set minimum height to the full height of the user's screen. */
-}
-/* Styling for pages with column elements and a sidebar. */
-div.settings_page, div.profile_page {
-    /* This class fits to the entire width of the screen. */
-    width: 100%;
-    /* Sets a limit on the width of the element to fit all screen sizes. */   
-    max-width: 400px;
-    display: flex;
-    flex-direction: column;
-
-    gap: 12px;   
-    /* THIS NEEDS CONFIGURATION */
     min-height: 100vh;
+    /* Grid will have two columns, one of automatic size, the other grows and shrinks depending on how much space there is.*/
+    display: grid;
+    grid-template-columns: auto 1fr;
+    font-family: inherit;
+}
+
+.settings_body main {
     display: flex;
     justify-content: center;
-    align-items: center;
+    padding: 10px;
+    margin-top: 20px;
+}
+
+div.settings_page {
+    width: 100%;
+    max-width: 700px;
+}
+
+div.settings_page h1, div.settings_page h2{
+    text-align: center;
+    padding: 20px;
+    font-size: 36px;
+}
+
+div.settings_page_content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
+div.settings_header_narrator {
+    color: var(--text-clr);
+    font-size: 24px;
+    text-align: left;
+}
+div.settings_option_narrator h1, div.settings_option_voice_input h1, div.settings_option_master_volume h1, div.settings_option_narrator_volume h1, div.settings_option_music_volume h1, div.settings_option_sound_effects_volume h1 {
+    color: var(--text-clr);
+    font-size: 24px;
+    text-align: left;
+}
+
+div.settings_row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px;
+    background-color: var(--hover-base-clr);
+    border-radius: 12px;
+}
+
+div.settings_option_narrator p, div.settings_option_voice_input p, div.settings_option_master_volume p, div.settings_option_narrator_volume p, div.settings_option_music_volume p, div.settings_option_sound_effects_volume p{
+    color: var(--secondary-text-clr);
+    text-align: left;
+}
+
+div.settings_row .settings_option_narrator_btn, div.settings_row .settings_option_voice_input_btn, div.settings_row .settings_option_master_volume_btn, div.settings_row .settings_option_narrator_volume_btn, div.settings_row .settings_option_music_volume_btn, div.settings_row .settings_option_sound_effects_volume_btn {
+    background-color: var(--accent-clr);
+    color: var(--text-clr);
+    border: none;
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 16px;
+    cursor: pointer;
+    min-width: 110px;
+    align-items: right;
+}
+
+div.settings_row .settings_option_narrator_btn.enabled, div.settings_row .settings_option_voice_input_btn.enabled, div.settings_row .settings_option_master_volume_btn.enabled, div.settings_row .settings_option_narrator_volume_btn.enabled, div.settings_row .settings_option_music_volume_btn.enabled, div.settings_row .settings_option_sound_effects_volume_btn.enabled {
+    background-color: var(--accent-clr);
+}
+
+div.settings_row .settings_option_narrator_btn.disabled, div.settings_row .settings_option_voice_input_btn.disabled, div.settings_row .settings_option_master_volume_btn.disabled, div.settings_row .settings_option_narrator_volume_btn.disabled, div.settings_row .settings_option_music_volume_btn.disabled, div.settings_row .settings_option_sound_effects_volume_btn.disabled{
+    background-color: var(--base-clr)
 }
