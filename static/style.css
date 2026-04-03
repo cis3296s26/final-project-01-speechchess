@@ -473,9 +473,8 @@ div.settings_option_narrator p, div.settings_option_voice_input p, div.settings_
     text-align: left;
 }
 
-/* Styles the toggle buttons. */
-div.settings_row .settings_option_narrator_btn, div.settings_row .settings_option_voice_input_btn, div.settings_row .settings_option_master_volume_btn, div.settings_row .settings_option_narrator_volume_btn, div.settings_row .settings_option_music_volume_btn, div.settings_row .settings_option_sound_effects_volume_btn {
-    background-color: var(--accent-clr);
+/* Styles the toggle buttons in the Settings page. */
+.settings_toggle {
     color: var(--text-clr);
     border: none;
     border-radius: 12px;
@@ -486,25 +485,23 @@ div.settings_row .settings_option_narrator_btn, div.settings_row .settings_optio
     align-items: right;
 }
 
-div.settings_row .settings_option_narrator_btn.enabled, div.settings_row .settings_option_voice_input_btn.enabled, div.settings_row .settings_option_master_volume_btn.enabled, div.settings_row .settings_option_narrator_volume_btn.enabled, div.settings_row .settings_option_music_volume_btn.enabled, div.settings_row .settings_option_sound_effects_volume_btn.enabled {
+.settings_toggle.enabled {
     background-color: var(--accent-clr);
 }
 
-div.settings_row .settings_option_narrator_btn.enabled:hover, div.settings_row .settings_option_voice_input_btn.enabled:hover, div.settings_row .settings_option_master_volume_btn.enabled:hover, div.settings_row .settings_option_narrator_volume_btn.enabled:hover, div.settings_row .settings_option_music_volume_btn.enabled:hover, div.settings_row .settings_option_sound_effects_volume_btn.enabled:hover {
+.settings_toggle.enabled:hover {
     background-color: var(--hover-accent-clr);
-    border: none var(--hover-base-clr);
 }
 
-div.settings_row .settings_option_narrator_btn.disabled, div.settings_row .settings_option_voice_input_btn.disabled, div.settings_row .settings_option_master_volume_btn.disabled, div.settings_row .settings_option_narrator_volume_btn.disabled, div.settings_row .settings_option_music_volume_btn.disabled, div.settings_row .settings_option_sound_effects_volume_btn.disabled {
-    background-color: var(--base-clr)
+.settings_toggle.disabled {
+background-color: var(--base-clr);
 }
 
-div.settings_row .settings_option_narrator_btn.disabled:hover, div.settings_row .settings_option_voice_input_btn.disabled:hover, div.settings_row .settings_option_master_volume_btn.disabled:hover, div.settings_row .settings_option_narrator_volume_btn.disabled:hover, div.settings_row .settings_option_music_volume_btn.disabled:hover, div.settings_row .settings_option_sound_effects_volume_btn.disabled:hover {
+.settings_toggle.disabled:hover {
     background-color: var(--hover-base-clr);
-    border: none var(--hover-base-clr);
 }
 
-/* Styling for the volume control slider settings. Make it one dimensional wiht flex, and align the slider and number in the center of the 
+/* Styling for the volume control slider settings. Make it one dimensional with flex, and align the slider and number in the center of the 
 container vertically. Min-width ensures the slider and number value don't get too small. justify-content: flex-end puts them at the end
 (right side) of the container. */
 div.volume_control {
@@ -516,9 +513,14 @@ div.volume_control {
 }
 
 /* Styles the slider bar. */
-.settings_volume_slider {
+.volume_slider {
     width: 150px;
     cursor: pointer;
+    accent-color: var(--accent-clr);
+}
+
+.volume_slider:hover {
+    accent-color: var(--hover-accent-clr);
 }
 
 /* Styles the number value of the volume. */

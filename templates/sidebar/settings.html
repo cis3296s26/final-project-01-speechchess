@@ -109,14 +109,16 @@
                     <h1>Narrator</h1>
                     <p>Narration of webpage navigation and game moves.</p>
                 </div>
-                <button class="button settings_option_narrator_btn">Enabled</button>
+                <!--Button with the class name of .setting_toggle.enabled if narrator is enabled, otherwise it's .setting_toggle_disabled. data-setting-name is a custom html attribute (data attribute) used for the backend to say that this element is
+                associated with the narrator enabled setting. This connects the frontend and backend. The html name that appears on the page behaves like the class name.-->
+                <button type="button" class="settings_toggle {% if settings.narrator_enabled %}enabled{% else %}disabled{% endif %}" data-setting-name="narrator_enabled">{% if settings.narrator_enabled %}Enabled{% else %}Disabled{% endif %}</button>
             </div>
             <div class="settings_row">
                 <div class="settings_option_voice_input">
                     <h1>Voice Input</h1>
                     <p>User gives input through a microphone for webpage navigation and game moves.</p>
                 </div>
-                <button class="button settings_option_voice_input_btn">Enabled</button>
+                <button type="button" class="settings_toggle {% if settings.voice_input_enabled %}enabled{% else %}disabled{% endif %}" data-setting-name="voice_input_enabled">{% if settings.voice_input_enabled %}Enabled{% else %}Disabled{% endif %}</button>
             </div>
         </div>
         <h2>Music & Sound Settings</h2>
@@ -127,8 +129,8 @@
                     <p>Control the volume of all sounds.</p>
                 </div>
                 <div class="volume_control">
-                    <input type="range" min="0" max="100" value="50" class="settings_volume_slider" id="masterVolume">
-                    <span class="volume_value" id="masterVolumeValue">50</span>
+                    <input type="range" min="0" max="100" value="{{ settings.master_volume }}" class="volume_slider" data-setting-name="master_volume">
+                    <span class="volume_value">{{ settings.master_volume }}</span>
                 </div>
             </div>
             <div class ="settings_row">
@@ -137,8 +139,8 @@
                     <p>Control the volume of the narrator.</p>
                 </div>
                 <div class="volume_control">
-                    <input type="range" min="0" max="100" value="50" class="settings_volume_slider" id="narratorVolume">
-                    <span class="volume_value" id="narratorVolumeValue">50</span>
+                    <input type="range" min="0" max="100" value="{{ settings.narrator_volume }}" class="volume_slider" data-setting-name="narrator_volume">
+                    <span class="volume_value">{{ settings.narrator_volume }}</span>
                 </div>
             </div>
             <div class="settings_row">
@@ -147,8 +149,8 @@
                     <p>Control the volume of music.</p>
                 </div>
                 <div class="volume_control">
-                    <input type="range" min="0" max="100" value="50" class="settings_volume_slider" id="musicVolume">
-                    <span class="volume_value" id="musicVolumeValue">50</span>
+                    <input type="range" min="0" max="100" value="{{ settings.music_volume }}" class="volume_slider" data-setting-name="music_volume">
+                    <span class="volume_value">{{ settings.music_volume }}</span>
                 </div>
             </div>
             <div class="settings_row">
@@ -157,8 +159,8 @@
                     <p>Control the volume of sound effects.</p>
                 </div>
                 <div class="volume_control">
-                    <input type="range" min="0" max="100" value="50" class="settings_volume_slider" id="soundEffectsVolume">
-                    <span class="volume_value" id="soundEffectsVolumeValue">50</span>
+                    <input type="range" min="0" max="100" value="{{ settings.sound_effects_volume }}" class="volume_slider" data-setting-name="sound_effects_volume">
+                    <span class="volume_value">{{ settings.sound_effects_volume }}</span>
                 </div>
             </div>
         </div>
