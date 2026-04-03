@@ -498,7 +498,7 @@ background-color: var(--base-clr);
 }
 
 .settings_toggle.disabled:hover {
-    background-color: var(--hover-base-clr);
+    background-color: var(--secondary-text-clr);
 }
 
 /* Styling for the volume control slider settings. Make it one dimensional with flex, and align the slider and number in the center of the 
@@ -507,7 +507,7 @@ container vertically. Min-width ensures the slider and number value don't get to
 div.volume_control {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 5px;
     min-width: 200px;
     justify-content: flex-end;
 }
@@ -515,6 +515,7 @@ div.volume_control {
 /* Styles the slider bar. */
 .volume_slider {
     width: 150px;
+    flex-shrink: 0;
     cursor: pointer;
     accent-color: var(--accent-clr);
 }
@@ -524,8 +525,9 @@ div.volume_control {
 }
 
 /* Styles the number value of the volume. */
-div.volume_value {
-    min-width: 35px;
+.volume_value {
+    width: 35px;
+    flex-shrink: 0;
     text-align: right;
     font-size: 16px;
     color: var(--text-clr);

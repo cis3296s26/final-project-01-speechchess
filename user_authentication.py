@@ -140,4 +140,5 @@ def update_setting(request: Request, setting_name: str = Form(...), setting_valu
             setattr(settings, setting_name, volume)
         session.add(settings)
         session.commit()
+    # Return success from backend so frontend knows the request worked.
     return {"success": True}
