@@ -8,12 +8,12 @@
 
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
-    <script type="text/javascript" src="/static/app.js?v=20260401c" defer></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/chess/chessboard.min.js"></script>
+    <script type="text/javascript" src="/static/app.js"></script>
     <script src="/static/voice.js?v=20260401a" defer></script>
 </head>
-<body>
+<body class="homepage_body">
     <aside id="sidebar">
         <ul>
             <li>
@@ -96,13 +96,13 @@
             {% endif %}
         </ul>
     </aside>
-    <h2 style="text-align:center;">Speech Chess</h2>
 
     <audio id="backgroundMusic" loop>
         <source src="/static/Sounds/senormusica81-daytime-smooth-jazz-2025-2-458721.mp3" type="audio/mpeg">
     </audio>
 
     <main>
+        <h2 style="text-align:center;">Speech Chess</h2>
         <div id="board" style="width: 400px; margin: 20px auto;"></div>
         <div style="text-align: center;">
             <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
@@ -112,183 +112,73 @@
         </div>
     </main>
 
-    <div id="promo-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
-        <div style="background:black; border-radius:12px; padding:1.5rem 2rem; text-align:center;">
-            <p style="font-weight:500; margin:0 0 1rem;">Promote pawn to:</p>
-            <div style="display:flex; gap:12px; justify-content:center;">
-                <button onclick="resolvePromotion('q')"><img src="/static/chess/img/chesspieces/alpha/wQ.png" width="40"><br>Queen</button>
-                <button onclick="resolvePromotion('r')"><img src="/static/chess/img/chesspieces/alpha/wR.png" width="40"><br>Rook</button>
-                <button onclick="resolvePromotion('b')"><img src="/static/chess/img/chesspieces/alpha/wB.png" width="40"><br>Bishop</button>
-                <button onclick="resolvePromotion('n')"><img src="/static/chess/img/chesspieces/alpha/wN.png" width="40"><br>Knight</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-    let board;
-    let lastHistoryLength = 0;
-    let suppressNextAnnouncement = false;
-    let promoResolve = null;
+        let chess;
+        let lastHistoryLength = 0;
+        let suppressNextAnnouncement = false;
 
-    const moveSounds = [
-        new Audio('/static/sounds/ChessNoise1.mp3'),
-        new Audio('/static/sounds/ChessNoise2.mp3')
-    ];
+        window.onload = function () {
+            chess = initChessGame({
+                elementId: "board",
+                orientation: "white",
+                fen: "start",
+                draggable: true,
+                onPromotion: () => askPromotion(),
+                onDrop: async (source, target, piece, move) => {
+                    const res = await fetch("/move", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ move })
+                    });
 
-    function askPromotion() {
-        return new Promise(resolve => {
-            promoResolve = resolve;
-            document.getElementById('promo-overlay').style.display = 'flex';
-        });
-    }
+                    const data = await res.json();
 
-    function resolvePromotion(piece) {
-        document.getElementById('promo-overlay').style.display = 'none';
-        if (promoResolve) promoResolve(piece);
-    }
-
-    function playMoveSound() {
-        const sound = moveSounds[Math.floor(Math.random() * moveSounds.length)];
-        sound.currentTime = 0;
-        sound.play();
-    };
-
-    function startBackgroundMusic() {
-        const music = document.getElementById("backgroundMusic");
-        if (!music) {
-            return;
-        }
-
-        music.volume = 0.2;
-        music.play().catch(function () {
-            return;
-        });
-    }
-
-    function boardPosition(position) {
-        if (!position) {
-            return "start";
-        }
-
-        if (position.includes(" ")) {
-            return position.split(" ")[0];
-        }
-
-        return position;
-    }
-
-    async function refreshBoard() {
-        const res = await fetch("/state");
-        const data = await res.json();
-        board.position(boardPosition(data.fen));
-
-        playMoveSound();
-
-        if (data.history && data.history.length > lastHistoryLength) {
-            playMoveSound();
-
-            const latestMove = data.history[data.history.length - 1];
-
-            if (!suppressNextAnnouncement && typeof speakText === "function") {
-                speakText(`Latest move ${latestMove}. ${data.turn} to move.`);
-            }
-
-            suppressNextAnnouncement = false;
-        }
-
-        lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
-    }
-
-    window.onload = function () {
-        board = Chessboard("board", {
-            draggable: true,
-            position: "start",
-            pieceTheme: "/static/chess/img/chesspieces/wikipedia/{piece}.png",
-
-            onDrop: async function (source, target, piece) {
-                let move = source + target;
-
-                if (
-                    (piece === "wP" && target[1] === "8") ||
-                    (piece === "bP" && target[1] === "1")
-                ) {
-                    const choice = await askPromotion();
-                    move += choice;
-                }
-
-                const res = await fetch("/move", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ move: move })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    suppressNextAnnouncement = true;
-                    board.position(boardPosition(data.fen));
-                    lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
-
-                    if (typeof speakText === "function") {
-                        const latestMove = data.history && data.history.length
-                            ? data.history[data.history.length - 1]
-                            : "that move";
-                        const announcement = data.spoken_text || `Latest move ${latestMove}`;
-                        speakText(`${announcement}. ${data.turn} to move.`);
+                    if (data.success) {
+                        playMoveSound()
+                        suppressNextAnnouncement = true;
+                        chess.setPosition(data.fen);
+                        lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
+                    } else {
+                        return "snapback";
                     }
-                } else {
-                    return "snapback";
                 }
-            },
+            });
 
-            onSnapEnd: async function () {
+            window.onVoiceMoveResult = async function (data) {
+                if (data.success) {
+                    playMoveSound()
+                    suppressNextAnnouncement = true;
+                    chess.setPosition(data.fen);
+                    lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
+                }
                 await refreshBoard();
-            }
-        });
+            };
 
-        window.onVoiceMoveResult = async function (data) {
-            if (data.success) {
-                suppressNextAnnouncement = true;
-                board.position(boardPosition(data.fen));
-                lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
-                await refreshBoard();
-                return;
+            window.refreshVoiceBoard = refreshBoard;
+
+            refreshBoard();
+
+            const startedFromPlayButton = sessionStorage.getItem("speechChessAutoStart") === "1";
+            const introAlreadyPlayed = sessionStorage.getItem("speechChessPlayIntro") === "1";
+
+            if (startedFromPlayButton) sessionStorage.removeItem("speechChessAutoStart");
+            if (introAlreadyPlayed) sessionStorage.removeItem("speechChessPlayIntro");
+
+            if (sessionStorage.getItem("speechChessPlayMusic") === "1") {
+                sessionStorage.removeItem("speechChessPlayMusic");
+                startBackgroundMusic();
             }
 
-            await refreshBoard();
+            setTimeout(function () {
+                if (introAlreadyPlayed && typeof enableVoiceMode === "function") {
+                    enableVoiceMode(false);
+                    return;
+                }
+                if (typeof beginAutoIntroSession === "function") {
+                    beginAutoIntroSession();
+                }
+            }, 150);
         };
-
-        window.refreshVoiceBoard = refreshBoard;
-
-        refreshBoard();
-
-        const startedFromPlayButton = sessionStorage.getItem("speechChessAutoStart") === "1";
-        const introAlreadyPlayed = sessionStorage.getItem("speechChessPlayIntro") === "1";
-
-        if (startedFromPlayButton) {
-            sessionStorage.removeItem("speechChessAutoStart");
-        }
-
-        if (introAlreadyPlayed) {
-            sessionStorage.removeItem("speechChessPlayIntro");
-        }
-
-        if (sessionStorage.getItem("speechChessPlayMusic") === "1") {
-            sessionStorage.removeItem("speechChessPlayMusic");
-            startBackgroundMusic();
-        }
-
-        setTimeout(function () {
-            if (introAlreadyPlayed && typeof enableVoiceMode === "function") {
-                enableVoiceMode(false);
-                return;
-            }
-
-            if (typeof beginAutoIntroSession === "function") {
-                beginAutoIntroSession();
-            }
-        }, 150);
-    };
     </script>
 </body>
 </html>

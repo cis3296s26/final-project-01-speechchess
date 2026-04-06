@@ -200,8 +200,10 @@ submenu should be shown. */
 
 /* Main is a wrapper for the non-sidebar elements of the body in pages with a sidebar. All elements have a 20 pixel margin in all directions. */
 main {
-    padding: 20px;
-    margin-top: 40px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 /* Flex puts the elements of this container, div chess_board horizontally. So, the img in chess_board is on the left in one column, and
