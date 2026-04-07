@@ -10,3 +10,4 @@ pwdlib[argon2]
 python-multipart
 itsdangerous
 websockets
+openai
