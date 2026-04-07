@@ -1,4 +1,8 @@
 let recognition = null;
+let mediaRecorder = null;
+let mediaStream = null;
+let recordingTimeout = null;
+let discardCurrentCapture = false;
 let voiceModeEnabled = false;
 let suspendedForSpeech = false;
 let pendingMove = null;
@@ -6,8 +10,10 @@ let awaitingMove = false;
 let parsingMove = false;
 let lastPrompt = "";
 let transcriptQueue = Promise.resolve();
+let transcriptionMode = "browser";
 
 const pendingMoveStorageKey = "speechChessPendingMove";
+const captureLengthMs = 4000;
 
 function updateVoiceMessage(message) {
     const output = document.getElementById("voiceMove");
@@ -29,29 +35,22 @@ function updateTranscriptField(text) {
 
 function currentTranscript() {
     const field = transcriptField();
-    if (!field) {
-        return "";
-    }
-
-    return field.value.trim();
+    return field ? field.value.trim() : "";
 }
 
 function updateVoiceModeButton() {
     const button = document.getElementById("voiceModeButton");
-    if (!button) {
-        return;
+    if (button) {
+        button.innerText = voiceModeEnabled ? "Stop Voice Session" : "Start Voice Session";
     }
-
-    button.innerText = voiceModeEnabled ? "Stop Voice Session" : "Start Voice Session";
 }
 
 function savePendingMove() {
     if (pendingMove) {
         sessionStorage.setItem(pendingMoveStorageKey, JSON.stringify(pendingMove));
-        return;
+    } else {
+        sessionStorage.removeItem(pendingMoveStorageKey);
     }
-
-    sessionStorage.removeItem(pendingMoveStorageKey);
 }
 
 function restorePendingMove() {
@@ -110,17 +109,82 @@ function isHelpCommand(text) {
     return normalizeCommand(text) === "help";
 }
 
+function hasBrowserSpeechRecognition() {
+    return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+}
+
+function hasOpenAIAudioCapture() {
+    return Boolean(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+}
+
+function preferredTranscriptionMode() {
+    if (window.speechChessTranscriptionMode === "browser") {
+        return "browser";
+    }
+
+    if (window.speechChessTranscriptionMode === "openai" && hasOpenAIAudioCapture()) {
+        return "openai";
+    }
+
+    if (hasOpenAIAudioCapture()) {
+        return "openai";
+    }
+
+    if (hasBrowserSpeechRecognition()) {
+        return "browser";
+    }
+
+    return "none";
+}
+
+function stopBrowserRecognition() {
+    if (!recognition) {
+        return;
+    }
+
+    try {
+        recognition.stop();
+    } catch (error) {
+        return;
+    }
+}
+
+function stopAudioCapture(discard = false) {
+    discardCurrentCapture = discardCurrentCapture || discard;
+
+    if (recordingTimeout) {
+        clearTimeout(recordingTimeout);
+        recordingTimeout = null;
+    }
+
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        try {
+            mediaRecorder.stop();
+        } catch (error) {
+            discardCurrentCapture = false;
+        }
+    }
+}
+
+function stopActiveListening(discard = false) {
+    stopBrowserRecognition();
+    stopAudioCapture(discard);
+}
+
 function speakText(text) {
     lastPrompt = text;
     updateVoiceMessage(text);
 
     if (!("speechSynthesis" in window)) {
+        if (voiceModeEnabled) {
+            setTimeout(startListeningMode, 0);
+        }
         return;
     }
 
-    if (voiceModeEnabled && recognition) {
+    if (voiceModeEnabled) {
         suspendedForSpeech = true;
-        recognition.stop();
+        stopActiveListening(true);
     }
 
     window.speechSynthesis.cancel();
@@ -128,10 +192,12 @@ function speakText(text) {
     utterance.rate = 1;
     utterance.pitch = 1;
     utterance.onend = function () {
-        if (voiceModeEnabled) {
-            suspendedForSpeech = false;
-            startRecognition();
+        if (!voiceModeEnabled) {
+            return;
         }
+
+        suspendedForSpeech = false;
+        startListeningMode();
     };
     utterance.onerror = utterance.onend;
     window.speechSynthesis.speak(utterance);
@@ -164,14 +230,13 @@ function speakStartupIntro() {
         utterance.pitch = 1;
         utterance.onend = finish;
         utterance.onerror = finish;
-
         window.speechSynthesis.speak(utterance);
         setTimeout(finish, 6000);
     });
 }
 
-function startRecognition() {
-    if (!voiceModeEnabled || recognition || (!window.SpeechRecognition && !window.webkitSpeechRecognition)) {
+function startBrowserRecognition() {
+    if (!voiceModeEnabled || recognition || !hasBrowserSpeechRecognition()) {
         return;
     }
 
@@ -206,20 +271,134 @@ function startRecognition() {
 
     recognition.onend = function () {
         recognition = null;
-        if (voiceModeEnabled && !suspendedForSpeech) {
-            startRecognition();
+        if (voiceModeEnabled && !suspendedForSpeech && transcriptionMode === "browser") {
+            startBrowserRecognition();
         }
     };
 
     recognition.start();
 }
 
-function stopRecognition() {
-    if (recognition) {
-        recognition.stop();
+async function transcribeRecordedAudio(blob) {
+    const formData = new FormData();
+    formData.append("audio", blob, "speech-command.webm");
+
+    try {
+        const response = await fetch("/voice-transcribe", {
+            method: "POST",
+            body: formData
+        });
+
+        return response.json();
+    } catch (error) {
+        return {
+            "success": false,
+            "error": "Could not reach the transcription server."
+        };
+    }
+}
+
+async function startOpenAIAudioCapture() {
+    if (!voiceModeEnabled || suspendedForSpeech || mediaRecorder || !hasOpenAIAudioCapture()) {
+        return;
     }
 
-    recognition = null;
+    try {
+        if (!mediaStream) {
+            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+    } catch (error) {
+        updateVoiceMessage("Microphone access was denied.");
+        if (hasBrowserSpeechRecognition()) {
+            transcriptionMode = "browser";
+            speakText("Microphone recording was blocked. Falling back to browser speech recognition.");
+        }
+        return;
+    }
+
+    const chunks = [];
+    discardCurrentCapture = false;
+    updateVoiceMessage("Listening...");
+
+    mediaRecorder = new MediaRecorder(mediaStream);
+    mediaRecorder.ondataavailable = function (event) {
+        if (event.data && event.data.size > 0) {
+            chunks.push(event.data);
+        }
+    };
+
+    mediaRecorder.onerror = function () {
+        mediaRecorder = null;
+        updateVoiceMessage("There was a problem recording audio.");
+    };
+
+    mediaRecorder.onstop = async function () {
+        recordingTimeout = null;
+        const discard = discardCurrentCapture;
+        discardCurrentCapture = false;
+        mediaRecorder = null;
+
+        if (!voiceModeEnabled || suspendedForSpeech || discard) {
+            return;
+        }
+
+        if (!chunks.length) {
+            speakText("No speech detected. Please try again.");
+            return;
+        }
+
+        const result = await transcribeRecordedAudio(new Blob(chunks, { type: "audio/webm" }));
+
+        if (!result.success) {
+            if (result.fallback_to_browser && hasBrowserSpeechRecognition()) {
+                transcriptionMode = "browser";
+                speakText("OpenAI transcription is not available right now. Falling back to browser speech recognition.");
+                return;
+            }
+
+            speakText(result.error || "I could not transcribe that audio.");
+            return;
+        }
+
+        const transcript = (result.transcript || "").trim();
+        updateTranscriptField(transcript);
+
+        if (!transcript) {
+            speakText("No speech detected. Please try again.");
+            return;
+        }
+
+        transcriptQueue = transcriptQueue
+            .then(function () {
+                return handleTranscript(transcript);
+            })
+            .catch(function () {
+                updateVoiceMessage("There was a problem handling that voice command.");
+            });
+    };
+
+    mediaRecorder.start();
+    recordingTimeout = setTimeout(function () {
+        stopAudioCapture(false);
+    }, captureLengthMs);
+}
+
+function startListeningMode() {
+    if (!voiceModeEnabled || suspendedForSpeech) {
+        return;
+    }
+
+    if (transcriptionMode === "openai") {
+        startOpenAIAudioCapture();
+        return;
+    }
+
+    if (transcriptionMode === "browser") {
+        startBrowserRecognition();
+        return;
+    }
+
+    updateVoiceMessage("Voice transcription is not supported in this browser.");
 }
 
 function enableVoiceMode(announce = true) {
@@ -227,17 +406,17 @@ function enableVoiceMode(announce = true) {
         return;
     }
 
+    transcriptionMode = preferredTranscriptionMode();
     voiceModeEnabled = true;
     clearPendingMove();
     updateVoiceModeButton();
 
     if (announce) {
         speakText("Voice mode enabled. Say Speech Chess to begin your move.");
-        return;
+    } else {
+        updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
+        startListeningMode();
     }
-
-    startRecognition();
-    updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
 }
 
 function disableVoiceMode() {
@@ -246,9 +425,11 @@ function disableVoiceMode() {
     }
 
     voiceModeEnabled = false;
-    stopRecognition();
     suspendedForSpeech = false;
-    window.speechSynthesis.cancel();
+    stopActiveListening(true);
+    if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+    }
     clearPendingMove();
     updateVoiceModeButton();
     updateVoiceMessage("Voice mode disabled.");
@@ -408,6 +589,7 @@ async function beginAutoIntroSession() {
         return;
     }
 
+    transcriptionMode = preferredTranscriptionMode();
     voiceModeEnabled = true;
     clearPendingMove();
     updateVoiceModeButton();
@@ -417,6 +599,6 @@ async function beginAutoIntroSession() {
         return;
     }
 
-    startRecognition();
     updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
+    startListeningMode();
 }
