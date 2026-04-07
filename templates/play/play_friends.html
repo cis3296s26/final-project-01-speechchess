@@ -122,6 +122,10 @@
             </li>
             {% if user_email %}
             <li>
+                <span style="display:block; padding: 6px 16px; font-size:0.8em; color:#aaa; word-break:break-all;">{{ user_email }}</span>
+                <span style="display:block; padding: 2px 16px 6px; font-size:0.8em; color:#aaa;">Rating: {{ user_rating }}</span>
+            </li>
+            <li>
                 <a href="/user_authentication/profile" class="button profile-btn">Profile</a>
             </li>
             <li>
@@ -170,6 +174,10 @@
     </div>
 
     <div id="game-area">
+        <div id="player-bar" style="display:flex; justify-content:space-between; max-width:400px; margin:0 auto 4px; font-size:0.85em; color:#555;">
+            <span id="player-black-info">Black</span>
+            <span id="player-white-info">White</span>
+        </div>
         <div id="timer-bar">
             <div id="timer-black">Black: <span id="time-black">--</span></div>
             <div id="timer-white">White: <span id="time-white">--</span></div>
@@ -199,6 +207,7 @@
     let gameOver = false;
     let lastAnnouncedHistoryLength = 0;
     let currentFen = "start";
+    let currentRoomData = null;
 
     function boardPosition(position) {
         if (!position) {
@@ -224,7 +233,7 @@
         fetch("/rooms", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ player_one: myName, player_two: "waiting" })
+            body: JSON.stringify({ player_one: myName, player_two: "waiting", player_one_email: "{{ user_email or '' }}" })
         })
         .then(r => r.json())
         .then(data => {
@@ -276,11 +285,12 @@
         ws = new WebSocket(`${protocol}://${location.host}/ws/${roomId}`);
 
         ws.onopen = () => {
-            ws.send(JSON.stringify({ type: "join", player: myColor, name: myName }));
+            ws.send(JSON.stringify({ type: "join", player: myColor, name: myName, email: "{{ user_email or '' }}"}));
         };
 
         ws.onmessage = (event) => {
             const msg = JSON.parse(event.data);
+            currentRoomData = msg.data;
 
             if (msg.event === "join" || msg.event === "state") {
                 if (msg.data.player_two !== "waiting" || myColor === "black") {
@@ -289,7 +299,7 @@
             } else if (msg.event === "move" || msg.event === "reset") {
                 applyState(msg.data);
             } else if (msg.event === "leave" || msg.event === "timeout") {
-                endGame(msg.data.winner + " wins!");
+                endGame(msg.data.winner + " wins!", msg.data.winner);
             } else if (msg.event === "error") {
                 showError(msg.detail || "Connection error.");
             }
@@ -298,12 +308,34 @@
         ws.onerror = () => showError("Connection error.");
     }
 
+    async function fetchAndShowRating(email, elementId, playerName) {
+        const el = document.getElementById(elementId);
+        if (!email) {
+            el.textContent = playerName + " (Guest)";
+            return;
+        }
+        try {
+            const res = await fetch("/ratings/" + encodeURIComponent(email));
+            if (res.ok) {
+                const data = await res.json();
+                el.textContent = playerName + " (" + data.rating + ")";
+            } else {
+                el.textContent = playerName + " (Guest)";
+            }
+        } catch {
+            el.textContent = playerName;
+        }
+    }
+
     function startGame(state) {
         timerSeconds = parseInt(document.getElementById("timer-setting").value, 10);
         timeLeft = { white: timerSeconds, black: timerSeconds };
 
         document.getElementById("lobby").style.display = "none";
         document.getElementById("game-area").style.display = "block";
+
+        fetchAndShowRating(state.player_one_email, "player-white-info", state.player_one || "White");
+        fetchAndShowRating(state.player_two_email, "player-black-info", state.player_two || "Black");
 
         board = Chessboard("board", {
             draggable: true,
@@ -362,7 +394,7 @@
         updateTimerDisplay();
 
         if (state.game_over) {
-            endGame(state.winner ? state.winner + " wins!" : "Draw!");
+            endGame(state.winner ? state.winner + " wins!" : "Draw!", state.winner || null);
             return;
         }
 
@@ -411,7 +443,8 @@
             if (timeLeft[currentTurn] <= 0) {
                 clearInterval(timerInterval);
                 ws.send(JSON.stringify({ type: "leave", player: myColor }));
-                endGame("Time's up! " + (myColor === currentTurn ? "You lost." : "You won!"));
+                const timeoutWinner = myColor === "white" ? "black" : "white";
+                endGame("Time's up! " + (myColor === currentTurn ? "You lost." : "You won!"), timeoutWinner);
             }
         }, 1000);
     }
@@ -433,15 +466,39 @@
         }
 
         ws.send(JSON.stringify({ type: "leave", player: myColor }));
-        endGame("You resigned.");
+        const resignWinner = myColor === "white" ? "black" : "white";
+        endGame("You resigned.", resignWinner);
     }
 
-    function endGame(message) {
+    function endGame(message, winnerColor) {
         gameOver = true;
         clearInterval(timerInterval);
         document.getElementById("turn-indicator").textContent = message;
         if (ws) {
             ws.close();
+        }
+
+        // Update Elo ratings — fetch fresh room data to ensure emails are present
+        if (roomId && winnerColor) {
+            fetch("/rooms/" + roomId)
+                .then(r => r.json())
+                .then(room => {
+                    const winnerEmail = winnerColor === "white"
+                        ? room.player_one_email
+                        : room.player_two_email;
+                    const loserEmail = winnerColor === "white"
+                        ? room.player_two_email
+                        : room.player_one_email;
+
+                    if (winnerEmail && loserEmail) {
+                        fetch("/update-ratings", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ winner_email: winnerEmail, loser_email: loserEmail })
+                        }).catch(() => {});
+                    }
+                })
+                .catch(() => {});
         }
     }
 
