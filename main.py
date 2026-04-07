@@ -1,5 +1,6 @@
 import chess_logic
 import Voice
+import user_authentication
 import io
 import os
 from pydantic import BaseModel
@@ -8,35 +9,21 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from user_authentication import router as authentication_router, create_db_and_tables
-from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
 import uuid
 import json
 
-# Create database and tables during startup. App runs after yield.
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    create_db_and_tables()
-    yield
-
-# Creates a fastapi instance, pass lifespan function so it runs when app starts and creates the database and tables during startup.
-app = FastAPI(lifespan=lifespan)
+# Creates a fastapi instance
+app = FastAPI()
 # Mounted to the /static path, refers to the "static directory", referred by FastAPI as static. If a there is a request to a file with /static, serve it from the static/ folder directly with FastAPI.
 app.mount("/static", StaticFiles(directory="static"), name="static")
 # Create an instance, templates, to later render and return a TemplateResponse. All html files are in templates directory.
 templates = Jinja2Templates(directory="templates")
 
-# Helper function to return html templates with session based user data to every page that needs it. 
-def render_page(request: Request, template_name: str):
-    # Checks the session to see if there's a valid value for user_email in the session dictionary. HTML code checks user_email to see if contains a valid value, which it does if the user successfully logs in. 
-    user_email = request.session.get("user_email")
-    # Pass the request, template name, and data fields through the context dictionary, when returning a template. Calls to render_page in other routes will then do this to when returning templates.
-    return templates.TemplateResponse(request=request, name=template_name, context={"request": request, "user_email": user_email})
-    
-# Reads session cookie before and after every request and verifies the key. Then grants access to the request.session. request.session is a dictionary that stores the fields, fastapi middleware saves it to a cookie.
-app.add_middleware(SessionMiddleware, secret_key="secret-key")
+app.include_router(user_authentication.router)
+user_authentication.create_db_and_tables()
 
+app.add_middleware(SessionMiddleware, secret_key="speechchess-secret-key")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Switch to url of git website when it gets working
@@ -45,81 +32,85 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add all routes from authentication_router to app.
-app.include_router(authentication_router)
+def ctx(request: Request, **extra):
+    email = request.session.get("user_email")
+    rating = None
+    if email:
+        from sqlmodel import Session, select
+        with user_authentication.Session(user_authentication.engine) as session:
+            user = session.exec(select(user_authentication.User).where(user_authentication.User.email == email)).first()
+            if user:
+                rating = user.rating
+    return {"request": request, "user_email": email, "user_rating": rating, **extra}
 
-# root() runs whenever "/" path occurs. Route returns HTML. root() passes an instance of the Request object named request. Returns render_page instance.
+# root() runs whenever "/" path occurs. Route returns HTML. root() passes an instance of the Request object named request. Returns template instance.
 @app.get("/", response_class = HTMLResponse)
 def root(request: Request):
-    return render_page(request, "index.html")
+    return templates.TemplateResponse(request=request, name="index.html", context=ctx(request))
 
 # All the user_authentication directory html file returns
 @app.get("/user_authentication/get_started", response_class = HTMLResponse)
-def get_started_page(request: Request):
-    return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context={"request": request})
+def getStartedPage(request: Request):
+    return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context=ctx(request))
 
 @app.get("/user_authentication/login", response_class = HTMLResponse)
-def login_page(request: Request):
-    return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request})
+def settings_page(request: Request):
+    return templates.TemplateResponse(request=request, name="user_authentication/login.html", context=ctx(request))
 
 @app.get("/user_authentication/signup", response_class = HTMLResponse)
-def signup_page(request: Request):
-    return templates.TemplateResponse(request=request, name="user_authentication/signup.html", context={"request": request})
-
-@app.get("/user_authentication/profile",  response_class = HTMLResponse)
-def profile_page(request: Request):
-    return templates.TemplateResponse(request=request, name="user_authentication/profile.html", context={"request": request})
+def settings_page(request: Request):
+    return templates.TemplateResponse(request=request, name="user_authentication/signup.html", context=ctx(request))
 
 # All the play directory html file returns
 @app.get("/play/play", response_class = HTMLResponse)
-def play_page(request: Request):
-    return render_page(request, "play/play.html")
+def playPage(request: Request):
+    return templates.TemplateResponse(request=request, name="play/play.html", context=ctx(request))
     
 @app.get("/play/play_online", response_class = HTMLResponse)
-def play_online_page(request: Request):
-    return render_page(request, "play/play_online.html")
+def settings_page(request: Request):
+    return templates.TemplateResponse(request=request, name="play/play_online.html", context=ctx(request))
 
 @app.get("/play/play_ai", response_class = HTMLResponse)
-def play_ai_page(request: Request):
-    return render_page(request, "play/play_ai.html")
+def settings_page(request: Request):
+    return templates.TemplateResponse(request=request, name="play/play_ai.html", context=ctx(request))
 
 @app.get("/play/play_friends", response_class = HTMLResponse)
-def play_friends_page(request: Request):
-    return render_page(request, "play/play_friends.html")
+def settings_page(request: Request):
+    return templates.TemplateResponse(request=request, name="play/play_friends.html", context=ctx(request))
 
 @app.get("/play/stats", response_class = HTMLResponse)
-def stats_page(request: Request):
-    return render_page(request, "play/stats.html")
+def settings_page(request: Request):
+    return templates.TemplateResponse(request=request, name="play/stats.html", context=ctx(request))
 
 @app.get("/play/history", response_class = HTMLResponse)
-def history_page(request: Request):
-    return render_page(request, "play/history.html")
+def settings_page(request: Request):
+    return templates.TemplateResponse(request=request, name="play/history.html", context=ctx(request))
 
 # All the puzzle directory html file returns
 @app.get("/puzzles/daily_puzzle", response_class = HTMLResponse)
-def daily_puzzle_page(request: Request):
-    return render_page(request, "puzzles/daily_puzzle.html")
+def settings_page(request: Request):
+    return templates.TemplateResponse(request=request, name="puzzles/daily_puzzle.html", context=ctx(request))
 
 @app.get("/puzzles/all_puzzles", response_class = HTMLResponse)
-def all_puzzles_page(request: Request):
-    return render_page(request, "puzzles/all_puzzles.html")
+def settings_page(request: Request):
+    return templates.TemplateResponse(request=request, name="puzzles/all_puzzles.html", context=ctx(request))
 
 # Rest of the sidebar html file returns
 @app.get("/sidebar/learn", response_class = HTMLResponse)
-def learn_page(request: Request):
-    return render_page(request, "sidebar/learn.html")    
+def learnPage(request: Request):
+    return templates.TemplateResponse(request=request, name="sidebar/learn.html", context=ctx(request))    
     
 @app.get("/sidebar/community", response_class = HTMLResponse)
 def community_page(request: Request):
-    return render_page(request, "sidebar/community.html")
+    return templates.TemplateResponse(request=request, name="sidebar/community.html", context=ctx(request))
 
 @app.get("/sidebar/settings", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return render_page(request, "sidebar/settings.html")
+    return templates.TemplateResponse(request=request, name="sidebar/settings.html", context=ctx(request))
 
 @app.get("/sidebar/support", response_class = HTMLResponse)
-def support_page(request: Request):
-    return render_page(request, "sidebar/support.html")
+def settings_page(request: Request):
+    return templates.TemplateResponse(request=request, name="sidebar/support.html", context=ctx(request))
 
 #Chess Logic
 
@@ -135,11 +126,11 @@ def state():
 
 @app.get("/game", response_class=HTMLResponse)
 def game(request: Request):
-    return templates.TemplateResponse(request=request, name="game.html", context={"request": request})
+    return templates.TemplateResponse(request=request, name="game.html", context=ctx(request))
 
 @app.get("/voice", response_class=HTMLResponse)
 def voice(request: Request):
-    return templates.TemplateResponse(request=request, name="voice.html", context={"request": request})
+    return templates.TemplateResponse(request=request, name="voice.html", context=ctx(request))
 
 @app.get("/board")
 def board():
@@ -174,6 +165,35 @@ def voice_parse(data: VoiceInput):
     result = Voice.parse_speech(data.transcript)
     result["turn"] = chess_logic.get_game_state()["turn"]
     return result
+class RoomVoiceInput(BaseModel):
+    room_id: str
+    player: str
+    transcript: str
+
+@app.post("/rooms/voice-parse")
+def parse_room_voice(req: RoomVoiceInput):
+    room = get_room_or_404(req.room_id)
+
+    if room["game_over"]:
+        return {
+            "status": "invalid",
+            "transcript": req.transcript,
+            "prompt": "This game is already over.",
+            "turn": room["turn"],
+        }
+
+    if room["turn"] != req.player:
+        return {
+            "status": "invalid",
+            "transcript": req.transcript,
+            "prompt": f"It is {room['turn']}'s turn.",
+            "turn": room["turn"],
+        }
+
+    result = Voice.parse_speech(req.transcript, room["game"].board)
+    result["turn"] = room["turn"]
+    return result
+
 
 @app.post("/voice-transcribe")
 async def voice_transcribe(audio: UploadFile = File(...)):
@@ -234,7 +254,8 @@ def reset():
 class CreateRoomRequest(BaseModel):
     player_one: str
     player_two: str
-
+    player_one_email: str = ""
+    player_two_email: str = ""
 
 class MoveRequest(BaseModel):
     room_id: str
@@ -245,12 +266,6 @@ class MoveRequest(BaseModel):
 class LeaveRequest(BaseModel):
     room_id: str
     player: str
-
-
-class RoomVoiceInput(BaseModel):
-    room_id: str
-    player: str
-    transcript: str
 
 
 rooms: dict[str, dict] = {} 
@@ -270,11 +285,13 @@ def get_room_or_404(room_id: str) -> dict:
 def create_room(req: CreateRoomRequest):
     room_id = str(uuid.uuid4())
     rooms[room_id] = {
-        "room_id": room_id,
-        "player_one": req.player_one,
-        "player_two": req.player_two,
-        **chess_logic.get_game_state(),
-    }
+    "room_id": room_id,
+    "player_one": req.player_one,
+    "player_two": req.player_two,
+    "player_one_email": req.player_one_email,
+    "player_two_email": req.player_two_email,
+    **chess_logic.get_game_state(),
+}
     rooms[room_id]["game"] = chess_logic.GameBoard()
     connections[room_id] = []
     return room_data(rooms[room_id])
@@ -307,31 +324,6 @@ async def submit_move(req: MoveRequest):
     rooms[req.room_id].update(result)
     await broadcast(req.room_id, {"event": "move", "data": room_data(rooms[req.room_id])})
     return room_data(rooms[req.room_id])
-
-
-@app.post("/rooms/voice-parse", summary="Parse a voice move for a room")
-def parse_room_voice(req: RoomVoiceInput):
-    room = get_room_or_404(req.room_id)
-
-    if room["game_over"]:
-        return {
-            "status": "invalid",
-            "transcript": req.transcript,
-            "prompt": "This game is already over.",
-            "turn": room["turn"],
-        }
-
-    if room["turn"] != req.player:
-        return {
-            "status": "invalid",
-            "transcript": req.transcript,
-            "prompt": f"It is {room['turn']}'s turn.",
-            "turn": room["turn"],
-        }
-
-    result = Voice.parse_speech(req.transcript, room["game"].board)
-    result["turn"] = room["turn"]
-    return result
 
 @app.post("/rooms/reset", summary="Reset the board in a room")
 async def reset_room(room_id: str):
@@ -400,6 +392,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
             elif msg.get("type") == "join":
                 if msg.get("player") == "black":
                     rooms[room_id]["player_two"] = msg.get("name", "Player 2")
+                    rooms[room_id]["player_two_email"] = msg.get("email", "")
                     await broadcast(room_id, {"event": "join", "data": room_data(rooms[room_id])})
 
             elif msg.get("type") == "leave":
@@ -410,8 +403,9 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                     await broadcast(room_id, {"event": "leave", "data": room_data(room)})
 
                 
-    except WebSocketDisconnect:
-        connections[room_id].remove(websocket)
+    except (WebSocketDisconnect, RuntimeError):
+        if websocket in connections.get(room_id, []):
+            connections[room_id].remove(websocket)
 
 
 async def broadcast(room_id: str, payload: dict):

@@ -86,6 +86,10 @@
             </li>
             {% if user_email %}
             <li>
+                <span style="display:block; padding: 6px 16px; font-size:0.8em; color:#aaa; word-break:break-all;">{{ user_email }}</span>
+                <span style="display:block; padding: 2px 16px 6px; font-size:0.8em; color:#aaa;">Rating: {{ user_rating }}</span>
+            </li>
+            <li>
                 <a href="/user_authentication/profile" class="button profile-btn">Profile</a>
             </li>
             <li>
