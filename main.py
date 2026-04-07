@@ -1,7 +1,9 @@
 import chess_logic
 import Voice
+import io
+import os
 from pydantic import BaseModel
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -173,6 +175,57 @@ def voice_parse(data: VoiceInput):
     result["turn"] = chess_logic.get_game_state()["turn"]
     return result
 
+@app.post("/voice-transcribe")
+async def voice_transcribe(audio: UploadFile = File(...)):
+    try:
+        from openai import OpenAI
+    except ImportError:
+        return {
+            "success": False,
+            "error": "OpenAI is not installed on the server.",
+            "fallback_to_browser": True,
+        }
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return {
+            "success": False,
+            "error": "OPENAI_API_KEY is not configured on the server.",
+            "fallback_to_browser": True,
+        }
+
+    audio_bytes = await audio.read()
+    if not audio_bytes:
+        return {
+            "success": False,
+            "error": "No audio was uploaded.",
+        }
+
+    audio_file = io.BytesIO(audio_bytes)
+    audio_file.name = audio.filename or "speech.webm"
+
+    try:
+        client = OpenAI(api_key=api_key)
+        transcription = client.audio.transcriptions.create(
+            model=os.getenv("OPENAI_TRANSCRIBE_MODEL", "gpt-4o-mini-transcribe"),
+            file=audio_file,
+            prompt=(
+                "Transcribe short chess voice commands for a website called Speech Chess. "
+                "Common phrases include Speech Chess, submit move, cancel, repeat, help, "
+                "castle kingside, knight f3, bishop c4, b1 to c3, and e2 to e4."
+            ),
+        )
+    except Exception as exc:
+        return {
+            "success": False,
+            "error": f"OpenAI transcription failed: {exc}",
+        }
+
+    return {
+        "success": True,
+        "transcript": (getattr(transcription, "text", "") or "").strip(),
+    }
+
 @app.post("/reset")
 def reset():
     return chess_logic.reset_game()
@@ -282,8 +335,8 @@ def parse_room_voice(req: RoomVoiceInput):
 
 @app.post("/rooms/reset", summary="Reset the board in a room")
 async def reset_room(room_id: str):
-    get_room_or_404(room_id)
-    result = chess_logic.reset_game()
+    room = get_room_or_404(room_id)
+    result = room["game"].reset_game()
     rooms[room_id].update(result)
     await broadcast(room_id, {"event": "reset", "data": room_data(rooms[room_id])})
     return room_data(rooms[room_id])
@@ -311,9 +364,9 @@ def delete_room(room_id: str):
 
 @app.post("/undo")
 def undo_move():
-    if len(board.move_stack) > 0:
-        board.pop()
-    return {"success": True}
+    if len(chess_logic.board.move_stack) > 0:
+        chess_logic.board.pop()
+    return {"success": True, **chess_logic.get_game_state()}
 
 @app.websocket("/ws/{room_id}")
 async def websocket_endpoint(websocket: WebSocket, room_id: str):
