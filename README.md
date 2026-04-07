@@ -14,8 +14,10 @@ Follow this project board to know the latest status of the project: [http://...]
 3. Open Windows PowerShell
 4. Enter: python -m pip install -r requirements.txt
 5. Navigate to directory where the extracted folder for this project is located
-6. Enter: python -m uvicorn main:app --reload or python main.py
-7. Proceed to the link generated
+6. Enter: $env:OPENAI_API_KEY="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"
+7. Enter: $env:OPENAI_TRANSCRIBE_MODEL="gpt-4o-mini-transcribe"
+8. Enter: python -m uvicorn main:app --reload or python main.py
+9. Proceed to the link generated
 
 # Player Requirements
 A modern web browser, microphone access enabled
