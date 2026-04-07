@@ -1,0 +1,12 @@
+SpeechRecognition
+sounddevice
+numpy
+pyttsx3
+jinja2
+uvicorn
+fastapi
+sqlmodel
+pwdlib[argon2]
+python-multipart
+itsdangerous
+websockets
