@@ -11,9 +11,53 @@ let parsingMove = false;
 let lastPrompt = "";
 let transcriptQueue = Promise.resolve();
 let transcriptionMode = "browser";
+let speechPlaybackId = 0;
+let backgroundMusicHeldForVoiceCommand = false;
+let backgroundMusicWasPlaying = false;
 
 const pendingMoveStorageKey = "speechChessPendingMove";
 const captureLengthMs = 4000;
+
+function backgroundMusicElement() {
+    return document.getElementById("backgroundMusic");
+}
+
+function pauseBackgroundMusic() {
+    const music = backgroundMusicElement();
+    if (!music || music.paused) {
+        return;
+    }
+
+    backgroundMusicWasPlaying = true;
+    music.pause();
+}
+
+function resumeBackgroundMusic() {
+    if (!backgroundMusicWasPlaying) {
+        return;
+    }
+
+    backgroundMusicWasPlaying = false;
+
+    const music = backgroundMusicElement();
+    if (!music) {
+        return;
+    }
+
+    music.play().catch(function () {
+        return;
+    });
+}
+
+function holdBackgroundMusicForVoiceCommand() {
+    backgroundMusicHeldForVoiceCommand = true;
+    pauseBackgroundMusic();
+}
+
+function releaseBackgroundMusicForVoiceCommand() {
+    backgroundMusicHeldForVoiceCommand = false;
+    resumeBackgroundMusic();
+}
 
 function updateVoiceMessage(message) {
     const output = document.getElementById("voiceMove");
@@ -171,14 +215,26 @@ function stopActiveListening(discard = false) {
     stopAudioCapture(discard);
 }
 
-function speakText(text) {
+function speakText(text, options = {}) {
+    const releaseMusicHold = options.releaseMusicHold === true;
+
     lastPrompt = text;
     updateVoiceMessage(text);
+    pauseBackgroundMusic();
+
+    const playbackId = ++speechPlaybackId;
 
     if (!("speechSynthesis" in window)) {
         if (voiceModeEnabled) {
             setTimeout(startListeningMode, 0);
         }
+
+        if (releaseMusicHold) {
+            releaseBackgroundMusicForVoiceCommand();
+        } else if (!backgroundMusicHeldForVoiceCommand) {
+            resumeBackgroundMusic();
+        }
+
         return;
     }
 
@@ -192,12 +248,27 @@ function speakText(text) {
     utterance.rate = 1;
     utterance.pitch = 1;
     utterance.onend = function () {
+        if (playbackId !== speechPlaybackId) {
+            return;
+        }
+
         if (!voiceModeEnabled) {
+            if (releaseMusicHold) {
+                releaseBackgroundMusicForVoiceCommand();
+            } else if (!backgroundMusicHeldForVoiceCommand) {
+                resumeBackgroundMusic();
+            }
             return;
         }
 
         suspendedForSpeech = false;
         startListeningMode();
+
+        if (releaseMusicHold) {
+            releaseBackgroundMusicForVoiceCommand();
+        } else if (!backgroundMusicHeldForVoiceCommand) {
+            resumeBackgroundMusic();
+        }
     };
     utterance.onerror = utterance.onend;
     window.speechSynthesis.speak(utterance);
@@ -206,8 +277,14 @@ function speakText(text) {
 function speakStartupIntro() {
     const intro = "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move.";
     updateVoiceMessage(intro);
+    pauseBackgroundMusic();
+
+    const playbackId = ++speechPlaybackId;
 
     if (!("speechSynthesis" in window)) {
+        if (!backgroundMusicHeldForVoiceCommand) {
+            resumeBackgroundMusic();
+        }
         return Promise.resolve();
     }
 
@@ -223,6 +300,11 @@ function speakStartupIntro() {
             }
 
             settled = true;
+
+            if (playbackId === speechPlaybackId && !backgroundMusicHeldForVoiceCommand) {
+                resumeBackgroundMusic();
+            }
+
             resolve();
         };
 
@@ -427,9 +509,11 @@ function disableVoiceMode() {
     voiceModeEnabled = false;
     suspendedForSpeech = false;
     stopActiveListening(true);
+    backgroundMusicHeldForVoiceCommand = false;
     if ("speechSynthesis" in window) {
         window.speechSynthesis.cancel();
     }
+    resumeBackgroundMusic();
     clearPendingMove();
     updateVoiceModeButton();
     updateVoiceMessage("Voice mode disabled.");
@@ -453,7 +537,7 @@ async function playPendingMove() {
     restorePendingMove();
 
     if (!pendingMove) {
-        speakText("There is no pending move to submit.");
+        speakText("There is no pending move to submit.", { releaseMusicHold: true });
         return;
     }
 
@@ -472,7 +556,8 @@ async function playPendingMove() {
             data = await response.json();
         }
     } catch (error) {
-        speakText("I could not send that move to the server.");
+        clearPendingMove();
+        speakText("I could not send that move to the server.", { releaseMusicHold: true });
         return;
     }
 
@@ -487,19 +572,28 @@ async function playPendingMove() {
 
         const playedMove = data.spoken_text || pendingMove.spoken;
         clearPendingMove();
-        speakText(`Played ${playedMove}. ${data.turn} to move.`);
+        speakText(`Played ${playedMove}. ${data.turn} to move.`, { releaseMusicHold: true });
         return;
     }
 
     clearPendingMove();
-    speakText(data.error || "That move could not be played.");
+    speakText(data.error || "That move could not be played.", { releaseMusicHold: true });
 }
 
 async function handleMoveTranscript(transcript) {
     parsingMove = true;
     updateVoiceMessage(`Parsing move: ${transcript}`);
 
-    const result = await parseMoveTranscript(transcript);
+    let result;
+    try {
+        result = await parseMoveTranscript(transcript);
+    } catch (error) {
+        parsingMove = false;
+        clearPendingMove();
+        speakText("I could not understand that move right now.", { releaseMusicHold: true });
+        return;
+    }
+
     parsingMove = false;
 
     if (result.status === "exact") {
@@ -513,7 +607,9 @@ async function handleMoveTranscript(transcript) {
     pendingMove = null;
     savePendingMove();
     awaitingMove = result.status !== "invalid";
-    speakText(result.prompt);
+    speakText(result.prompt, {
+        releaseMusicHold: !awaitingMove && !pendingMove
+    });
 }
 
 async function handleTranscript(transcript) {
@@ -534,11 +630,12 @@ async function handleTranscript(transcript) {
 
     if (isCancelCommand(normalized)) {
         clearPendingMove();
-        speakText("Cancelled. Say Speech Chess to start another move.");
+        speakText("Cancelled. Say Speech Chess to start another move.", { releaseMusicHold: true });
         return;
     }
 
     if (isWakePhrase(normalized)) {
+        holdBackgroundMusicForVoiceCommand();
         clearPendingMove();
         awaitingMove = true;
         speakText("Listening for your move.");
