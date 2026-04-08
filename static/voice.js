@@ -157,31 +157,28 @@ function speakText(text) {
 function speakStartupIntro() {
     const intro = "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move.";
     updateVoiceMessage(intro);
-
+    if(!narratorEnabled) {
+        return Promise.resolve();
+    }
     if (!("speechSynthesis" in window)) {
         return Promise.resolve();
     }
-
     window.speechSynthesis.cancel();
-
     return new Promise(function (resolve) {
         const utterance = new SpeechSynthesisUtterance(intro);
         let settled = false;
-
         const finish = function () {
             if (settled) {
                 return;
             }
-
             settled = true;
             resolve();
         };
-
+        utterance.volume = (narratorVolume/100) * (masterVolume/100);
         utterance.rate = 1;
         utterance.pitch = 1;
         utterance.onend = finish;
         utterance.onerror = finish;
-
         window.speechSynthesis.speak(utterance);
         setTimeout(finish, 6000);
     });
