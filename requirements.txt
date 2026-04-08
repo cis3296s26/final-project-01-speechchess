@@ -1,6 +1,7 @@
 SpeechRecognition
 sounddevice
 numpy
+chess
 pyttsx3
 jinja2
 uvicorn
