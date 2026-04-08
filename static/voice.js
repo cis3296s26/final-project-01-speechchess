@@ -132,12 +132,19 @@ function normalizeCommand(text) {
 }
 
 function isWakePhrase(text) {
-    return normalizeCommand(text).includes("speech chess");
+    const normalized = normalizeCommand(text);
+    return (
+        normalized.includes("speech chess") ||
+        normalized.includes("speechchess") ||
+        normalized.includes("speech chest") ||
+        normalized.includes("speech test") ||
+        normalized.includes("chess et")
+    );
 }
 
 function isSubmitCommand(text) {
     const normalized = normalizeCommand(text);
-    return normalized.includes("submit move") || normalized === "submit";
+    return normalized.includes("submit move") || normalized === "submit" || normalized === "confirm" || normalized.includes("confirm move");
 }
 
 function isCancelCommand(text) {
@@ -151,6 +158,32 @@ function isRepeatCommand(text) {
 
 function isHelpCommand(text) {
     return normalizeCommand(text) === "help";
+}
+
+function moveAfterWakePhrase(text) {
+    const normalized = normalizeCommand(text);
+
+    if (normalized.startsWith("speech chess ")) {
+        return normalized.slice("speech chess ".length).trim();
+    }
+
+    if (normalized.startsWith("speechchess ")) {
+        return normalized.slice("speechchess ".length).trim();
+    }
+
+    if (normalized.startsWith("speech chest ")) {
+        return normalized.slice("speech chest ".length).trim();
+    }
+
+    if (normalized.startsWith("speech test ")) {
+        return normalized.slice("speech test ".length).trim();
+    }
+
+    if (normalized.startsWith("chess et ")) {
+        return normalized.slice("chess et ".length).trim();
+    }
+
+    return "";
 }
 
 function hasBrowserSpeechRecognition() {
@@ -364,10 +397,23 @@ function startBrowserRecognition() {
 async function transcribeRecordedAudio(blob) {
     const formData = new FormData();
     formData.append("audio", blob, "speech-command.webm");
+    const endpoint =
+        window.speechChessTranscriptionEndpoint ||
+        localStorage.getItem("speechChessTranscriptionEndpoint") ||
+        "/voice-transcribe";
+    const authToken =
+        window.speechChessAuthToken ||
+        localStorage.getItem("speechChessAuthToken");
+    const headers = {};
+
+    if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+    }
 
     try {
-        const response = await fetch("/voice-transcribe", {
+        const response = await fetch(endpoint, {
             method: "POST",
+            headers: headers,
             body: formData
         });
 
@@ -456,6 +502,11 @@ async function startOpenAIAudioCapture() {
             })
             .catch(function () {
                 updateVoiceMessage("There was a problem handling that voice command.");
+            })
+            .finally(function () {
+                if (voiceModeEnabled && !suspendedForSpeech && transcriptionMode === "openai" && !mediaRecorder) {
+                    startListeningMode();
+                }
             });
     };
 
@@ -600,7 +651,7 @@ async function handleMoveTranscript(transcript) {
         pendingMove = result.move;
         savePendingMove();
         awaitingMove = false;
-        speakText(`I heard ${result.move.spoken}. Say submit move to play it, or cancel.`);
+        speakText(`I heard ${result.move.spoken}. Say submit move or confirm to play it, or cancel.`);
         return;
     }
 
@@ -614,6 +665,7 @@ async function handleMoveTranscript(transcript) {
 
 async function handleTranscript(transcript) {
     const normalized = normalizeCommand(transcript);
+    const wakeMove = moveAfterWakePhrase(transcript);
     updateVoiceMessage(`Heard: ${transcript}`);
 
     if (isRepeatCommand(normalized)) {
@@ -624,13 +676,21 @@ async function handleTranscript(transcript) {
     }
 
     if (isHelpCommand(normalized)) {
-        speakText("Say Speech Chess, then say your move. Then say submit move to play it, or cancel.");
+        speakText("Say Speech Chess and your move together, like Speech Chess knight f 3. Then say submit move or confirm to play it, or cancel.");
         return;
     }
 
     if (isCancelCommand(normalized)) {
         clearPendingMove();
         speakText("Cancelled. Say Speech Chess to start another move.", { releaseMusicHold: true });
+        return;
+    }
+
+    if (wakeMove) {
+        holdBackgroundMusicForVoiceCommand();
+        clearPendingMove();
+        awaitingMove = false;
+        await handleMoveTranscript(wakeMove);
         return;
     }
 
@@ -658,7 +718,7 @@ async function handleTranscript(transcript) {
     }
 
     if (pendingMove) {
-        speakText(`I still have ${pendingMove.spoken}. Say submit move to play it, or cancel.`);
+        speakText(`I still have ${pendingMove.spoken}. Say submit move or confirm to play it, or cancel.`);
     }
 }
 
