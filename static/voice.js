@@ -6,8 +6,20 @@ let awaitingMove = false;
 let parsingMove = false;
 let lastPrompt = "";
 let transcriptQueue = Promise.resolve();
+let narratorEnabled = true;
+let voiceInputEnabled = true;
+let masterVolume = 50;
+let narratorVolume = 50;
 
 const pendingMoveStorageKey = "speechChessPendingMove";
+
+// If the global object exists then keep those settings and set the local variables to them. Else, keep them set to default values.
+if (window.speechChessSettings) {
+    narratorEnabled = window.speechChessSettings.narratorEnabled;
+    voiceInputEnabled = window.speechChessSettings.voiceInputEnabled;
+    masterVolume = window.speechChessSettings.masterVolume;
+    narratorVolume = window.speechChessSettings.narratorVolume;
+}
 
 function updateVoiceMessage(message) {
     const output = document.getElementById("voiceMove");
@@ -111,6 +123,10 @@ function isHelpCommand(text) {
 }
 
 function speakText(text) {
+    if(!narratorEnabled) {
+        return;
+    }
+
     lastPrompt = text;
     updateVoiceMessage(text);
 
@@ -125,6 +141,7 @@ function speakText(text) {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.volume = (narratorVolume/100) * (masterVolume/100);
     utterance.rate = 1;
     utterance.pitch = 1;
     utterance.onend = function () {
@@ -171,23 +188,24 @@ function speakStartupIntro() {
 }
 
 function startRecognition() {
-    if (!voiceModeEnabled || recognition || (!window.SpeechRecognition && !window.webkitSpeechRecognition)) {
+    if(!voiceInputEnabled) {
+        updateVoiceMessage("Voice input is disabled in settings.");
         return;
     }
-
+    if(!voiceModeEnabled || recognition || (!window.SpeechRecognition && !window.webkitSpeechRecognition)) {
+        return;
+    }
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRecognition();
     recognition.lang = "en-US";
     recognition.interimResults = false;
     recognition.continuous = true;
     recognition.maxAlternatives = 3;
-
     recognition.onresult = function (event) {
         for (let i = event.resultIndex; i < event.results.length; i += 1) {
             if (!event.results[i].isFinal) {
                 continue;
             }
-
             const transcript = event.results[i][0].transcript.trim();
             updateTranscriptField(transcript);
             transcriptQueue = transcriptQueue
@@ -198,47 +216,46 @@ function startRecognition() {
                     updateVoiceMessage("There was a problem handling that voice command.");
                 });
         }
-    };
-
-    recognition.onerror = function (event) {
-        updateVoiceMessage(`Speech recognition error: ${event.error}`);
-    };
-
-    recognition.onend = function () {
-        recognition = null;
-        if (voiceModeEnabled && !suspendedForSpeech) {
-            startRecognition();
-        }
-    };
-
-    recognition.start();
-}
-
+        };
+        recognition.onerror = function (event) {
+            updateVoiceMessage(`Speech recognition error: ${event.error}`);
+        };
+        recognition.onend = function () {
+            recognition = null;
+            if(voiceModeEnabled && !suspendedForSpeech && voiceInputEnabled) {
+                startRecognition();
+            }
+        };
+        recognition.start();
+    }   
+    
 function stopRecognition() {
     if (recognition) {
         recognition.stop();
     }
-
     recognition = null;
 }
 
 function enableVoiceMode(announce = true) {
-    if (voiceModeEnabled) {
+    if(!voiceInputEnabled) {
+        updateVoiceMessage("Voice input is disabled in settings.");
         return;
     }
-
+    if(!voiceModeEnabled) {
+        enableVoiceMode(true);
+        return;
+    }
     voiceModeEnabled = true;
     clearPendingMove();
     updateVoiceModeButton();
-
     if (announce) {
         speakText("Voice mode enabled. Say Speech Chess to begin your move.");
         return;
     }
-
     startRecognition();
     updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
 }
+
 
 function disableVoiceMode() {
     if (!voiceModeEnabled) {
@@ -385,11 +402,14 @@ async function handleTranscript(transcript) {
 }
 
 function startVoiceInput() {
-    if (!voiceModeEnabled) {
+    if(!voiceInputEnabled) {
+        updateVoiceMessage("Voice input is disabled in settings.");
+        return;
+    }
+    if(!voiceModeEnabled) {
         enableVoiceMode(true);
         return;
     }
-
     disableVoiceMode();
 }
 
@@ -399,24 +419,23 @@ async function submitVoiceMove() {
         updateVoiceMessage("Type a transcript or use voice mode first.");
         return;
     }
-
     await handleMoveTranscript(transcript);
 }
 
 async function beginAutoIntroSession() {
-    if (voiceModeEnabled) {
+    if (!voiceInputEnabled) {
+        updateVoiceMessage("Voice input is disabled in settings.");
+        return;
+    }if(voiceModeEnabled) {
         return;
     }
-
     voiceModeEnabled = true;
     clearPendingMove();
     updateVoiceModeButton();
     await speakStartupIntro();
-
     if (!voiceModeEnabled) {
         return;
     }
-
     startRecognition();
     updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
 }

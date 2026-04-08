@@ -6,9 +6,10 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from user_authentication import router as authentication_router, create_db_and_tables
+from user_authentication import router as authentication_router, create_db_and_tables, engine, get_or_create_user_settings
 from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
+from sqlmodel import Session
 import uuid
 import json
 
@@ -25,13 +26,17 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Create an instance, templates, to later render and return a TemplateResponse. All html files are in templates directory.
 templates = Jinja2Templates(directory="templates")
 
-# Helper function to return html templates with session based user data to every page that needs it. 
+# Helper function to return html page templates if user is logged in or not. As well as with that account's settings if a user is logged in when accessing a page.
 def render_page(request: Request, template_name: str):
-    # Checks the session to see if there's a valid value for user_email in the session dictionary. HTML code checks user_email to see if contains a valid value, which it does if the user successfully logs in. 
     user_email = request.session.get("user_email")
-    # Pass the request, template name, and data fields through the context dictionary, when returning a template. Calls to render_page in other routes will then do this to when returning templates.
-    return templates.TemplateResponse(request=request, name=template_name, context={"request": request, "user_email": user_email})
-    
+    user_id = request.session.get("user_id")
+    settings = None
+    if user_id is not None:
+        with Session(engine) as session:
+            settings = get_or_create_user_settings(session, user_id)
+
+    return templates.TemplateResponse(request=request, name=template_name, context={"request": request, "user_email": user_email, "settings": settings})
+
 # Reads session cookie before and after every request and verifies the key. Then grants access to the request.session. request.session is a dictionary that stores the fields, fastapi middleware saves it to a cookie.
 app.add_middleware(SessionMiddleware, secret_key="secret-key")
 

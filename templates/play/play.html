@@ -5,12 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Play</title>
-
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
     <script type="text/javascript" src="/static/app.js?v=20260401c" defer></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/chess/chessboard.min.js"></script>
+    <script>
+        window.speechChessSettings = {
+            narratorEnabled: {{ (settings.narrator_enabled if settings else true) | tojson }},
+            voiceInputEnabled: {{ (settings.voice_input_enabled if settings else true) | tojson }},
+            masterVolume: {{ (settings.master_volume if settings else 50) | tojson }},
+            narratorVolume: {{ (settings.narrator_volume if settings else 50) | tojson }}
+            musicVolume: {{ (settings.music_volume if settings else 50) | tojson }},
+            soundEffectsVolume: {{ (settings.sound_effects_volume if settings else 50) | tojson }}
+        };
+    </script>
     <script src="/static/voice.js?v=20260401a" defer></script>
 </head>
 <body>
