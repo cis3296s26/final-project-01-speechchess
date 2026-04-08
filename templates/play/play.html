@@ -8,7 +8,7 @@
 
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
-    <script type="text/javascript" src="/static/app.js?v=20260401c" defer></script>
+    <script type="text/javascript" src="/static/app.js?v=20260407b" defer></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/chess/chessboard.min.js"></script>
     <script src="/static/voice.js?v=20260407a" defer></script>
@@ -112,7 +112,7 @@
         <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
         <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
         <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
-        <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Click Start Voice Session, then say "Speech Chess", then your move, then "submit move".</pre>
+        <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Click Start Voice Session, then say "Speech Chess e4" or "Speech Chess knight f3", then say "submit move" or "confirm".</pre>
     </div>
 </main>
 
@@ -182,7 +182,7 @@
     }
 
     async function refreshBoard() {
-        const res = await fetch("/state");
+        const res = await fetch("/state?mode=example");
         const data = await res.json();
         board.position(boardPosition(data.fen));
 
@@ -203,7 +203,9 @@
         lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
     }
 
-    window.onload = function () {
+    window.onload = async function () {
+        await fetch("/reset?mode=example", { method: "POST" });
+
         board = Chessboard("board", {
             draggable: true,
             position: "start",
@@ -223,7 +225,7 @@
                 const res = await fetch("/move", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ move: move })
+                    body: JSON.stringify({ move: move, mode: "example" })
                 });
 
                 const data = await res.json();
@@ -260,6 +262,26 @@
             }
 
             await refreshBoard();
+        };
+
+        window.voiceParseTranscript = async function (transcript) {
+            const response = await fetch("/voice-parse", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ transcript: transcript, mode: "example" })
+            });
+
+            return response.json();
+        };
+
+        window.voiceSubmitPendingMove = async function (pendingMove) {
+            const response = await fetch("/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ move: pendingMove.uci, mode: "example" })
+            });
+
+            return response.json();
         };
 
         window.refreshVoiceBoard = refreshBoard;

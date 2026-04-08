@@ -30,34 +30,9 @@ function profile(button){
 function playExample(button){
     const destination = "play/play"
     sessionStorage.setItem("speechChessAutoStart", "1")
-    sessionStorage.setItem("speechChessPlayIntro", "1")
     sessionStorage.setItem("speechChessPlayMusic", "1")
-
-    if (!("speechSynthesis" in window)) {
-        window.location.href = destination
-        return
-    }
-
-    const intro = new SpeechSynthesisUtterance(
-        "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move."
-    )
-
-    let redirected = false
-    const goToPlayPage = function () {
-        if (redirected) {
-            return
-        }
-
-        redirected = true
-        window.location.href = destination
-    }
-
-    intro.onend = goToPlayPage
-    intro.onerror = goToPlayPage
-
-    window.speechSynthesis.cancel()
-    window.speechSynthesis.speak(intro)
-    setTimeout(goToPlayPage, 6000)
+    sessionStorage.removeItem("speechChessPlayIntro")
+    window.location.href = destination
 }
 
 function playOnline(button){

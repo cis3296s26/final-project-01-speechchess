@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/chess/chessboard.min.js"></script>
-    <script src="/static/app.js?v=20260406a" defer></script>
-    <script src="/static/voice.js?v=20260407a" defer></script>
+    <script src="/static/app.js?v=20260407b" defer></script>
+    <script src="/static/voice.js?v=20260407b" defer></script>
     <style>
         #game-area { display: none; max-width: 500px; margin: 20px auto; text-align: center; }
         #lobby { max-width: 420px; margin: 40px auto; padding: 24px; }
@@ -188,7 +188,7 @@
             <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
             <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
             <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
-            <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Say "Speech Chess", then your move, then "submit move".</pre>
+            <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Say "Speech Chess e4" or "Speech Chess knight f3", then say "submit move" or "confirm".</pre>
         </div>
         <div id="game-log"></div>
         <button onclick="resignGame()" style="margin-top:12px;">Resign</button>
@@ -383,6 +383,12 @@
         window.refreshVoiceBoard = async function () {
             return;
         };
+
+        setTimeout(() => {
+            if (typeof enableVoiceMode === "function") {
+                enableVoiceMode(true);
+            }
+        }, 150);
     }
 
     function applyState(state) {

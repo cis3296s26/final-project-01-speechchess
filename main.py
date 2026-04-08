@@ -4,7 +4,7 @@ import user_authentication
 import io
 import os
 from pydantic import BaseModel
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File, Header
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -116,13 +116,41 @@ def settings_page(request: Request):
 
 class Move(BaseModel):
     move: str
+    mode: str = "example"
 
 class VoiceInput(BaseModel):
     transcript: str
+    mode: str = "example"
+
+
+single_player_games: dict[str, dict[str, chess_logic.GameBoard]] = {}
+
+
+def normalized_mode(mode: str) -> str:
+    if mode == "ai":
+        return "ai"
+    return "example"
+
+
+def get_session_id(request: Request) -> str:
+    session_id = request.session.get("session_game_id")
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        request.session["session_game_id"] = session_id
+    return session_id
+
+
+def get_single_player_game(request: Request, mode: str) -> chess_logic.GameBoard:
+    session_id = get_session_id(request)
+    mode_key = normalized_mode(mode)
+    games = single_player_games.setdefault(session_id, {})
+    if mode_key not in games:
+        games[mode_key] = chess_logic.GameBoard()
+    return games[mode_key]
 
 @app.get("/state")
-def state():
-    return chess_logic.get_game_state()
+def state(request: Request, mode: str = "example"):
+    return get_single_player_game(request, mode).get_game_state()
 
 @app.get("/game", response_class=HTMLResponse)
 def game(request: Request):
@@ -133,16 +161,17 @@ def voice(request: Request):
     return templates.TemplateResponse(request=request, name="voice.html", context=ctx(request))
 
 @app.get("/board")
-def board():
-    return chess_logic.get_game_state()
+def board(request: Request, mode: str = "example"):
+    return get_single_player_game(request, mode).get_game_state()
 
 @app.post("/move")
-def move_piece(data: Move):
-    return chess_logic.make_move(data.move)
+def move_piece(request: Request, data: Move):
+    return get_single_player_game(request, data.mode).make_move(data.move)
 
 @app.post("/voice-move")
-def voice_move(data: VoiceInput):
-    parse_result = Voice.parse_speech(data.transcript)
+def voice_move(request: Request, data: VoiceInput):
+    game = get_single_player_game(request, data.mode)
+    parse_result = Voice.parse_speech(data.transcript, game.board)
 
     if parse_result["status"] != "exact":
         return {
@@ -151,19 +180,20 @@ def voice_move(data: VoiceInput):
             "transcript": parse_result["transcript"],
             "status": parse_result["status"],
             "options": parse_result.get("options", []),
-            **chess_logic.get_game_state(),
+            **game.get_game_state(),
         }
 
-    result = chess_logic.make_move(parse_result["move"]["uci"])
+    result = game.make_move(parse_result["move"]["uci"])
     result["transcript"] = parse_result["transcript"]
     result["parsed_move"] = parse_result["move"]
     return result
 
 
 @app.post("/voice-parse")
-def voice_parse(data: VoiceInput):
-    result = Voice.parse_speech(data.transcript)
-    result["turn"] = chess_logic.get_game_state()["turn"]
+def voice_parse(request: Request, data: VoiceInput):
+    game = get_single_player_game(request, data.mode)
+    result = Voice.parse_speech(data.transcript, game.board)
+    result["turn"] = game.get_game_state()["turn"]
     return result
 class RoomVoiceInput(BaseModel):
     room_id: str
@@ -196,7 +226,13 @@ def parse_room_voice(req: RoomVoiceInput):
 
 
 @app.post("/voice-transcribe")
-async def voice_transcribe(audio: UploadFile = File(...)):
+async def voice_transcribe(audio: UploadFile = File(...), authorization: str | None = Header(default=None)):
+    project_auth_token = os.getenv("PROJECT_AUTH_TOKEN")
+    if project_auth_token:
+        expected = f"Bearer {project_auth_token}"
+        if authorization != expected:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+
     try:
         from openai import OpenAI
     except ImportError:
@@ -247,8 +283,8 @@ async def voice_transcribe(audio: UploadFile = File(...)):
     }
 
 @app.post("/reset")
-def reset():
-    return chess_logic.reset_game()
+def reset(request: Request, mode: str = "example"):
+    return get_single_player_game(request, mode).reset_game()
 
 # Implementation for multiplayer
 class CreateRoomRequest(BaseModel):

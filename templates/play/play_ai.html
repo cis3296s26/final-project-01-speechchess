@@ -9,8 +9,8 @@
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/chess/chessboard.min.js"></script>
-    <script type="text/javascript" src="/static/app.js"></script>
-    <script src="/static/voice.js?v=20260407a" defer></script>
+    <script type="text/javascript" src="/static/app.js?v=20260407b"></script>
+    <script src="/static/voice.js?v=20260407b" defer></script>
 
 </head>
 <body class="homepage_body">
@@ -134,7 +134,7 @@
         <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
         <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
         <textarea id="voiceTranscript" rows="2" style="display:block; max-width:400px; width:100%; margin:15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
-        <pre id="voiceMove" style="max-width:400px; margin:15px auto; white-space:pre-wrap;">Say "Speech Chess", then your move, then "submit move".</pre>
+        <pre id="voiceMove" style="max-width:400px; margin:15px auto; white-space:pre-wrap;">Say "Speech Chess e4" or "Speech Chess knight f3", then say "submit move" or "confirm".</pre>
     </div>
     <div id="game-log"></div>
     <button onclick="resignAiGame()" style="margin-top:12px;">Resign</button>
@@ -238,7 +238,9 @@
     }
 
     // Start game
-    function startAiGame() {
+    async function startAiGame() {
+        await fetch("/reset?mode=ai", { method: "POST" });
+
         document.getElementById("ai-lobby").style.display = "none";
         document.getElementById("game-area").style.display = "block";
         document.getElementById("difficulty-badge").textContent = selectedDifficulty.toUpperCase();
@@ -257,7 +259,7 @@
                 const res = await fetch("/move", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ move })
+                    body: JSON.stringify({ move, mode: "ai" })
                 });
 
                 const data = await res.json();
@@ -292,7 +294,7 @@
             const res = await fetch("/voice-parse", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ transcript })
+                body: JSON.stringify({ transcript, mode: "ai" })
             });
             return res.json();
         };
@@ -302,7 +304,7 @@
             const res = await fetch("/move", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ move: pendingMove.uci })
+                body: JSON.stringify({ move: pendingMove.uci, mode: "ai" })
             });
             const data = await res.json();
             if (data.success) {
@@ -326,10 +328,16 @@
         };
 
         window.refreshVoiceBoard = async () => {
-            const res = await fetch("/state");
+            const res = await fetch("/state?mode=ai");
             const data = await res.json();
             chess.setPosition(data.fen);
         };
+
+        setTimeout(() => {
+            if (typeof enableVoiceMode === "function") {
+                enableVoiceMode(true);
+            }
+        }, 150);
     }
 
     async function doAiMove() {
@@ -340,7 +348,7 @@
         await new Promise(r => setTimeout(r, 350));
 
         // Fetch legal moves for the current position from the server
-        const stateRes = await fetch("/state");
+        const stateRes = await fetch("/state?mode=ai");
         const state = await stateRes.json();
 
         if (state.game_over) { endGame(state.winner ? state.winner + " wins!" : "Draw!"); setAiThinking(false); return; }
@@ -358,7 +366,7 @@
         const res = await fetch("/move", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ move: chosenMove })
+            body: JSON.stringify({ move: chosenMove, mode: "ai" })
         });
 
         const data = await res.json();
