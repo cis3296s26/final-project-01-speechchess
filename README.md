@@ -16,6 +16,10 @@ Follow this project board to know the latest status of the project: [http://...]
 5. Navigate to directory where the extracted folder for this project is located
 6. Enter: python -m uvicorn main:app --reload or python main.py
 7. Proceed to the link generated
+8. Press f12.
+9. In the browser JavaScript Console, Enter: localStorage.setItem("speechChessTranscriptionEndpoint", "http://YOUR-IP:8000/voice-transcribe");
+10. Then Enter: localStorage.setItem("speechChessAuthToken", "your_shared_team_token");
+
 
 # Player Requirements
 A modern web browser, microphone access enabled
