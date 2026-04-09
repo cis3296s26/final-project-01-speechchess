@@ -183,7 +183,7 @@ submenu should be shown. */
     margin: 5px auto;
     width: 225px;
 }
-#sidebar a.logout-btn:hover, #sidebar a.signup-btn {
+#sidebar a.logout-btn:hover, #sidebar a.signup-btn:hover {
     background-color: var(--accent-clr);
     border: none var(--hover-accent-clr);
 }
@@ -199,6 +199,11 @@ submenu should be shown. */
 }
 
 /* Main is a wrapper for the non-sidebar elements of the body in pages with a sidebar. All elements have a 20 pixel margin in all directions. */
+.homepage_body main {
+    padding: 50px;
+    margin-top: 20px;
+}
+
 main {
     width: 100%;
     display: flex;
@@ -206,9 +211,11 @@ main {
     align-items: center;
 }
 
-/* Flex puts the elements of this container, div chess_board horizontally. So, the img in chess_board is on the left in one column, and
-the get_started class is on the right side as it's also in the container. flex-wrap: nowrap forces elements to stay on the same line, and
-justify-content: center; to center elements in the display, the pair of display: flex, for each div.*/
+/* Flex puts the elements of this container, div chess_board horizontally. This works as there is a div class for each preview of the 
+features on the homepage. Since each div comes one after the other in the html, the horizontal divs are stacked on top of each other. The 
+img in chess_board is on the left in one column, and the get_started class is on the right side as it's also in the container. 
+flex-wrap: nowrap forces elements to stay on the same line, and justify-content: center; to center elements in the display, the pair of 
+display: flex, for each div.*/
 div.chess_board, div.play, div.learn, div.puzzles {
     display: flex;
     align-items: center;
@@ -230,7 +237,7 @@ div.get_started, div.home_play, div.home_learn, div.home_puzzles {
     /* This class fits to the entire width of the screen. */
     width: 100%;
     /* Sets a limit on the width of the element to fit all screen sizes. */
-    max-width: 500px;
+    max-width: 700px;
 }
 
 /* Styles the images for each homepage body div. */
@@ -407,25 +414,128 @@ div.get_started_signup_or_login p, div.get_started_signup_or_login a:hover, div.
     font-size: 0.95rem;
 }
 
-/* Body for pages with column elements and a sidebar. */
+/* Styling for settings and profile pages start here. Body for pages with column elements and a sidebar. */
 .settings_body, .profile_body {
     background-color: var(--base-clr);
     color: var(--text-clr);
     /*  Set minimum height to the full height of the user's screen. */
-}
-/* Styling for pages with column elements and a sidebar. */
-div.settings_page, div.profile_page {
-    /* This class fits to the entire width of the screen. */
-    width: 100%;
-    /* Sets a limit on the width of the element to fit all screen sizes. */   
-    max-width: 400px;
-    display: flex;
-    flex-direction: column;
-
-    gap: 12px;   
-    /* THIS NEEDS CONFIGURATION */
     min-height: 100vh;
+    /* Grid will have two columns, one of automatic size, the other grows and shrinks depending on how much space there is. 
+    One is the sidebar, the other is the rest of the content of the page. */
+    display: grid;
+    grid-template-columns: auto 1fr;
+    font-family: inherit;
+}
+
+/* Turns the settings body to a flex display and aligns the items horizontally. */
+.settings_body main {
     display: flex;
     justify-content: center;
+    margin-bottom: 10px;
+}
+
+/* Fill the container, don't go past 700px. */
+div.settings_page {
+    width: 100%;
+    max-width: 700px;
+}
+
+/* > ensures only that div's element, in this case header, is affected by this css. */
+div.settings_page > h1, div.settings_page > h2{
+    text-align: center;
+    padding: 30px;
+    font-size: 36px;
+}
+
+/* Puts the following divs inside of this div in column form, so the setting rows are stacked vertically with 10px gaps in between them. */
+div.settings_page_content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Styling for the setting_row div headers, so the header for each setting. */
+div.settings_option_narrator h1, div.settings_option_voice_input h1, div.settings_option_master_volume h1, div.settings_option_narrator_volume h1, div.settings_option_music_volume h1, div.settings_option_sound_effects_volume h1 {
+    color: var(--text-clr);
+    font-size: 24px;
+    text-align: left;
+}
+
+/* Style the rows of each actual setting, so the header and p and button. */
+div.settings_row {
+    /* Turns this div into a one dimensional container. justify-content is used horizontally, align-items is used vertically. */
+    display: flex;
+    /* Aligns the items horizontally to have space-between them. So there's a space between the buttons and the contents of this div. */
+    justify-content: space-between;
+    /* Aligns the items of the display to the center of it. */
     align-items: center;
+    padding: 20px;
+    gap: 10px;
+    background-color: var(--hover-base-clr);
+    border-radius: 12px;
+}
+
+div.settings_option_narrator p, div.settings_option_voice_input p, div.settings_option_master_volume p, div.settings_option_narrator_volume p, div.settings_option_music_volume p, div.settings_option_sound_effects_volume p{
+    color: var(--secondary-text-clr);
+    text-align: left;
+}
+
+/* Styles the toggle buttons in the Settings page. */
+.settings_toggle {
+    color: var(--text-clr);
+    border: none;
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 16px;
+    cursor: pointer;
+    min-width: 100px;
+    align-items: right;
+}
+
+.settings_toggle.enabled {
+    background-color: var(--accent-clr);
+}
+
+.settings_toggle.enabled:hover {
+    background-color: var(--hover-accent-clr);
+}
+
+.settings_toggle.disabled {
+background-color: var(--base-clr);
+}
+
+.settings_toggle.disabled:hover {
+    background-color: var(--secondary-text-clr);
+}
+
+/* Styling for the volume control slider settings. Make it one dimensional with flex, and align the slider and number in the center of the 
+container vertically. Min-width ensures the slider and number value don't get too small. justify-content: flex-end puts them at the end
+(right side) of the container. */
+div.volume_control {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 200px;
+    justify-content: flex-end;
+}
+
+/* Styles the slider bar. */
+.volume_slider {
+    width: 150px;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: var(--accent-clr);
+}
+
+.volume_slider:hover {
+    accent-color: var(--hover-accent-clr);
+}
+
+/* Styles the number value of the volume. */
+.volume_value {
+    width: 35px;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 16px;
+    color: var(--text-clr);
 }

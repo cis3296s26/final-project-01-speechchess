@@ -9,7 +9,10 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+from user_authentication import router as authentication_router, create_db_and_tables, engine, get_or_create_user_settings
+from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
+from sqlmodel import Session
 import uuid
 import json
 
@@ -20,6 +23,22 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Create an instance, templates, to later render and return a TemplateResponse. All html files are in templates directory.
 templates = Jinja2Templates(directory="templates")
 
+# Helper function to return saved user settings from SQLModel object, converted to a dictionary, if user is logged in. Or return standard settings from dictionary if not.
+def render_page(request: Request, template_name: str):
+    user_email = request.session.get("user_email")
+    user_id = request.session.get("user_id")
+    settings = None
+    if user_id is not None:
+        with Session(engine) as session:
+            settings_object = get_or_create_user_settings(session, user_id)
+            settings = {"narrator_enabled": settings_object.narrator_enabled, "voice_input_enabled": settings_object.voice_input_enabled, "master_volume": settings_object.master_volume, "narrator_volume": settings_object.narrator_volume, "music_volume": settings_object.music_volume, "sound_effects_volume": settings_object.sound_effects_volume}
+            return templates.TemplateResponse(request=request, name=template_name, context={"request": request, "user_email": user_email, "settings": settings})
+    else:
+        settings = {"narrator_enabled": True, "voice_input_enabled": True, "master_volume": 50, "narrator_volume": 50, "music_volume": 50, "sound_effects_volume": 50}
+        return templates.TemplateResponse(request=request, name=template_name, context={"request": request, "user_email": user_email, "settings": settings})
+        
+# Reads session cookie before and after every request and verifies the key. Then grants access to the request.session. request.session is a dictionary that stores the fields, fastapi middleware saves it to a cookie.
+app.add_middleware(SessionMiddleware, secret_key="secret-key")
 app.include_router(user_authentication.router)
 user_authentication.create_db_and_tables()
 
@@ -50,6 +69,20 @@ def root(request: Request):
 
 # All the user_authentication directory html file returns
 @app.get("/user_authentication/get_started", response_class = HTMLResponse)
+def get_started_page(request: Request):
+    return render_page(request, "user_authentication/get_started.html")
+
+@app.get("/user_authentication/login", response_class = HTMLResponse)
+def login_page(request: Request):
+    return render_page(request, "user_authentication/login.html")
+
+@app.get("/user_authentication/signup", response_class = HTMLResponse)
+def signup_page(request: Request):
+    return render_page(request, "user_authentication/signup.html")
+
+@app.get("/user_authentication/profile",  response_class = HTMLResponse)
+def profile_page(request: Request):
+    return render_page(request, "user_authentication/profile.html")
 def getStartedPage(request: Request):
     return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context=ctx(request))
 

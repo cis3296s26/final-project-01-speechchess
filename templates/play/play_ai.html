@@ -6,6 +6,123 @@
     <title>Play</title>
 
     <link rel="stylesheet" href="/static/style.css">
+    <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
+    <script type="text/javascript" src="/static/app.js" defer></script>
+    <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <script>
+        window.speechChessSettings = {
+            narratorEnabled: {{ settings["narrator_enabled"] | tojson }},
+            voiceInputEnabled: {{ settings["voice_input_enabled"] | tojson }},
+            masterVolume: {{ settings["master_volume"] | tojson }},
+            narratorVolume: {{ settings["narrator_volume"] | tojson }},
+            musicVolume: {{ settings["music_volume"] | tojson }},
+            soundEffectsVolume: {{ settings["sound_effects_volume"] | tojson }}
+        };
+    </script>
+    <script src="/static/voice.js?v=20260401a" defer></script>
+    <!--Announces this string upon loading of home page.-->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof speakText === "function") {
+                speakText("Play AI page. The sidebar to navigate to other pages is found on the left side of the screen. May use voice input to navigate this page.");
+            }
+        });
+    </script>
+</head>
+<body>
+    <aside id="sidebar">
+        <ul>
+            <li>
+                <!--<img class = "img_deg" src="static/images/SpeechChess_logo.png">-->
+                <span class="logo">SpeechChess</span>
+            </li>
+            <a href="/" data-narrate="Home">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M240-200h120v-200q0-17 11.5-28.5T400-440h160q17 0 28.5 11.5T600-400v200h120v-360L480-740 240-560v360Zm-80 0v-360q0-19 8.5-36t23.5-28l240-180q21-16 48-16t48 16l240 180q15 11 23.5 28t8.5 36v360q0 33-23.5 56.5T720-120H560q-17 0-28.5-11.5T520-160v-200h-80v200q0 17-11.5 28.5T400-120H240q-33 0-56.5-23.5T160-200Zm320-270Z"/></svg>
+                <span>Home</span>
+            </a>
+            <li>
+                <!--Use onclick attribute to call the function toggle submenu and pass 'this' as an argument().-->
+                <button onclick="toggleSubMenu(this)" data-narrate="Play Menu Dropdown Button" class="dropdown-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M762-96 645-212l-60 60q-11 11-28 11t-28-11q-23-23-23-57t23-57l169-169q23-23 57-23t57 23q11 11 11 28t-11 28l-60 60 116 117q12 12 12 28t-12 28l-50 50q-12 12-28 12t-28-12Zm106-616L426-270l5 4q23 23 23 57t-23 57q-11 11-28 11t-28-11l-60-60L198-96q-12 12-28 12t-28-12l-50-50q-12-12-12-28t12-28l116-117-60-60q-11-11-11-28t11-28q23-23 57-23t57 23l4 5 431-431q11-11 25.5-17t30.5-6h87q17 0 28.5 11.5T880-844v103q0 8-3 15.5t-9 13.5ZM334-583l24-23 23-24-23 24-24 23Zm-85 28L103-701q-11-11-17-25.5T80-757v-87q0-17 11.5-28.5T120-884h87q16 0 30.5 6t25.5 17l147 147q12 12 11.5 28T409-658q-12 11-28 11.5T353-658L207-804h-47v47l146 146q11 11 11 27.5T306-555q-12 12-28.5 12T249-555Zm121 228 430-430v-47h-47L323-374l47 47Zm0 0-24-23-23-24 23 24 24 23Z"/></svg>
+                    <span>Play</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M465-363.5q-7-2.5-13-8.5L268-556q-11-11-11-28t11-28q11-11 28-11t28 11l156 156 156-156q11-11 28-11t28 11q11 11 11 28t-11 28L508-372q-6 6-13 8.5t-15 2.5q-8 0-15-2.5Z"/></svg>
+                </button>
+                <ul class="sub-menu">
+                    <!--Use a div container around the list items in the submenu-->
+                    <div>
+                        <li><a href="/play/play" data-narrate="Play">Play Example</a></li>
+                        <li><a href="/play/play_online" data-narrate="Play Online">Play Online</a></li>
+                        <!--This class holds the current website link. Depending on where we are on the website, a different link will be highlighted
+                        using this class.-->
+                        <li class="active">
+                            <a href="/play/play_ai" data-narrate="Play AI">
+                                <span>Play AI</span>
+                            </a>
+                        </li>
+                        <li><a href="/play/play_friends" data-narrate="Play a Friend">Play a Friend</a></li>
+                        <li><a href="/play/stats" data-narrate="Statistics">Statistics</a></li>
+                        <li><a href="/play/history" data-narrate="History">History</a></li>  
+                    </div>                       
+                </ul>
+            </li>
+            <li>
+                <button onclick="toggleSubMenu(this)" data-narrate="Play Menu Dropdown Button" class="dropdown-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M352-120H200q-33 0-56.5-23.5T120-200v-152q48 0 84-30.5t36-77.5q0-47-36-77.5T120-568v-152q0-33 23.5-56.5T200-800h160q0-42 29-71t71-29q42 0 71 29t29 71h160q33 0 56.5 23.5T800-720v160q42 0 71 29t29 71q0 42-29 71t-71 29v160q0 33-23.5 56.5T720-120H568q0-50-31.5-85T460-240q-45 0-76.5 35T352-120Zm-152-80h85q24-66 77-93t98-27q45 0 98 27t77 93h85v-240h80q8 0 14-6t6-14q0-8-6-14t-14-6h-80v-240H480v-80q0-8-6-14t-14-6q-8 0-14 6t-6 14v80H200v88q54 20 87 67t33 105q0 57-33 104t-87 68v88Zm260-260Z"/></svg>
+                    <span>Puzzles</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M465-363.5q-7-2.5-13-8.5L268-556q-11-11-11-28t11-28q11-11 28-11t28 11l156 156 156-156q11-11 28-11t28 11q11 11 11 28t-11 28L508-372q-6 6-13 8.5t-15 2.5q-8 0-15-2.5Z"/></svg>
+                </button>
+                <ul class="sub-menu">
+                    <div>
+                        <li><a href="/puzzles/daily_puzzle" data-narrate="Daily Puzzle">Daily Puzzle</a></li>
+                        <li><a href="/puzzles/all_puzzles" data-narrate="All Puzzles">All Puzzles</a></li>                          
+                    </div>  
+                </ul>                
+            </li>
+            <li>
+                <!---Used the <a> anchor tag instead of button for the sidebar options which just redirect because it's easier for
+                    formatting since those tags were already formatted in #sidebar css instead of having to do the format again if
+                    I made them buttons with individual classes-->
+                <a href="/sidebar/learn" data-narrate="Learn">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M242-249q-20-11-31-29.5T200-320v-192l-96-53q-11-6-16-15t-5-20q0-11 5-20t16-15l338-184q9-5 18.5-7.5T480-829q10 0 19.5 2.5T518-819l381 208q10 5 15.5 14.5T920-576v256q0 17-11.5 28.5T880-280q-17 0-28.5-11.5T840-320v-236l-80 44v192q0 23-11 41.5T718-249L518-141q-9 5-18.5 7.5T480-131q-10 0-19.5-2.5T442-141L242-249Zm238-203 274-148-274-148-274 148 274 148Zm0 241 200-108v-151l-161 89q-9 5-19 7.5t-20 2.5q-10 0-20-2.5t-19-7.5l-161-89v151l200 108Zm0-241Zm0 121Zm0 0Z"/></svg>
+                    <span>Learn</span>
+                </a>
+            </li>
+            <li>
+                <a href="/sidebar/community" data-narrate="Community">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M40-240q-17 0-28.5-11.5T0-280v-23q0-43 44-70t116-27q13 0 25 .5t23 2.5q-14 21-21 44t-7 48v65H40Zm240 0q-17 0-28.5-11.5T240-280v-25q0-32 17.5-58.5T307-410q32-20 76.5-30t96.5-10q53 0 97.5 10t76.5 30q32 20 49 46.5t17 58.5v25q0 17-11.5 28.5T680-240H280Zm500 0v-65q0-26-6.5-49T754-397q11-2 22.5-2.5t23.5-.5q72 0 116 26.5t44 70.5v23q0 17-11.5 28.5T920-240H780Zm-455-80h311q-10-20-55.5-35T480-370q-55 0-100.5 15T325-320ZM160-440q-33 0-56.5-23.5T80-520q0-34 23.5-57t56.5-23q34 0 57 23t23 57q0 33-23 56.5T160-440Zm640 0q-33 0-56.5-23.5T720-520q0-34 23.5-57t56.5-23q34 0 57 23t23 57q0 33-23 56.5T800-440Zm-320-40q-50 0-85-35t-35-85q0-51 35-85.5t85-34.5q51 0 85.5 34.5T600-600q0 50-34.5 85T480-480Zm0-80q17 0 28.5-11.5T520-600q0-17-11.5-28.5T480-640q-17 0-28.5 11.5T440-600q0 17 11.5 28.5T480-560Zm1 240Zm-1-280Z"/></svg>
+                    <span>Community</span>
+                </a>
+            </li>
+            <li>
+                <a href="/sidebar/settings" data-narrate="Settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M433-80q-27 0-46.5-18T363-142l-9-66q-13-5-24.5-12T307-235l-62 26q-25 11-50 2t-39-32l-47-82q-14-23-8-49t27-43l53-40q-1-7-1-13.5v-27q0-6.5 1-13.5l-53-40q-21-17-27-43t8-49l47-82q14-23 39-32t50 2l62 26q11-8 23-15t24-12l9-66q4-26 23.5-44t46.5-18h94q27 0 46.5 18t23.5 44l9 66q13 5 24.5 12t22.5 15l62-26q25-11 50-2t39 32l47 82q14 23 8 49t-27 43l-53 40q1 7 1 13.5v27q0 6.5-2 13.5l53 40q21 17 27 43t-8 49l-48 82q-14 23-39 32t-50-2l-60-26q-11 8-23 15t-24 12l-9 66q-4 26-23.5 44T527-80h-94Zm7-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"/></svg>
+                    <span>Settings</span>
+                </a>
+            </li>
+            <li>
+                <a href="/sidebar/support" data-narrate="Support">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M714-162 537-339l84-84 177 177q17 17 17 42t-17 42q-17 17-42 17t-42-17Zm-569-42q0-25 17-42l234-234-68-68q-11 11-28 11t-28-11l-23-23v90q0 14-12 19t-22-5L106-576q-10-10-5-22t19-12h90l-22-22q-12-12-12-28t12-28l114-114q20-20 43-29t47-9q20 0 37.5 6t34.5 18q8 5 8.5 14t-6.5 16l-76 76 22 22q11 11 11 28t-11 28l68 68 90-90q-4-11-6.5-23t-2.5-24q0-59 40.5-99.5T701-841q8 0 15 .5t14 2.5q9 3 11.5 12.5T737-809l-65 65q-6 6-6 14t6 14l44 44q6 6 14 6t14-6l65-65q7-7 16.5-5t12.5 12q2 7 2.5 14t.5 15q0 59-40.5 99.5T701-561q-12 0-24-2t-23-7L246-162q-17 17-42 17t-42-17q-17-17-17-42Z"/></svg>
+                    <span>Support</span>
+                </a>
+            </li>
+            {% if user_email %}
+            <li>
+                <a href="/user_authentication/profile" data-narrate="Profile" class="button profile-btn">Profile</a>
+            </li>
+            <li>
+                <a href="/logout" data-narrate="Logout" class="button logout-btn">Logout</a>
+            </li>
+            {% else %}
+            <li>
+                <a href="/user_authentication/login" data-narrate="Login" class="button login-btn">Login</a>
+            </li>
+            <li>
+                <a href="/user_authentication/get_started" data-narrate="Sign-up" class="button signup-btn">Sign-Up</a>
+            </li>
+            {% endif %}
+        </ul>
+    </aside>
+    <p>Play AI page</p>
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/chess/chessboard.min.js"></script>
