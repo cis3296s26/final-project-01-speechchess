@@ -204,6 +204,13 @@ submenu should be shown. */
     margin-top: 20px;
 }
 
+main {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 /* Flex puts the elements of this container, div chess_board horizontally. This works as there is a div class for each preview of the 
 features on the homepage. Since each div comes one after the other in the html, the horizontal divs are stacked on top of each other. The 
 img in chess_board is on the left in one column, and the get_started class is on the right side as it's also in the container. 

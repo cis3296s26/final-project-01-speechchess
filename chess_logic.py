@@ -82,10 +82,15 @@ class GameBoard:
             return {"success": False, "error": "Use correct move like e2e4", **self.get_game_state()}
         if move not in self.board.legal_moves:
             return {"success": False, "error": "Illegal move", **self.get_game_state()}
+        spoken_text = spoken_move_text_for_board(self.board, move)
         san = self.board.san(move)
         self.board.push(move)
-        TTS.speak(f"Played {san}")
-        return {"success": True, "message": f"Played {san}", **self.get_game_state()}
+        return {
+            "success": True,
+            "message": f"Played {san}",
+            "spoken_text": spoken_text,
+            **self.get_game_state(),
+        }
 
     def reset_game(self):
         self.board.reset()
@@ -157,19 +162,19 @@ def spoken_square(square):
     name = chess.square_name(square)
     return f"{name[0].upper()} {RANK_WORDS[name[1]]}"
 
-def captured_piece_for_move(move):
-    if not board.is_capture(move):
+def captured_piece_for_move_for_board(active_board, move):
+    if not active_board.is_capture(move):
         return None
 
-    if board.is_en_passant(move):
-        offset = -8 if board.turn == chess.WHITE else 8
-        return board.piece_at(move.to_square + offset)
+    if active_board.is_en_passant(move):
+        offset = -8 if active_board.turn == chess.WHITE else 8
+        return active_board.piece_at(move.to_square + offset)
 
-    return board.piece_at(move.to_square)
+    return active_board.piece_at(move.to_square)
 
-def spoken_move_text(move):
-    piece = board.piece_at(move.from_square)
-    captured_piece = captured_piece_for_move(move)
+def spoken_move_text_for_board(active_board, move):
+    piece = active_board.piece_at(move.from_square)
+    captured_piece = captured_piece_for_move_for_board(active_board, move)
     from_square = spoken_square(move.from_square)
     to_square = spoken_square(move.to_square)
 
@@ -188,6 +193,12 @@ def spoken_move_text(move):
         )
 
     return f"{color} {piece_name} played from {from_square} to {to_square}"
+
+def captured_piece_for_move(move):
+    return captured_piece_for_move_for_board(board, move)
+
+def spoken_move_text(move):
+    return spoken_move_text_for_board(board, move)
 
 def make_move(move_str): #ex: e2e4
     move_text = move_str.strip().lower().replace(" ", "")
@@ -211,7 +222,7 @@ def make_move(move_str): #ex: e2e4
 
     return {
         "success": True,
-        "message": f"Played{san}",
+        "message": f"Played {san}",
         "spoken_text": spoken_text,
         **get_game_state(),
     }

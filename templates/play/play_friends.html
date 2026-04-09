@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Play a Friend – SpeechChess</title>
+    <title>Play a Friend - SpeechChess</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -28,32 +28,56 @@
             }
         });
     </script>
+    <script src="/static/app.js?v=20260407b" defer></script>
+    <script src="/static/voice.js?v=20260407b" defer></script>
     <style>
-        #game-area { display: none; }
+        #game-area { display: none; max-width: 500px; margin: 20px auto; text-align: center; }
         #lobby { max-width: 420px; margin: 40px auto; padding: 24px; }
         #lobby h2 { margin-bottom: 16px; }
-        #lobby input, #lobby select { width: 100%; padding: 8px; margin: 6px 0 14px; box-sizing: border-box; }
+        #lobby input { width: 100%; padding: 8px; margin: 6px 0 14px; box-sizing: border-box; }
         #lobby button { padding: 10px 20px; margin-right: 8px; cursor: pointer; }
-        #room-id-display { background: #f4f4f4; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 1.1em; margin: 10px 0; word-break: break-all; }
+        #room-id-display {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 1.1em;
+            margin: 10px 0;
+            word-break: break-all;
+        }
         #copy-btn { font-size: 0.85em; }
         #status-msg { margin: 10px 0; color: #555; font-style: italic; }
-
-        #game-area { max-width: 500px; margin: 20px auto; text-align: center; }
         #board { width: 400px; margin: 0 auto 16px; }
-        #timer-bar { display: flex; justify-content: space-between; max-width: 400px; margin: 0 auto 8px; font-size: 1.1em; font-weight: bold; }
+        #timer-bar {
+            display: flex;
+            justify-content: space-between;
+            max-width: 400px;
+            margin: 0 auto 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
         #timer-white, #timer-black { padding: 4px 12px; border-radius: 4px; }
         #timer-white { background: #fff; color: #333; border: 2px solid #333; }
         #timer-black { background: #333; color: #fff; border: 2px solid #333; }
         .active-timer { outline: 3px solid #f0a500; }
         #turn-indicator { margin: 8px 0; font-size: 1em; color: #333; }
-        #game-log { max-width: 400px; margin: 12px auto 0; max-height: 120px; overflow-y: auto; font-size: 0.85em; text-align: left; background: #fafafa; border: 1px solid #ddd; padding: 8px; }
+        #game-log {
+            max-width: 400px;
+            margin: 12px auto 0;
+            max-height: 120px;
+            overflow-y: auto;
+            font-size: 0.85em;
+            text-align: left;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
     </style>
 </head>
 <body>
     <aside id="sidebar">
         <ul>
             <li>
-                <!--<img class = "img_deg" src="static/images/SpeechChess_logo.png">-->
                 <span class="logo">SpeechChess</span>
             </li>
             <a href="/" data-narrate="Home">
@@ -68,7 +92,6 @@
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M465-363.5q-7-2.5-13-8.5L268-556q-11-11-11-28t11-28q11-11 28-11t28 11l156 156 156-156q11-11 28-11t28 11q11 11 11 28t-11 28L508-372q-6 6-13 8.5t-15 2.5q-8 0-15-2.5Z"/></svg>
                 </button>
                 <ul class="sub-menu">
-                    <!--Use a div container around the list items in the submenu-->
                     <div>
                         <li><a href="/play/play" data-narrate="Play">Play Example</a></li>
                         <li><a href="/play/play_online" data-narrate="Play Online">Play Online</a></li>
@@ -155,39 +178,59 @@
         <button onclick="showJoinForm()">Join Room</button>
     </div>
 
-    <div id="join-form" style="display:none; margin-top:16px;">
-        <input type="text" id="join-room-id" placeholder="Paste Room ID" />
-        <button onclick="joinRoom()">Join</button>
+    <div id="lobby">
+        <h2>Play a Friend</h2>
+
+        <label>Your Name</label>
+        <input type="text" id="player-name" placeholder="Enter your name">
+
+        <label>Move Timer (seconds per turn)</label>
+        <input type="range" id="timer-setting" min="10" max="300" step="10" value="60"
+               oninput="document.getElementById('timer-label').textContent = this.value + 's'">
+        <span id="timer-label">60s</span>
+
+        <div style="margin-top: 16px;">
+            <button onclick="createRoom()">Create Room</button>
+            <button onclick="showJoinForm()">Join Room</button>
+        </div>
+
+        <div id="join-form" style="display:none; margin-top:16px;">
+            <input type="text" id="join-room-id" placeholder="Paste Room ID">
+            <button onclick="joinRoom()">Join</button>
+        </div>
+
+        <div id="room-id-section" style="display:none; margin-top:16px;">
+            <p>Share this Room ID with your friend:</p>
+            <div id="room-id-display"></div>
+            <button id="copy-btn" onclick="copyRoomId()">Copy</button>
+            <p id="status-msg">Waiting for opponent to join...</p>
+        </div>
+
+        <p id="lobby-error" style="color:red;"></p>
     </div>
 
-    <div id="room-id-section" style="display:none; margin-top:16px;">
-        <p>Share this Room ID with your friend:</p>
-        <div id="room-id-display"></div>
-        <button id="copy-btn" onclick="copyRoomId()">Copy</button>
-        <p id="status-msg">Waiting for opponent to join...</p>
+    <div id="game-area">
+        <div id="player-bar" style="display:flex; justify-content:space-between; max-width:400px; margin:0 auto 4px; font-size:0.85em; color:#555;">
+            <span id="player-black-info">Black</span>
+            <span id="player-white-info">White</span>
+        </div>
+        <div id="timer-bar">
+            <div id="timer-black">Black: <span id="time-black">--</span></div>
+            <div id="timer-white">White: <span id="time-white">--</span></div>
+        </div>
+        <div id="turn-indicator">Waiting...</div>
+        <div id="board"></div>
+        <div style="margin-top: 12px;">
+            <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
+            <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
+            <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
+            <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Say "Speech Chess e4" or "Speech Chess knight f3", then say "submit move" or "confirm".</pre>
+        </div>
+        <div id="game-log"></div>
+        <button onclick="resignGame()" style="margin-top:12px;">Resign</button>
     </div>
 
-    <p id="lobby-error" style="color:red;"></p>
-</div>
-
-<div id="game-area">
-    <div id="timer-bar">
-        <div id="timer-black">Black: <span id="time-black">--</span></div>
-        <div id="timer-white">White: <span id="time-white">--</span></div>
-    </div>
-    <div id="turn-indicator">Waiting...</div>
-    <div id="board"></div>
-    <div style="margin-top: 12px;">
-        <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
-        <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
-        <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
-        <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Say "Speech Chess", then your move, then "submit move".</pre>
-    </div>
-    <div id="game-log"></div>
-    <button onclick="resignGame()" style="margin-top:12px;">Resign</button>
-</div>
-
-<script>
+    <script>
     let board = null;
     let ws = null;
     let myColor = null;
@@ -199,6 +242,8 @@
     let timerInterval = null;
     let gameOver = false;
     let lastAnnouncedHistoryLength = 0;
+    let currentFen = "start";
+    let currentRoomData = null;
 
     function boardPosition(position) {
         if (!position) {
@@ -214,13 +259,17 @@
 
     function createRoom() {
         myName = document.getElementById("player-name").value.trim();
-        if (!myName) { showError("Enter your name."); return; }
-        timerSeconds = parseInt(document.getElementById("timer-setting").value);
+        if (!myName) {
+            showError("Enter your name.");
+            return;
+        }
+
+        timerSeconds = parseInt(document.getElementById("timer-setting").value, 10);
 
         fetch("/rooms", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ player_one: myName, player_two: "waiting" })
+            body: JSON.stringify({ player_one: myName, player_two: "waiting", player_one_email: "{{ user_email or '' }}" })
         })
         .then(r => r.json())
         .then(data => {
@@ -240,8 +289,17 @@
     function joinRoom() {
         myName = document.getElementById("player-name").value.trim();
         roomId = document.getElementById("join-room-id").value.trim();
-        if (!myName) { showError("Enter your name."); return; }
-        if (!roomId) { showError("Enter a Room ID."); return; }
+
+        if (!myName) {
+            showError("Enter your name.");
+            return;
+        }
+
+        if (!roomId) {
+            showError("Enter a Room ID.");
+            return;
+        }
+
         myColor = "black";
         connectWebSocket();
     }
@@ -249,11 +307,13 @@
     function copyRoomId() {
         navigator.clipboard.writeText(roomId);
         document.getElementById("copy-btn").textContent = "Copied!";
-        setTimeout(() => document.getElementById("copy-btn").textContent = "Copy", 2000);
+        setTimeout(() => {
+            document.getElementById("copy-btn").textContent = "Copy";
+        }, 2000);
     }
 
-    function showError(msg) {
-        document.getElementById("lobby-error").textContent = msg;
+    function showError(message) {
+        document.getElementById("lobby-error").textContent = message;
     }
 
     function connectWebSocket() {
@@ -261,31 +321,57 @@
         ws = new WebSocket(`${protocol}://${location.host}/ws/${roomId}`);
 
         ws.onopen = () => {
-            ws.send(JSON.stringify({ type: "join", player: myColor, name: myName }));
+            ws.send(JSON.stringify({ type: "join", player: myColor, name: myName, email: "{{ user_email or '' }}"}));
         };
 
         ws.onmessage = (event) => {
             const msg = JSON.parse(event.data);
+            currentRoomData = msg.data;
+
             if (msg.event === "join" || msg.event === "state") {
                 if (msg.data.player_two !== "waiting" || myColor === "black") {
                     startGame(msg.data);
                 }
-            } else if (msg.event === "move") {
+            } else if (msg.event === "move" || msg.event === "reset") {
                 applyState(msg.data);
             } else if (msg.event === "leave" || msg.event === "timeout") {
-                endGame(msg.data.winner + " wins!");
+                endGame(msg.data.winner + " wins!", msg.data.winner);
+            } else if (msg.event === "error") {
+                showError(msg.detail || "Connection error.");
             }
         };
 
         ws.onerror = () => showError("Connection error.");
     }
 
+    async function fetchAndShowRating(email, elementId, playerName) {
+        const el = document.getElementById(elementId);
+        if (!email) {
+            el.textContent = playerName + " (Guest)";
+            return;
+        }
+        try {
+            const res = await fetch("/ratings/" + encodeURIComponent(email));
+            if (res.ok) {
+                const data = await res.json();
+                el.textContent = playerName + " (" + data.rating + ")";
+            } else {
+                el.textContent = playerName + " (Guest)";
+            }
+        } catch {
+            el.textContent = playerName;
+        }
+    }
+
     function startGame(state) {
-        timerSeconds = parseInt(document.getElementById("timer-setting").value);
+        timerSeconds = parseInt(document.getElementById("timer-setting").value, 10);
         timeLeft = { white: timerSeconds, black: timerSeconds };
 
         document.getElementById("lobby").style.display = "none";
         document.getElementById("game-area").style.display = "block";
+
+        fetchAndShowRating(state.player_one_email, "player-white-info", state.player_one || "White");
+        fetchAndShowRating(state.player_two_email, "player-black-info", state.player_two || "Black");
 
         board = Chessboard("board", {
             draggable: true,
@@ -333,33 +419,39 @@
         window.refreshVoiceBoard = async function () {
             return;
         };
-    }
 
-    let currentFen = "start";
+        setTimeout(() => {
+            if (typeof enableVoiceMode === "function") {
+                enableVoiceMode(true);
+            }
+        }, 150);
+    }
 
     function applyState(state) {
         currentFen = state.fen;
         currentTurn = state.turn;
-        board.position(boardPosition(state.fen));
+        if (board) {
+            board.position(boardPosition(state.fen));
+        }
         updateTimerDisplay();
 
         if (state.game_over) {
-            endGame(state.winner ? state.winner + " wins!" : "Draw!");
+            endGame(state.winner ? state.winner + " wins!" : "Draw!", state.winner || null);
             return;
         }
 
         const isMyTurn = currentTurn === myColor;
-        document.getElementById("turn-indicator").textContent =
-            isMyTurn ? "Your turn" : "Opponent's turn";
+        document.getElementById("turn-indicator").textContent = isMyTurn ? "Your turn" : "Opponent's turn";
 
         startTimer();
+
         if (state.history && state.history.length > lastAnnouncedHistoryLength) {
             const latestMove = state.history[state.history.length - 1];
             logMove(latestMove);
 
             if (typeof speakText === "function") {
-                const speaker = currentTurn === "white" ? "Black" : "White";
-                speakText(`${speaker} played ${latestMove}. ${state.turn} to move.`);
+                const announcement = state.spoken_text || `Latest move ${latestMove}`;
+                speakText(`${announcement}. ${state.turn} to move.`);
             }
         }
 
@@ -367,8 +459,9 @@
     }
 
     function onDrop(source, target, piece) {
-        if (gameOver) return "snapback";
-        if (currentTurn !== myColor) return "snapback";
+        if (gameOver || currentTurn !== myColor) {
+            return "snapback";
+        }
 
         let move = source + target;
         if ((piece === "wP" && target[1] === "8") || (piece === "bP" && target[1] === "1")) {
@@ -381,13 +474,19 @@
     function startTimer() {
         clearInterval(timerInterval);
         timerInterval = setInterval(() => {
-            if (gameOver) { clearInterval(timerInterval); return; }
-            timeLeft[currentTurn]--;
+            if (gameOver) {
+                clearInterval(timerInterval);
+                return;
+            }
+
+            timeLeft[currentTurn] -= 1;
             updateTimerDisplay();
+
             if (timeLeft[currentTurn] <= 0) {
                 clearInterval(timerInterval);
                 ws.send(JSON.stringify({ type: "leave", player: myColor }));
-                endGame("Time's up! " + (myColor === currentTurn ? "You lost." : "You won!"));
+                const timeoutWinner = myColor === "white" ? "black" : "white";
+                endGame("Time's up! " + (myColor === currentTurn ? "You lost." : "You won!"), timeoutWinner);
             }
         }, 1000);
     }
@@ -399,21 +498,50 @@
         document.getElementById("timer-black").classList.toggle("active-timer", currentTurn === "black");
     }
 
-    function formatTime(s) {
-        return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    function formatTime(seconds) {
+        return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
     }
 
     function resignGame() {
-        if (gameOver) return;
+        if (gameOver) {
+            return;
+        }
+
         ws.send(JSON.stringify({ type: "leave", player: myColor }));
-        endGame("You resigned.");
+        const resignWinner = myColor === "white" ? "black" : "white";
+        endGame("You resigned.", resignWinner);
     }
 
-    function endGame(message) {
+    function endGame(message, winnerColor) {
         gameOver = true;
         clearInterval(timerInterval);
         document.getElementById("turn-indicator").textContent = message;
-        if (ws) ws.close();
+        if (ws) {
+            ws.close();
+        }
+
+        // Update Elo ratings — fetch fresh room data to ensure emails are present
+        if (roomId && winnerColor) {
+            fetch("/rooms/" + roomId)
+                .then(r => r.json())
+                .then(room => {
+                    const winnerEmail = winnerColor === "white"
+                        ? room.player_one_email
+                        : room.player_two_email;
+                    const loserEmail = winnerColor === "white"
+                        ? room.player_two_email
+                        : room.player_one_email;
+
+                    if (winnerEmail && loserEmail) {
+                        fetch("/update-ratings", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ winner_email: winnerEmail, loser_email: loserEmail })
+                        }).catch(() => {});
+                    }
+                })
+                .catch(() => {});
+        }
     }
 
     function logMove(san) {
@@ -423,7 +551,6 @@
         log.appendChild(entry);
         log.scrollTop = log.scrollHeight;
     }
-</script>
-
+    </script>
 </body>
 </html>

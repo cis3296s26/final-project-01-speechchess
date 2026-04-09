@@ -1,1 +1,15 @@
- test
+SpeechRecognition
+sounddevice
+numpy
+chess
+pyttsx3
+jinja2
+uvicorn
+fastapi
+sqlmodel
+pwdlib[argon2]
+python-multipart
+itsdangerous
+websockets
+openai
+chess
