@@ -62,19 +62,19 @@ def root(request: Request):
 # All the user_authentication directory html file returns
 @app.get("/user_authentication/get_started", response_class = HTMLResponse)
 def get_started_page(request: Request):
-    return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context={"request": request})
+    return render_page(request, "user_authentication/get_started.html")
 
 @app.get("/user_authentication/login", response_class = HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request})
+    return render_page(request, "user_authentication/login.html")
 
 @app.get("/user_authentication/signup", response_class = HTMLResponse)
 def signup_page(request: Request):
-    return templates.TemplateResponse(request=request, name="user_authentication/signup.html", context={"request": request})
+    return render_page(request, "user_authentication/signup.html")
 
 @app.get("/user_authentication/profile",  response_class = HTMLResponse)
 def profile_page(request: Request):
-    return templates.TemplateResponse(request=request, name="user_authentication/profile.html", context={"request": request})
+    return render_page(request, "user_authentication/profile.html")
 
 # All the play directory html file returns
 @app.get("/play/play", response_class = HTMLResponse)

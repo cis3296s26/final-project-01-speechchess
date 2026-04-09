@@ -8,22 +8,43 @@
     <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
     <script type="text/javascript" src="/static/app.js" defer></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <script type="text/javascript" src="/static/app.js" defer></script>
+    <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <script>
+        window.speechChessSettings = {
+            narratorEnabled: {{ settings["narrator_enabled"] | tojson }},
+            voiceInputEnabled: {{ settings["voice_input_enabled"] | tojson }},
+            masterVolume: {{ settings["master_volume"] | tojson }},
+            narratorVolume: {{ settings["narrator_volume"] | tojson }},
+            musicVolume: {{ settings["music_volume"] | tojson }},
+            soundEffectsVolume: {{ settings["sound_effects_volume"] | tojson }}
+        };
+    </script>
+    <script src="/static/voice.js?v=20260401a" defer></script>
+    <!--Announces this string upon loading of this page.-->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof speakText === "function") {
+                speakText("Sign-up page. Hover over page elements to have narrator announce them. Click the, 'Already Have An Account?' link if you wish to login. Create an account after filling out both fields. May use voice input to navigate this page.");
+            }
+        });
+    </script>
 </head>
 <body class="get_started_body">
     <div class="get_started_page">
         <div class="get_started_signup_or_login">
-            <h1>Create Your <a class="get_started_homepage_redirect" href="/">SpeechChess</a> Account</h1>
+            <h1>Create Your <a class="get_started_homepage_redirect" href="/" data-narrate="Homepage button">SpeechChess</a> Account</h1>
             <!--Indicates to user there is an error with one of the fields. Fill out the field.-->
             {% if error %}
                 <p class="authentication-error">{{ error }}</p>
             {% endif %}
             <form action="/signup" method="post">
-                <input type="text" id="email" name="email" placeholder="Email" required>
-                <input type="password" id="password" name="password" placeholder="Password" required>  
-                <button class="button get-started-create-account-btn" type="submit">Create Account</button>          
+                <input data-narrate="Enter email field" type="text" id="email" name="email" placeholder="Email" required >
+                <input data-narrate="Enter password field" type="password" id="password" name="password" placeholder="Password" required>  
+                <button data-narrate="Create Account button" class="button get-started-create-account-btn" type="submit">Create Account</button>          
             </form>
             <!--Need to insert a button like "Create Account" to add and commit what the user entered to the database.-->
-            <p><a href="/user_authentication/login">Already Have An Account?</a></p>      
+            <p><a href="/user_authentication/login" data-narrate="Already have an account button">Already Have An Account?</a></p>      
         </div>
     </div>
 </body>

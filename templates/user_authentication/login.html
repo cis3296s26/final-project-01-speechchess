@@ -8,22 +8,43 @@
     <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
     <script type="text/javascript" src="/static/app.js" defer></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <script type="text/javascript" src="/static/app.js" defer></script>
+    <link href="https://fonts.googleapis.com" rel="stylesheet">
+    <script>
+        window.speechChessSettings = {
+            narratorEnabled: {{ settings["narrator_enabled"] | tojson }},
+            voiceInputEnabled: {{ settings["voice_input_enabled"] | tojson }},
+            masterVolume: {{ settings["master_volume"] | tojson }},
+            narratorVolume: {{ settings["narrator_volume"] | tojson }},
+            musicVolume: {{ settings["music_volume"] | tojson }},
+            soundEffectsVolume: {{ settings["sound_effects_volume"] | tojson }}
+        };
+    </script>
+    <script src="/static/voice.js?v=20260401a" defer></script>
+    <!--Announces this string upon loading of this page.-->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof speakText === "function") {
+                speakText("Login page. Hover over page elements to have narrator announce them. Click the, 'Don't Have an Account Yet?' link if you wish to create an account. Login after filling out both fields. May use voice input to navigate this page.");
+            }
+        });
+    </script>
 </head>
 <body class="login_body">
     <div class="login_page">
         <div class="login_form">
-            <h1>Login To Your <a class="login_homepage_redirect" href="/">SpeechChess</a> Account</h1>
+            <h1>Login To Your <a class="login_homepage_redirect" href="/" data-narrate="Homepage button">SpeechChess</a> Account</h1>
             <!--Indicates to user there is an error with one of the fields. Fill out the field.-->
             {% if error %}
                 <p class="authentication-error">{{ error }}</p>
             {% endif %}
             <form action="/login" method="post">
-                <input type="text" id="email" name="email" placeholder="Email" required>
-                <input type="password" id="password" name="password" placeholder="Password" required>  
-                <button class="button login-form-btn" type="submit">Sign-In</button>          
+                <input data-narrate="Enter email field" type="text" id="email" name="email" placeholder="Email" required>
+                <input data-narrate="Enter password field" type="password" id="password" name="password" placeholder="Password" required>  
+                <button data-narrate="Sign-in button" class="button login-form-btn" type="submit">Sign-In</button>          
             </form>
             <!--Need to insert a button like "Create Account" to add and commit what the user entered to the database.-->
-            <p><a href="/user_authentication/get_started">Don't Have An Account Yet?</a></p>      
+            <p><a href="/user_authentication/get_started" data-narrate="Don't have an account button">Don't Have An Account Yet?</a></p>      
         </div>
     </div>
 </body>
