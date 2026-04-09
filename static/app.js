@@ -143,6 +143,19 @@ document.addEventListener("DOMContentLoaded", function () {
                         button.classList.add("disabled");
                         button.textContent = "Disabled";
                     }
+                    if (window.speechChessSettings) {
+                        if (settingName === "narrator_enabled") {
+                            window.speechChessSettings.narratorEnabled = (newValue === "true");
+                        } else if (settingName === "voice_input_enabled") {
+                            window.speechChessSettings.voiceInputEnabled = (newValue === "true");
+                        }
+                    }
+                    if (typeof narratorEnabled !== "undefined" && settingName === "narrator_enabled") {
+                        narratorEnabled = (newValue === "true");
+                    }
+                    if (typeof voiceInputEnabled !== "undefined" && settingName === "voice_input_enabled") {
+                        voiceInputEnabled = (newValue === "true");
+                    }
                 } else {
                     alert("Failed to update setting.");
                 }
@@ -157,9 +170,28 @@ document.addEventListener("DOMContentLoaded", function () {
     sliders.forEach(slider => {
         // Gets the number value fo the slider and sets valueSpan equal to it.
         const valueSpan = slider.nextElementSibling;
-        // Runs every time the slider moves to update the number live.
+        // Runs every time the slider moves to update the number live. Updates the database too.
         slider.addEventListener("input", function () {
+            const settingName = slider.dataset.settingName;
+            const newValue = Number(slider.value);
             valueSpan.textContent = slider.value;
+            if(window.speechChessSettings) {
+                if(settingName === "master_volume") {
+                    window.speechChessSettings.masterVolume = newValue;
+                }else if(settingName === "narrator_volume") {
+                    window.speechChessSettings.narratorVolume = newValue;
+                }else if(settingName === "music_volume") {
+                    window.speechChessSettings.musicVolume = newValue;
+                }else if(settingName === "sound_effects_volume") {
+                    window.speechChessSettings.soundEffectsVolume = newValue;
+                }
+            }
+            if (typeof masterVolume !== "undefined" && settingName === "master_volume") {
+                masterVolume = newValue;
+            }
+            if (typeof narratorVolume !== "undefined" && settingName === "narrator_volume") {
+                narratorVolume = newValue;
+            }
         });
         /* Called when the slider is released by the user. Then the setting name being changed is saved to settingName and so is the numerical
         value of the slider to newvalue. Then formData is given a FormData object which is then appended the setting name and value of the

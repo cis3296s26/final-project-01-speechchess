@@ -129,14 +129,14 @@
                 </div>
                 <!--Button with the class name of .setting_toggle.enabled if narrator is enabled, otherwise it's .setting_toggle_disabled. data-setting-name is a custom html attribute (data attribute) used for the backend to say that this element is
                 associated with the narrator enabled setting. This connects the frontend and backend. The html name that appears on the page behaves like the class name.-->
-                <button type="button" class="settings_toggle {% if settings.narrator_enabled %}enabled{% else %}disabled{% endif %}" data-setting-name="narrator_enabled">{% if settings.narrator_enabled %}Enabled{% else %}Disabled{% endif %}</button>
+                <button type="button" class="settings_toggle {% if settings['narrator_enabled'] %}enabled{% else %}disabled{% endif %}" data-setting-name="narrator_enabled">{% if settings['narrator_enabled'] %}Enabled{% else %}Disabled{% endif %}</button>
             </div>
             <div class="settings_row" data-narrate="Voice Input Setting">
                 <div class="settings_option_voice_input">
                     <h1>Voice Input</h1>
                     <p>User gives input through a microphone for webpage navigation and game moves.</p>
                 </div>
-                <button type="button" class="settings_toggle {% if settings.voice_input_enabled %}enabled{% else %}disabled{% endif %}" data-setting-name="voice_input_enabled">{% if settings.voice_input_enabled %}Enabled{% else %}Disabled{% endif %}</button>
+                <button type="button" class="settings_toggle {% if settings['voice_input_enabled'] %}enabled{% else %}disabled{% endif %}" data-setting-name="voice_input_enabled">{% if settings['voice_input_enabled'] %}Enabled{% else %}Disabled{% endif %}</button>
             </div>
         </div>
         <h2>Music & Sound Settings</h2>
