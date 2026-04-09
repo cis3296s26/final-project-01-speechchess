@@ -108,7 +108,8 @@ def settings_page(request: Request):
         return RedirectResponse(url="/user_authentication/login", status_code=303)
     # Opens active connection to the database and uses a session object to update and fetch data in the database.
     with Session(engine) as session:
-        settings = get_or_create_user_settings(session, user_id)
+        settings_object = get_or_create_user_settings(session, user_id)
+        settings = {"narrator_enabled": settings_object.narrator_enabled, "voice_input_enabled": settings_object.voice_input_enabled, "master_volume": settings_object.master_volume, "narrator_volume": settings_object.narrator_volume, "music_volume": settings_object.music_volume, "sound_effects_volume": settings_object.sound_effects_volume}
     return templates.TemplateResponse(request=request, name="sidebar/settings.html", context={"request": request, "user_email": user_email, "settings": settings})
 
 """Handle a post request to update any of the users' settings. Does not return an html template though. If a user ID is found, meaning

@@ -8,7 +8,6 @@
     <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
     <script type="text/javascript" src="/static/app.js?v=20260401c" defer></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
-
 </head>
 <body class="homepage_body">
     <!--Sidebar consists of a toggle button to toggle the sidebar, dropdown buttons for features with multiple options, and regular buttons.
@@ -105,6 +104,7 @@
         </ul>
     </aside>
     <main>
+        {% if not user_email %}
         <!--Will use display: flex; in CSS to put the get_started class next to chess_board class horizontally. Then will build get_started downwards.-->
         <div class="chess_board">
             <img src="static/images/chess_board_cyan.png" alt="Cyan digital chess board."> 
@@ -114,6 +114,7 @@
                 <button onclick="getStarted()" class="button getStarted-btn">Get Started</button>
             </div>
         </div>
+        {% endif %}
         <div class="play">
             <div class="home_play">
                 <h1>Play Example</h1>
