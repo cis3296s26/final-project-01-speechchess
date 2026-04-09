@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const settingName = button.dataset.settingName;
             const currentlyEnabled = button.classList.contains("enabled");
             let newValue;
-            if (button.classList.contains("enabled")) {
+            if (currentlyEnabled) {
                 newValue = "false";
             } else {
                 newValue = "true";
