@@ -1,9 +1,10 @@
 from typing import Optional
 from fastapi import APIRouter, Form, Request, HTTPException
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel, Field, Session, create_engine, select
 from pwdlib import PasswordHash
+from pydantic import BaseModel
 
 # router stores the routes and will be called in main.py to add the routes to app.
 router = APIRouter()
@@ -23,6 +24,7 @@ class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     email: str = Field(index=True, unique=True)
     hashed_password: str
+    rating: int = Field(default=1200)
 
 """Defines the database table with fields for the settings of each user, SQLModel is passed as the base class. Has a one-to-one correspondence 
 with the User database table since user_id references the id field in User as a foreign key, meaning that there must be a user_id value
@@ -92,6 +94,57 @@ def login(request: Request, email: str = Form(...), password: str = Form(...)):
     return RedirectResponse(url="/", status_code=303)
 
 # Allows users to logout and clear cookies, they're then redirected to the homepage.
+# NEED TO CHANGE REDIRECTION. I SHOULD ADD A DIFFERENT HOMEPAGE WITH DIFFERENT SIDEBAR ONCE A USER HAS LOGGED IN.
+def calculate_elo(winner_rating: int, loser_rating: int, k: int = 32):
+    expected_winner = 1 / (1 + 10 ** ((loser_rating - winner_rating) / 400))
+    expected_loser = 1 - expected_winner
+    new_winner = round(winner_rating + k * (1 - expected_winner))
+    new_loser = round(loser_rating + k * (0 - expected_loser))
+    return new_winner, new_loser
+
+
+class UpdateRatingsRequest(BaseModel):
+    winner_email: str
+    loser_email: str
+
+
+@router.get("/ratings/{email:path}")
+def get_rating(email: str):
+    with Session(engine) as session:
+        user = session.exec(select(User).where(User.email == email)).first()
+        if not user:
+            return JSONResponse(status_code=404, content={"error": "User not found"})
+        return {"email": user.email, "rating": user.rating}
+
+
+@router.post("/update-ratings")
+def update_ratings(req: UpdateRatingsRequest):
+    with Session(engine) as session:
+        winner = session.exec(select(User).where(User.email == req.winner_email)).first()
+        loser = session.exec(select(User).where(User.email == req.loser_email)).first()
+
+        if not winner or not loser:
+            return JSONResponse(status_code=404, content={"error": "One or both users not found"})
+
+        new_winner_rating, new_loser_rating = calculate_elo(winner.rating, loser.rating)
+        winner.rating = new_winner_rating
+        loser.rating = new_loser_rating
+        session.add(winner)
+        session.add(loser)
+        session.commit()
+
+    return {"winner_email": req.winner_email, "winner_new_rating": new_winner_rating,
+            "loser_email": req.loser_email, "loser_new_rating": new_loser_rating}
+
+
+@router.get("/guest")
+def guest_login(request: Request):
+    request.session["user_id"] = None
+    request.session["user_email"] = None
+    request.session["is_guest"] = True
+    return RedirectResponse(url="/", status_code=303)
+
+
 @router.get("/logout")
 def logout(request: Request):
     request.session.clear()
