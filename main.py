@@ -45,7 +45,6 @@ app.add_middleware(SessionMiddleware, secret_key="secret-key")
 app.include_router(user_authentication.router)
 user_authentication.create_db_and_tables()
 
-app.add_middleware(SessionMiddleware, secret_key="speechchess-secret-key")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Switch to url of git website when it gets working
@@ -57,7 +56,7 @@ app.add_middleware(
 # root() runs whenever "/" path occurs. Route returns HTML. root() passes an instance of the Request object named request. Returns template instance.
 @app.get("/", response_class = HTMLResponse)
 def root(request: Request):
-    return render_page(request,"index.html")
+    return render_page(request, "index.html")
 
 # All the user_authentication directory html file returns
 @app.get("/user_authentication/get_started", response_class = HTMLResponse)
@@ -76,14 +75,6 @@ def signup_page(request: Request):
 def profile_page(request: Request):
     return render_page(request, "user_authentication/profile.html")
 
-@app.get("/user_authentication/login", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return (request, "user_authentication/login.html")
-
-@app.get("/user_authentication/signup", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return render_page(request, "user_authentication/signup.html")
-
 # All the play directory html file returns
 @app.get("/play/play", response_class = HTMLResponse)
 def playPage(request: Request):
@@ -99,7 +90,7 @@ def settings_page(request: Request):
 
 @app.get("/play/play_friends", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return render_page(request, name="play/play_friends.html")
+    return render_page(request, "play/play_friends.html")
 
 @app.get("/play/stats", response_class = HTMLResponse)
 def settings_page(request: Request):
