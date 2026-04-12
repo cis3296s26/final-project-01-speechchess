@@ -42,7 +42,7 @@ def render_page(request: Request, template_name: str, **extra):
         
 # Reads session cookie before and after every request and verifies the key. Then grants access to the request.session. request.session is a dictionary that stores the fields, fastapi middleware saves it to a cookie.
 app.add_middleware(SessionMiddleware, secret_key="secret-key")
-app.include_router(user_authentication)
+app.include_router(user_authentication.router)
 user_authentication.create_db_and_tables()
 
 app.add_middleware(
