@@ -39,6 +39,8 @@ class UserSettings(SQLModel, table=True):
     music_volume: int = 50
     sound_effects_volume: int = 50
 
+DEFAULT_SETTINGS = {"narrator_enabled": True, "voice_input_enabled": True, "master_volume": 50, "narrator_volume": 50, "music_volume": 50, "sound_effects_volume": 50}
+
 """ Looks at ALL models that inherit from SQLModel and have table=True (true=True indicates it's a real database table and not just a model). 
 # So, it creates the tables in the database, this is called during app startup."""
 def create_db_and_tables():
@@ -59,13 +61,13 @@ def get_or_create_user_settings(session: Session, user_id: int):
 def signup(request: Request, email: str = Form(...), password: str = Form(...)):
     # If email or password fields empty, return the same page and print the error message to the screen.
     if not email or not password:
-        return templates.TemplateResponse("user_authentication/get_started.html", {"request": request, "error": "Email and password are required"})
+        return templates.TemplateResponse("user_authentication/get_started.html", {"request": request, "error": "Email and password are required", "settings": DEFAULT_SETTINGS})
     # Opens active connection to the database and uses a session object to update data in the database.    
     with Session(engine) as session:
         existing_user = session.exec(select(User).where(User.email == email)).first()
         # Fail if email is used already and return the same page, print the error message to the screen.
         if existing_user:
-            return templates.TemplateResponse("user_authentication/get_started.html", {"request": request,"error": "Email already registered"})
+            return templates.TemplateResponse("user_authentication/get_started.html", {"request": request,"error": "Email already registered", "settings": DEFAULT_SETTINGS})
         # Create new user and hash the password before adding and committing to the database.
         new_user = User(email=email, hashed_password=password_hash.hash(password))
         session.add(new_user)
@@ -79,14 +81,14 @@ def signup(request: Request, email: str = Form(...), password: str = Form(...)):
 def login(request: Request, email: str = Form(...), password: str = Form(...)):
     email = email.strip()
     if not email or not password:
-        return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request, "error": "Please enter both an email and password.", "email": email})
+        return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request, "error": "Please enter both an email and password.", "email": email, "settings": DEFAULT_SETTINGS})
     # Opens active connection to the database and uses a session object to update and fetch data in the database.
     with Session(engine) as session:
         user = session.exec(select(User).where(User.email == email)).first()
         if user is None:
-            return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request, "error": "Invalid email or password.", "email": email})
+            return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request, "error": "Invalid email or password.", "email": email, "settings": DEFAULT_SETTINGS})
         if not password_hash.verify(password, user.hashed_password):
-            return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request, "error": "Invalid email or password.", "email": email})
+            return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request, "error": "Invalid email or password.", "email": email, "settings": DEFAULT_SETTINGS})
     # Store the user's id in the session so it's saved into a cookie in the browser.
     request.session["user_id"] = user.id
     request.session["user_email"] = user.email
@@ -149,21 +151,6 @@ def guest_login(request: Request):
 def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/", status_code=303)
-
-"""Fetch a user's sidebar settings when a user accesses the settings page. Get's their user ID and email, they're redirected to the login
-page if no user ID is found. If a user ID is found, then the call to get or create the database table containing the user settings is made
-and the settings page is returned to the user with the user's email and their settings."""
-@router.get("/sidebar/settings", response_class=HTMLResponse)
-def settings_page(request: Request):
-    user_id = request.session.get("user_id")
-    user_email = request.session.get("user_email")
-    if user_id is None:
-        return RedirectResponse(url="/user_authentication/login", status_code=303)
-    # Opens active connection to the database and uses a session object to update and fetch data in the database.
-    with Session(engine) as session:
-        settings_object = get_or_create_user_settings(session, user_id)
-        settings = {"narrator_enabled": settings_object.narrator_enabled, "voice_input_enabled": settings_object.voice_input_enabled, "master_volume": settings_object.master_volume, "narrator_volume": settings_object.narrator_volume, "music_volume": settings_object.music_volume, "sound_effects_volume": settings_object.sound_effects_volume}
-    return templates.TemplateResponse(request=request, name="sidebar/settings.html", context={"request": request, "user_email": user_email, "settings": settings})
 
 """Handle a post request to update any of the users' settings. Does not return an html template though. If a user ID is found, meaning
 they're logged in, the setting they wish to change can be changed if it's a valid setting and change. If valid, then make the change and

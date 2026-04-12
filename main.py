@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from user_authentication import router as authentication_router, User, engine, create_db_and_tables, engine, get_or_create_user_settings
+from user_authentication import router as authentication_router, User, engine, create_db_and_tables, get_or_create_user_settings
 from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
 from sqlmodel import Session
@@ -42,7 +42,7 @@ def render_page(request: Request, template_name: str, **extra):
         
 # Reads session cookie before and after every request and verifies the key. Then grants access to the request.session. request.session is a dictionary that stores the fields, fastapi middleware saves it to a cookie.
 app.add_middleware(SessionMiddleware, secret_key="secret-key")
-app.include_router(user_authentication.router)
+app.include_router(user_authentication)
 user_authentication.create_db_and_tables()
 
 app.add_middleware(
@@ -168,11 +168,11 @@ def state(request: Request, mode: str = "example"):
 
 @app.get("/game", response_class=HTMLResponse)
 def game(request: Request):
-    return templates.TemplateResponse(request=request, name="game.html", context=ctx(request))
+    return templates.TemplateResponse(request, "game.html")
 
 @app.get("/voice", response_class=HTMLResponse)
 def voice(request: Request):
-    return templates.TemplateResponse(request=request, name="voice.html", context=ctx(request))
+    return templates.TemplateResponse(request, "voice.html")
 
 @app.get("/board")
 def board(request: Request, mode: str = "example"):
