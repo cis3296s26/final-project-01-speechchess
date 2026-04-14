@@ -81,6 +81,41 @@ function support(button){
     window.location.href="sidebar/support"
 }
 
+// Current volume is default value unless a database value is found for that account. Then local value is set to that database value.
+function effectiveVolume(localVolume){
+    let currentMasterVolume = 50;
+    if(typeof masterVolume !== "undefined"){
+        currentMasterVolume = masterVolume;
+    }else if(window.speechChessSettings && typeof window.speechChessSettings.masterVolume !== "undefined"){
+        currentMasterVolume = window.speechChessSettings.masterVolume;
+    }
+    return(Number(currentMasterVolume)/100)*(Number(localVolume)/100);
+}
+
+// Sets the music volume to default unless a database value is found for that account. Then that value is passed to effectiveVolume() for the master volume to be applied.
+function applyBackgroundMusicVolume(){
+    const music = document.getElementById("backgroundMusic");
+    if(!music)
+         return;
+    let musicVolume = 50;
+    if(window.speechChessSettings && typeof window.speechChessSettings.musicVolume !== "undefined"){
+        musicVolume = window.speechChessSettings.musicVolume;
+    }
+    music.volume = effectiveVolume(musicVolume);
+}
+
+// Sets the sound effect volume to default unless a database value is found for that account. Then that value is passed to effectiveVolume() for the master volume to be applied.
+function applySoundEffectsVolume(){
+    let soundEffectsVolume = 50;
+    if(window.speechChessSettings && typeof window.speechChessSettings.soundEffectsVolume !== "undefined"){
+        soundEffectsVolume = window.speechChessSettings.soundEffectsVolume;
+    }
+    const finalVolume = effectiveVolume(soundEffectsVolume);
+    moveSounds.forEach(sound => {
+        sound.volume = finalVolume;
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     // This grabs all elements with the .settings_toggle class
     const toggleButtons = document.querySelectorAll(".settings_toggle");
@@ -145,7 +180,7 @@ document.addEventListener("DOMContentLoaded", function () {
     sliders.forEach(slider => {
         // Gets the number value fo the slider and sets valueSpan equal to it.
         const valueSpan = slider.nextElementSibling;
-        // Runs every time the slider moves to update the number live. Updates the database too.
+        // Runs every time the slider moves to update the number live. Updates locally The slider("change") updates the database.
         slider.addEventListener("input", function () {
             const settingName = slider.dataset.settingName;
             const newValue = Number(slider.value);
@@ -166,6 +201,12 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             if (typeof narratorVolume !== "undefined" && settingName === "narrator_volume") {
                 narratorVolume = newValue;
+            }
+            if (settingName === "master_volume" || settingName === "music_volume") {
+                applyBackgroundMusicVolume();
+            }
+            if (settingName === "master_volume" || settingName === "sound_effects_volume") {
+                applySoundEffectsVolume();
             }
         });
         /* Called when the slider is released by the user. Then the setting name being changed is saved to settingName and so is the numerical
@@ -411,6 +452,7 @@ window.speechChessMoveSounds = window.speechChessMoveSounds || [
 ];
 
 function playMoveSound() {
+    applySoundEffectsVolume();
     const moveSounds = window.speechChessMoveSounds || [];
     if (!moveSounds.length) return;
 
@@ -423,7 +465,7 @@ function playMoveSound() {
 function startBackgroundMusic() {
     const music = document.getElementById("backgroundMusic");
     if (!music) return;
-    music.volume = 0.2;
+    applyBackgroundMusicVolume();
     music.play().catch(() => {});
 }
 
