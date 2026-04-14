@@ -20,15 +20,6 @@
             soundEffectsVolume: {{ settings["sound_effects_volume"] | tojson }}
         };
     </script>
-    <script src="/static/voice.js?v=20260401a" defer></script>
-    <!--Announces this string upon loading of this page.-->
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            if (typeof speakText === "function") {
-                speakText("Play page. The sidebar to navigate to other pages is found on the left side of the screen. May use voice input to navigate this page.");
-            }
-        });
-    </script>
     <script src="/static/voice.js?v=20260407a" defer></script>
 </head>
 <body>
@@ -153,8 +144,8 @@
     let promoResolve = null;
 
     const moveSounds = [
-        new Audio('/static/sounds/ChessNoise1.mp3'),
-        new Audio('/static/sounds/ChessNoise2.mp3')
+        new Audio('/static/Sounds/ChessNoise1.mp3'),
+        new Audio('/static/Sounds/ChessNoise2.mp3')
     ];
 
     function askPromotion() {
