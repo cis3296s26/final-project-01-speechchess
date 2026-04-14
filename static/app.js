@@ -234,7 +234,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Promote to queen, knight, bisop, rook
-let promoResolve = null;
+window.speechChessPromoResolve = window.speechChessPromoResolve || null;
 
 function createPromotionModal() {
     if (document.getElementById('promo-overlay')) return;
@@ -261,14 +261,75 @@ function createPromotionModal() {
 function askPromotion() {
     createPromotionModal();
     return new Promise(resolve => {
-        promoResolve = resolve;
+        window.speechChessPromoResolve = resolve;
         document.getElementById('promo-overlay').style.display = 'flex';
     });
 }
 
 function resolvePromotion(piece) {
     document.getElementById('promo-overlay').style.display = 'none';
-    if (promoResolve) promoResolve(piece);
+    if (window.speechChessPromoResolve) window.speechChessPromoResolve(piece);
+}
+
+function ensureLegalMoveHighlightStyles() {
+    if (document.getElementById("legal-move-highlight-styles")) return;
+
+    const style = document.createElement("style");
+    style.id = "legal-move-highlight-styles";
+    style.textContent = `
+        .legal-destination-square::after {
+            content: "";
+            position: absolute;
+            inset: 43%;
+            border-radius: 50%;
+            background: rgba(40, 120, 220, 0.85);
+            pointer-events: none;
+            z-index: 2;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function getChessBoardElement(elementId) {
+    if (elementId && typeof elementId !== "string") return elementId;
+
+    const id = (elementId || "board").replace(/^#/, "");
+    return document.getElementById(id);
+}
+
+function clearLegalMoveHighlights(elementId) {
+    const boardElement = getChessBoardElement(elementId);
+    if (!boardElement) return;
+
+    boardElement.querySelectorAll(".legal-destination-square").forEach(square => {
+        square.classList.remove("legal-destination-square");
+    });
+}
+
+function highlightLegalMoveDestinations(elementId, legalMoves, source) {
+    clearLegalMoveHighlights(elementId);
+    if (!source || !Array.isArray(legalMoves)) return 0;
+
+    const boardElement = getChessBoardElement(elementId);
+    if (!boardElement) return 0;
+
+    ensureLegalMoveHighlightStyles();
+
+    const destinations = new Set();
+    legalMoves.forEach(move => {
+        if (typeof move === "string" && move.slice(0, 2) === source) {
+            destinations.add(move.slice(2, 4));
+        }
+    });
+
+    destinations.forEach(square => {
+        const squareElement = boardElement.querySelector(`[data-square="${square}"]`);
+        if (squareElement) {
+            squareElement.classList.add("legal-destination-square");
+        }
+    });
+
+    return destinations.size;
 }
 
 
@@ -279,13 +340,44 @@ function initChessGame(config) {
     const onPromotion = config.onPromotion || (() => askPromotion());
 
     let currentFen = config.fen || "start";
+    let legalMoves = Array.isArray(config.legalMoves) ? config.legalMoves : [];
 
     function toDisplayFen(fen) {
         if (!fen || fen === "start") return "start";
         return fen.includes(" ") ? fen.split(" ")[0] : fen;
     }
 
+    function getLegalMoves() {
+        if (typeof config.getLegalMoves === "function") {
+            return config.getLegalMoves() || [];
+        }
+
+        return legalMoves;
+    }
+
+    function canShowLegalMoves(source, piece, position, orientation) {
+        if (typeof config.canShowLegalMoves === "function") {
+            return config.canShowLegalMoves(source, piece, position, orientation);
+        }
+
+        return true;
+    }
+
+    function handleDragStart(source, piece, position, orientation) {
+        clearLegalMoveHighlights(elementId);
+
+        if (typeof config.onDragStart === "function") {
+            const result = config.onDragStart(source, piece, position, orientation);
+            if (result === false) return false;
+        }
+
+        if (canShowLegalMoves(source, piece, position, orientation)) {
+            highlightLegalMoveDestinations(elementId, getLegalMoves(), source);
+        }
+    }
+
     async function handleDrop(source, target, piece) {
+        clearLegalMoveHighlights(elementId);
         if (!config.onDrop) return "snapback";
 
         const isWhitePawn = piece === "wP" && target[1] === "8";
@@ -306,14 +398,28 @@ function initChessGame(config) {
         position:   toDisplayFen(currentFen),
         orientation: config.orientation || "white",
         pieceTheme: pieceTheme,
+        onDragStart: handleDragStart,
         onDrop:     handleDrop,
-        onSnapEnd:  () => board.position(toDisplayFen(currentFen))
+        onSnapEnd:  () => {
+            clearLegalMoveHighlights(elementId);
+            board.position(toDisplayFen(currentFen));
+            if (typeof config.onSnapEnd === "function") {
+                config.onSnapEnd();
+            }
+        }
     });
 
     return {
         setPosition(fen) {
             currentFen = fen || "start";
+            clearLegalMoveHighlights(elementId);
             board.position(toDisplayFen(currentFen));
+        },
+        setLegalMoves(moves) {
+            legalMoves = Array.isArray(moves) ? moves : [];
+        },
+        clearHighlights() {
+            clearLegalMoveHighlights(elementId);
         },
         getBoard() {
             return board;
@@ -322,7 +428,7 @@ function initChessGame(config) {
 }
 
 //refresh chess board
-async function refreshBoard() {
+async function refreshSharedChessBoard() {
     const res = await fetch("/state");
     const data = await res.json();
     chess.setPosition(data.fen);
@@ -340,13 +446,16 @@ async function refreshBoard() {
 }
 
 // Chess piece movement noise
-const moveSounds = [
+window.speechChessMoveSounds = window.speechChessMoveSounds || [
     new Audio('/static/sounds/ChessNoise1.mp3'),
     new Audio('/static/sounds/ChessNoise2.mp3')
 ];
 
 function playMoveSound() {
     applySoundEffectsVolume();
+    const moveSounds = window.speechChessMoveSounds || [];
+    if (!moveSounds.length) return;
+
     const sound = moveSounds[Math.floor(Math.random() * moveSounds.length)];
     sound.currentTime = 0;
     sound.play();
@@ -361,12 +470,12 @@ function startBackgroundMusic() {
 }
 
 //Timer
-function startTimer() {
+function startSharedTimer() {
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         if (gameOver) { clearInterval(timerInterval); return; }
         timeLeft[currentTurn]--;
-        updateTimerDisplay();
+        updateSharedTimerDisplay();
         if (timeLeft[currentTurn] <= 0) {
             clearInterval(timerInterval);
             ws.send(JSON.stringify({ type: "leave", player: myColor }));
@@ -375,7 +484,7 @@ function startTimer() {
     }, 1000);
 }
 
-function updateTimerDisplay() {
+function updateSharedTimerDisplay() {
     document.getElementById("time-white").textContent = formatTime(timeLeft.white);
     document.getElementById("time-black").textContent = formatTime(timeLeft.black);
     document.getElementById("timer-white").classList.toggle("active-timer", currentTurn === "white");

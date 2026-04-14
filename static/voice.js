@@ -22,6 +22,13 @@ let backgroundMusicWasPlaying = false;
 const pendingMoveStorageKey = "speechChessPendingMove";
 const captureLengthMs = 4000;
 
+if (window.speechChessSettings) {
+    narratorEnabled = window.speechChessSettings.narratorEnabled;
+    voiceInputEnabled = window.speechChessSettings.voiceInputEnabled;
+    masterVolume = window.speechChessSettings.masterVolume;
+    narratorVolume = window.speechChessSettings.narratorVolume;
+}
+
 function backgroundMusicElement() {
     return document.getElementById("backgroundMusic");
 }
@@ -42,7 +49,6 @@ function resumeBackgroundMusic() {
     }
 
     backgroundMusicWasPlaying = false;
-
     const music = backgroundMusicElement();
     if (!music) {
         return;
@@ -61,14 +67,6 @@ function holdBackgroundMusicForVoiceCommand() {
 function releaseBackgroundMusicForVoiceCommand() {
     backgroundMusicHeldForVoiceCommand = false;
     resumeBackgroundMusic();
-}
-
-// If the global object exists then keep those settings and set the local variables to them. Else, keep them set to default values.
-if (window.speechChessSettings) {
-    narratorEnabled = window.speechChessSettings.narratorEnabled;
-    voiceInputEnabled = window.speechChessSettings.voiceInputEnabled;
-    masterVolume = window.speechChessSettings.masterVolume;
-    narratorVolume = window.speechChessSettings.narratorVolume;
 }
 
 function updateVoiceMessage(message) {
@@ -135,6 +133,32 @@ function clearPendingMove() {
     savePendingMove();
 }
 
+function clearVoiceMoveHighlightsIfAvailable() {
+    if (typeof window.clearVoiceMoveHighlights === "function") {
+        window.clearVoiceMoveHighlights();
+    }
+}
+
+function canUseVoiceHighlights() {
+    return typeof window.highlightLegalMovesForSquare === "function";
+}
+
+function voiceMovePrompt() {
+    if (canUseVoiceHighlights()) {
+        return "Say Speech Chess to begin your move, or highlight then location to show legal moves.";
+    }
+
+    return "Say Speech Chess to begin your move.";
+}
+
+function voiceHelpPrompt() {
+    if (canUseVoiceHighlights()) {
+        return "Say Speech Chess and your move together, like Speech Chess knight f 3. Say highlight then location to show legal moves. Then say submit move or confirm to play a move, or cancel.";
+    }
+
+    return "Say Speech Chess and your move together, like Speech Chess knight f 3. Then say submit move or confirm to play it, or cancel.";
+}
+
 function normalizeCommand(text) {
     return text
         .toLowerCase()
@@ -156,7 +180,12 @@ function isWakePhrase(text) {
 
 function isSubmitCommand(text) {
     const normalized = normalizeCommand(text);
-    return normalized.includes("submit move") || normalized === "submit" || normalized === "confirm" || normalized.includes("confirm move");
+    return (
+        normalized.includes("submit move") ||
+        normalized === "submit" ||
+        normalized === "confirm" ||
+        normalized.includes("confirm move")
+    );
 }
 
 function isCancelCommand(text) {
@@ -174,28 +203,81 @@ function isHelpCommand(text) {
 
 function moveAfterWakePhrase(text) {
     const normalized = normalizeCommand(text);
+    const prefixes = [
+        "speech chess ",
+        "speechchess ",
+        "speech chest ",
+        "speech test ",
+        "chess et "
+    ];
 
-    if (normalized.startsWith("speech chess ")) {
-        return normalized.slice("speech chess ".length).trim();
-    }
-
-    if (normalized.startsWith("speechchess ")) {
-        return normalized.slice("speechchess ".length).trim();
-    }
-
-    if (normalized.startsWith("speech chest ")) {
-        return normalized.slice("speech chest ".length).trim();
-    }
-
-    if (normalized.startsWith("speech test ")) {
-        return normalized.slice("speech test ".length).trim();
-    }
-
-    if (normalized.startsWith("chess et ")) {
-        return normalized.slice("chess et ".length).trim();
+    for (const prefix of prefixes) {
+        if (normalized.startsWith(prefix)) {
+            return normalized.slice(prefix.length).trim();
+        }
     }
 
     return "";
+}
+
+function normalizeSpokenSquareText(text) {
+    const replacements = {
+        "see": "c",
+        "sea": "c",
+        "cee": "c",
+        "bee": "b",
+        "be": "b",
+        "dee": "d",
+        "gee": "g",
+        "aitch": "h",
+        "age": "h",
+        "won": "1",
+        "one": "1",
+        "two": "2",
+        "too": "2",
+        "to": "2",
+        "three": "3",
+        "free": "3",
+        "four": "4",
+        "for": "4",
+        "five": "5",
+        "six": "6",
+        "seven": "7",
+        "eight": "8",
+        "ate": "8"
+    };
+
+    return normalizeCommand(text)
+        .split(" ")
+        .map(function (token) {
+            return replacements[token] || token;
+        })
+        .join(" ")
+        .replace(/\b([a-h])\s+([1-8])\b/g, "$1$2");
+}
+
+function highlightCommandInfo(text) {
+    const commandText = moveAfterWakePhrase(text) || normalizeCommand(text);
+
+    if (!/\bhighlight\b|\bhigh light\b/.test(commandText)) {
+        return { isHighlight: false, square: null };
+    }
+
+    const normalized = normalizeSpokenSquareText(commandText);
+    const cleaned = normalized.replace(
+        /\b(highlight|high|light|legal|moves?|destinations?|piece|square|on|at|from|for|the|my|please)\b/g,
+        " "
+    );
+    const match = cleaned.match(/\b([a-h][1-8])\b/);
+
+    return {
+        isHighlight: true,
+        square: match ? match[1] : null
+    };
+}
+
+function spokenSquare(square) {
+    return `${square[0]} ${square[1]}`;
 }
 
 function hasBrowserSpeechRecognition() {
@@ -261,8 +343,21 @@ function stopActiveListening(discard = false) {
 }
 
 function speakText(text, options = {}) {
-    const releaseMusicHold = options.releaseMusicHold === true;
+    if (!narratorEnabled) {
+        updateVoiceMessage(text);
+        if (options.releaseMusicHold === true) {
+            releaseBackgroundMusicForVoiceCommand();
+        } else if (!backgroundMusicHeldForVoiceCommand) {
+            resumeBackgroundMusic();
+        }
 
+        if (voiceModeEnabled && !suspendedForSpeech) {
+            setTimeout(startListeningMode, 0);
+        }
+        return;
+    }
+
+    const releaseMusicHold = options.releaseMusicHold === true;
     lastPrompt = text;
     updateVoiceMessage(text);
     pauseBackgroundMusic();
@@ -279,7 +374,6 @@ function speakText(text, options = {}) {
         } else if (!backgroundMusicHeldForVoiceCommand) {
             resumeBackgroundMusic();
         }
-
         return;
     }
 
@@ -290,7 +384,7 @@ function speakText(text, options = {}) {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.volume = (narratorVolume/100) * (masterVolume/100);
+    utterance.volume = (narratorVolume / 100) * (masterVolume / 100);
     utterance.rate = 1;
     utterance.pitch = 1;
     utterance.onend = function () {
@@ -321,13 +415,16 @@ function speakText(text, options = {}) {
 }
 
 function speakStartupIntro() {
-    const intro = "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move.";
+    const intro = canUseVoiceHighlights()
+        ? "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move. Say highlight then location to show legal moves."
+        : "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move.";
     updateVoiceMessage(intro);
-    if(!narratorEnabled) {
+
+    if (!narratorEnabled) {
         return Promise.resolve();
     }
-    pauseBackgroundMusic();
 
+    pauseBackgroundMusic();
     const playbackId = ++speechPlaybackId;
 
     if (!("speechSynthesis" in window)) {
@@ -336,23 +433,25 @@ function speakStartupIntro() {
         }
         return Promise.resolve();
     }
+
     window.speechSynthesis.cancel();
     return new Promise(function (resolve) {
         const utterance = new SpeechSynthesisUtterance(intro);
         let settled = false;
+
         const finish = function () {
             if (settled) {
                 return;
             }
-            settled = true;
 
+            settled = true;
             if (playbackId === speechPlaybackId && !backgroundMusicHeldForVoiceCommand) {
                 resumeBackgroundMusic();
             }
-
             resolve();
         };
-        utterance.volume = (narratorVolume/100) * (masterVolume/100);
+
+        utterance.volume = (narratorVolume / 100) * (masterVolume / 100);
         utterance.rate = 1;
         utterance.pitch = 1;
         utterance.onend = finish;
@@ -362,27 +461,29 @@ function speakStartupIntro() {
     });
 }
 
-function startRecognition() {
-    if(!voiceInputEnabled) {
+function startBrowserRecognition() {
+    if (!voiceInputEnabled) {
         updateVoiceMessage("Voice input is disabled in settings.");
         return;
     }
-    if(!voiceModeEnabled || recognition || (!window.SpeechRecognition && !window.webkitSpeechRecognition)) {
-function startBrowserRecognition() {
+
     if (!voiceModeEnabled || recognition || !hasBrowserSpeechRecognition()) {
         return;
     }
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRecognition();
     recognition.lang = "en-US";
     recognition.interimResults = false;
     recognition.continuous = true;
     recognition.maxAlternatives = 3;
+
     recognition.onresult = function (event) {
         for (let i = event.resultIndex; i < event.results.length; i += 1) {
             if (!event.results[i].isFinal) {
                 continue;
             }
+
             const transcript = event.results[i][0].transcript.trim();
             updateTranscriptField(transcript);
             transcriptQueue = transcriptQueue
@@ -393,25 +494,6 @@ function startBrowserRecognition() {
                     updateVoiceMessage("There was a problem handling that voice command.");
                 });
         }
-        };
-        recognition.onerror = function (event) {
-            updateVoiceMessage(`Speech recognition error: ${event.error}`);
-        };
-        recognition.onend = function () {
-            recognition = null;
-            if(voiceModeEnabled && !suspendedForSpeech && voiceInputEnabled) {
-                startRecognition();
-            }
-        };
-        recognition.start();
-    }   
-}
-    
-function stopRecognition() {
-    if (recognition) {
-        recognition.stop();
-    }
-    recognition = null;
     };
 
     recognition.onerror = function (event) {
@@ -420,7 +502,7 @@ function stopRecognition() {
 
     recognition.onend = function () {
         recognition = null;
-        if (voiceModeEnabled && !suspendedForSpeech && transcriptionMode === "browser") {
+        if (voiceModeEnabled && !suspendedForSpeech && transcriptionMode === "browser" && voiceInputEnabled) {
             startBrowserRecognition();
         }
     };
@@ -431,6 +513,7 @@ function stopRecognition() {
 async function transcribeRecordedAudio(blob) {
     const formData = new FormData();
     formData.append("audio", blob, "speech-command.webm");
+
     const endpoint =
         window.speechChessTranscriptionEndpoint ||
         localStorage.getItem("speechChessTranscriptionEndpoint") ||
@@ -454,13 +537,18 @@ async function transcribeRecordedAudio(blob) {
         return response.json();
     } catch (error) {
         return {
-            "success": false,
-            "error": "Could not reach the transcription server."
+            success: false,
+            error: "Could not reach the transcription server."
         };
     }
 }
 
 async function startOpenAIAudioCapture() {
+    if (!voiceInputEnabled) {
+        updateVoiceMessage("Voice input is disabled in settings.");
+        return;
+    }
+
     if (!voiceModeEnabled || suspendedForSpeech || mediaRecorder || !hasOpenAIAudioCapture()) {
         return;
     }
@@ -569,12 +657,12 @@ function startListeningMode() {
 }
 
 function enableVoiceMode(announce = true) {
-    if(!voiceInputEnabled) {
+    if (!voiceInputEnabled) {
         updateVoiceMessage("Voice input is disabled in settings.");
         return;
     }
-    if(!voiceModeEnabled) {
-        enableVoiceMode(true);
+
+    if (voiceModeEnabled) {
         return;
     }
 
@@ -582,16 +670,14 @@ function enableVoiceMode(announce = true) {
     voiceModeEnabled = true;
     clearPendingMove();
     updateVoiceModeButton();
+
     if (announce) {
-        speakText("Voice mode enabled. Say Speech Chess to begin your move.");
+        speakText(`Voice mode enabled. ${voiceMovePrompt()}`);
     } else {
-        updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
+        updateVoiceMessage(`Voice mode enabled. ${voiceMovePrompt()}`);
         startListeningMode();
     }
-    startRecognition();
-    updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
 }
-
 
 function disableVoiceMode() {
     if (!voiceModeEnabled) {
@@ -633,6 +719,7 @@ async function playPendingMove() {
         return;
     }
 
+    clearVoiceMoveHighlightsIfAvailable();
     updateVoiceMessage(`Playing ${pendingMove.spoken}...`);
 
     let data;
@@ -674,6 +761,7 @@ async function playPendingMove() {
 
 async function handleMoveTranscript(transcript) {
     parsingMove = true;
+    clearVoiceMoveHighlightsIfAvailable();
     updateVoiceMessage(`Parsing move: ${transcript}`);
 
     let result;
@@ -704,6 +792,36 @@ async function handleMoveTranscript(transcript) {
     });
 }
 
+async function handleHighlightTranscript(transcript) {
+    const command = highlightCommandInfo(transcript);
+
+    if (!command.isHighlight) {
+        return false;
+    }
+
+    if (!canUseVoiceHighlights()) {
+        return false;
+    }
+
+    clearPendingMove();
+
+    if (!command.square) {
+        updateVoiceMessage("Say highlight then location to show legal moves.");
+        return true;
+    }
+
+    const count = window.highlightLegalMovesForSquare(command.square);
+
+    if (count > 0) {
+        const moveWord = count === 1 ? "move" : "moves";
+        updateVoiceMessage(`Highlighted ${count} legal ${moveWord} from ${spokenSquare(command.square)}.`);
+        return true;
+    }
+
+    updateVoiceMessage(`No legal moves are available from ${spokenSquare(command.square)}.`);
+    return true;
+}
+
 async function handleTranscript(transcript) {
     const normalized = normalizeCommand(transcript);
     const wakeMove = moveAfterWakePhrase(transcript);
@@ -717,17 +835,23 @@ async function handleTranscript(transcript) {
     }
 
     if (isHelpCommand(normalized)) {
-        speakText("Say Speech Chess and your move together, like Speech Chess knight f 3. Then say submit move or confirm to play it, or cancel.");
+        speakText(voiceHelpPrompt());
         return;
     }
 
     if (isCancelCommand(normalized)) {
         clearPendingMove();
+        clearVoiceMoveHighlightsIfAvailable();
         speakText("Cancelled. Say Speech Chess to start another move.", { releaseMusicHold: true });
         return;
     }
 
+    if (await handleHighlightTranscript(transcript)) {
+        return;
+    }
+
     if (wakeMove) {
+        clearVoiceMoveHighlightsIfAvailable();
         holdBackgroundMusicForVoiceCommand();
         clearPendingMove();
         awaitingMove = false;
@@ -736,6 +860,7 @@ async function handleTranscript(transcript) {
     }
 
     if (isWakePhrase(normalized)) {
+        clearVoiceMoveHighlightsIfAvailable();
         holdBackgroundMusicForVoiceCommand();
         clearPendingMove();
         awaitingMove = true;
@@ -764,14 +889,11 @@ async function handleTranscript(transcript) {
 }
 
 function startVoiceInput() {
-    if(!voiceInputEnabled) {
-        updateVoiceMessage("Voice input is disabled in settings.");
-        return;
-    }
-    if(!voiceModeEnabled) {
+    if (!voiceModeEnabled) {
         enableVoiceMode(true);
         return;
     }
+
     disableVoiceMode();
 }
 
@@ -781,6 +903,11 @@ async function submitVoiceMove() {
         updateVoiceMessage("Type a transcript or use voice mode first.");
         return;
     }
+
+    if (await handleHighlightTranscript(transcript)) {
+        return;
+    }
+
     await handleMoveTranscript(transcript);
 }
 
@@ -788,7 +915,9 @@ async function beginAutoIntroSession() {
     if (!voiceInputEnabled) {
         updateVoiceMessage("Voice input is disabled in settings.");
         return;
-    }if(voiceModeEnabled) {
+    }
+
+    if (voiceModeEnabled) {
         return;
     }
 
@@ -797,32 +926,11 @@ async function beginAutoIntroSession() {
     clearPendingMove();
     updateVoiceModeButton();
     await speakStartupIntro();
+
     if (!voiceModeEnabled) {
         return;
     }
-    startRecognition();
 
-    updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
+    updateVoiceMessage(`Voice mode enabled. ${voiceMovePrompt()}`);
     startListeningMode();
 }
-
-/* Allows for narration of html elements when they're hovered over. the narratable elements are those with data-narrate attribute and for 
-each of those elements it converts the data-narrate content to text which then uses speakText() to actually have the narrator say it. 
-addEventListener() runs when mouseenter (cursor hovers over) occurs, in which that function for, the element hovered over, runs and the 
-narrator reads the text aloud. */
-function attachHoverNarration() {
-    const narratableElements = document.querySelectorAll("[data-narrate]");
-    narratableElements.forEach(element => {
-        element.addEventListener("mouseenter", function () {
-            const text = element.dataset.narrate;
-            if(text) {
-                speakText(text);
-            }
-        });
-    });
-}
-
-// When the html has finished loading, run the narration on cursor hover function.
-document.addEventListener("DOMContentLoaded", function () {
-    attachHoverNarration();
-});
