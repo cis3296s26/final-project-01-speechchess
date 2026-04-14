@@ -282,7 +282,7 @@ async def voice_transcribe(audio: UploadFile = File(...), authorization: str | N
             prompt=(
                 "Transcribe short chess voice commands for a website called Speech Chess. "
                 "Common phrases include Speech Chess, submit move, cancel, repeat, help, "
-                "castle kingside, knight f3, bishop c4, b1 to c3, and e2 to e4."
+                "highlight e2, castle kingside, knight f3, bishop c4, b1 to c3, and e2 to e4."
             ),
         )
     except Exception as exc:
