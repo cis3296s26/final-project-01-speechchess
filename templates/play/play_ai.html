@@ -278,6 +278,20 @@
     let gameOver = false;
     let playerTurn = true;
     let lastHistoryLength = 0;
+    let legalMoves = [];
+
+    window.highlightLegalMovesForSquare = function (source) {
+        if (gameOver || !playerTurn) {
+            clearLegalMoveHighlights("board");
+            return 0;
+        }
+
+        return highlightLegalMoveDestinations("board", legalMoves, source);
+    };
+
+    window.clearVoiceMoveHighlights = function () {
+        clearLegalMoveHighlights("board");
+    };
 
     // Difficulty
     async function getAiMove(legalMoves) {
@@ -355,7 +369,9 @@
 
     // Start game
     async function startAiGame() {
-        await fetch("/reset?mode=ai", { method: "POST" });
+        const resetResponse = await fetch("/reset?mode=ai", { method: "POST" });
+        const resetState = await resetResponse.json();
+        legalMoves = resetState.legal_moves || [];
 
         document.getElementById("ai-lobby").style.display = "none";
         document.getElementById("game-area").style.display = "block";
@@ -368,6 +384,8 @@
             orientation: playerColor,
             fen: "start",
             draggable: true,
+            legalMoves: legalMoves,
+            canShowLegalMoves: () => !gameOver && playerTurn,
             onPromotion: () => askPromotion(),
             onDrop: async (source, target, piece, move) => {
                 if (gameOver || !playerTurn) return "snapback";
@@ -382,6 +400,8 @@
 
                 if (!data.success) return "snapback";
 
+                legalMoves = data.legal_moves || [];
+                chess.setLegalMoves(legalMoves);
                 chess.setPosition(data.fen);
                 logMove(data.history[data.history.length - 1]);
                 playMoveSound();
@@ -424,6 +444,8 @@
             });
             const data = await res.json();
             if (data.success) {
+                legalMoves = data.legal_moves || [];
+                chess.setLegalMoves(legalMoves);
                 chess.setPosition(data.fen);
                 logMove(data.history[data.history.length - 1]);
                 playMoveSound();
@@ -438,6 +460,8 @@
 
         window.onVoiceMoveResult = async (data) => {
             if (data.success) {
+                legalMoves = data.legal_moves || [];
+                chess.setLegalMoves(legalMoves);
                 chess.setPosition(data.fen);
                 lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
             }
@@ -446,6 +470,8 @@
         window.refreshVoiceBoard = async () => {
             const res = await fetch("/state?mode=ai");
             const data = await res.json();
+            legalMoves = data.legal_moves || [];
+            chess.setLegalMoves(legalMoves);
             chess.setPosition(data.fen);
         };
 
@@ -469,15 +495,15 @@
 
         if (state.game_over) { endGame(state.winner ? state.winner + " wins!" : "Draw!"); setAiThinking(false); return; }
 
-        const legalMoves = state.legal_moves;
+        const aiLegalMoves = state.legal_moves;
 
-        if (!legalMoves || legalMoves.length === 0) {
+        if (!aiLegalMoves || aiLegalMoves.length === 0) {
             endGame("Draw or stalemate!");
             setAiThinking(false);
             return;
         }
 
-        const chosenMove = await getAiMove(legalMoves);
+        const chosenMove = await getAiMove(aiLegalMoves);
 
         const res = await fetch("/move", {
             method: "POST",
@@ -490,6 +516,8 @@
 
         if (!data.success) return;
 
+        legalMoves = data.legal_moves || [];
+        chess.setLegalMoves(legalMoves);
         chess.setPosition(data.fen);
         logMove(data.history[data.history.length - 1]);
         playMoveSound();

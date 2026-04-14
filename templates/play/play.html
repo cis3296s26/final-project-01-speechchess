@@ -151,11 +151,20 @@
     let lastHistoryLength = 0;
     let suppressNextAnnouncement = false;
     let promoResolve = null;
+    let legalMoves = [];
 
     const moveSounds = [
         new Audio('/static/sounds/ChessNoise1.mp3'),
         new Audio('/static/sounds/ChessNoise2.mp3')
     ];
+
+    window.highlightLegalMovesForSquare = function (source) {
+        return highlightLegalMoveDestinations("board", legalMoves, source);
+    };
+
+    window.clearVoiceMoveHighlights = function () {
+        clearLegalMoveHighlights("board");
+    };
 
     function askPromotion() {
         return new Promise(resolve => {
@@ -202,6 +211,7 @@
     async function refreshBoard() {
         const res = await fetch("/state?mode=example");
         const data = await res.json();
+        legalMoves = data.legal_moves || [];
         board.position(boardPosition(data.fen));
 
         playMoveSound();
@@ -229,7 +239,12 @@
             position: "start",
             pieceTheme: "/static/chess/img/chesspieces/wikipedia/{piece}.png",
 
+            onDragStart: function (source) {
+                highlightLegalMoveDestinations("board", legalMoves, source);
+            },
+
             onDrop: async function (source, target, piece) {
+                clearLegalMoveHighlights("board");
                 let move = source + target;
 
                 if (
@@ -250,6 +265,7 @@
 
                 if (data.success) {
                     suppressNextAnnouncement = true;
+                    legalMoves = data.legal_moves || [];
                     board.position(boardPosition(data.fen));
                     lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
 
@@ -266,6 +282,7 @@
             },
 
             onSnapEnd: async function () {
+                clearLegalMoveHighlights("board");
                 await refreshBoard();
             }
         });
@@ -273,6 +290,7 @@
         window.onVoiceMoveResult = async function (data) {
             if (data.success) {
                 suppressNextAnnouncement = true;
+                legalMoves = data.legal_moves || [];
                 board.position(boardPosition(data.fen));
                 lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
                 await refreshBoard();
