@@ -22,6 +22,13 @@ let backgroundMusicWasPlaying = false;
 const pendingMoveStorageKey = "speechChessPendingMove";
 const captureLengthMs = 4000;
 
+if (window.speechChessSettings) {
+    narratorEnabled = window.speechChessSettings.narratorEnabled;
+    voiceInputEnabled = window.speechChessSettings.voiceInputEnabled;
+    masterVolume = window.speechChessSettings.masterVolume;
+    narratorVolume = window.speechChessSettings.narratorVolume;
+}
+
 function backgroundMusicElement() {
     return document.getElementById("backgroundMusic");
 }
@@ -42,7 +49,6 @@ function resumeBackgroundMusic() {
     }
 
     backgroundMusicWasPlaying = false;
-
     const music = backgroundMusicElement();
     if (!music) {
         return;
@@ -61,14 +67,6 @@ function holdBackgroundMusicForVoiceCommand() {
 function releaseBackgroundMusicForVoiceCommand() {
     backgroundMusicHeldForVoiceCommand = false;
     resumeBackgroundMusic();
-}
-
-// If the global object exists then keep those settings and set the local variables to them. Else, keep them set to default values.
-if (window.speechChessSettings) {
-    narratorEnabled = window.speechChessSettings.narratorEnabled;
-    voiceInputEnabled = window.speechChessSettings.voiceInputEnabled;
-    masterVolume = window.speechChessSettings.masterVolume;
-    narratorVolume = window.speechChessSettings.narratorVolume;
 }
 
 function updateVoiceMessage(message) {
@@ -156,7 +154,12 @@ function isWakePhrase(text) {
 
 function isSubmitCommand(text) {
     const normalized = normalizeCommand(text);
-    return normalized.includes("submit move") || normalized === "submit" || normalized === "confirm" || normalized.includes("confirm move");
+    return (
+        normalized.includes("submit move") ||
+        normalized === "submit" ||
+        normalized === "confirm" ||
+        normalized.includes("confirm move")
+    );
 }
 
 function isCancelCommand(text) {
@@ -172,33 +175,20 @@ function isHelpCommand(text) {
     return normalizeCommand(text) === "help";
 }
 
-function speakText(text) {
-    if(!narratorEnabled) {
-        return;
-    }
-}
-
 function moveAfterWakePhrase(text) {
     const normalized = normalizeCommand(text);
+    const prefixes = [
+        "speech chess ",
+        "speechchess ",
+        "speech chest ",
+        "speech test ",
+        "chess et "
+    ];
 
-    if (normalized.startsWith("speech chess ")) {
-        return normalized.slice("speech chess ".length).trim();
-    }
-
-    if (normalized.startsWith("speechchess ")) {
-        return normalized.slice("speechchess ".length).trim();
-    }
-
-    if (normalized.startsWith("speech chest ")) {
-        return normalized.slice("speech chest ".length).trim();
-    }
-
-    if (normalized.startsWith("speech test ")) {
-        return normalized.slice("speech test ".length).trim();
-    }
-
-    if (normalized.startsWith("chess et ")) {
-        return normalized.slice("chess et ".length).trim();
+    for (const prefix of prefixes) {
+        if (normalized.startsWith(prefix)) {
+            return normalized.slice(prefix.length).trim();
+        }
     }
 
     return "";
@@ -267,8 +257,21 @@ function stopActiveListening(discard = false) {
 }
 
 function speakText(text, options = {}) {
-    const releaseMusicHold = options.releaseMusicHold === true;
+    if (!narratorEnabled) {
+        updateVoiceMessage(text);
+        if (options.releaseMusicHold === true) {
+            releaseBackgroundMusicForVoiceCommand();
+        } else if (!backgroundMusicHeldForVoiceCommand) {
+            resumeBackgroundMusic();
+        }
 
+        if (voiceModeEnabled && !suspendedForSpeech) {
+            setTimeout(startListeningMode, 0);
+        }
+        return;
+    }
+
+    const releaseMusicHold = options.releaseMusicHold === true;
     lastPrompt = text;
     updateVoiceMessage(text);
     pauseBackgroundMusic();
@@ -285,7 +288,6 @@ function speakText(text, options = {}) {
         } else if (!backgroundMusicHeldForVoiceCommand) {
             resumeBackgroundMusic();
         }
-
         return;
     }
 
@@ -296,7 +298,7 @@ function speakText(text, options = {}) {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.volume = (narratorVolume/100) * (masterVolume/100);
+    utterance.volume = (narratorVolume / 100) * (masterVolume / 100);
     utterance.rate = 1;
     utterance.pitch = 1;
     utterance.onend = function () {
@@ -329,11 +331,12 @@ function speakText(text, options = {}) {
 function speakStartupIntro() {
     const intro = "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move.";
     updateVoiceMessage(intro);
-    if(!narratorEnabled) {
+
+    if (!narratorEnabled) {
         return Promise.resolve();
     }
-    pauseBackgroundMusic();
 
+    pauseBackgroundMusic();
     const playbackId = ++speechPlaybackId;
 
     if (!("speechSynthesis" in window)) {
@@ -342,23 +345,25 @@ function speakStartupIntro() {
         }
         return Promise.resolve();
     }
+
     window.speechSynthesis.cancel();
     return new Promise(function (resolve) {
         const utterance = new SpeechSynthesisUtterance(intro);
         let settled = false;
+
         const finish = function () {
             if (settled) {
                 return;
             }
-            settled = true;
 
+            settled = true;
             if (playbackId === speechPlaybackId && !backgroundMusicHeldForVoiceCommand) {
                 resumeBackgroundMusic();
             }
-
             resolve();
         };
-        utterance.volume = (narratorVolume/100) * (masterVolume/100);
+
+        utterance.volume = (narratorVolume / 100) * (masterVolume / 100);
         utterance.rate = 1;
         utterance.pitch = 1;
         utterance.onend = finish;
@@ -368,27 +373,29 @@ function speakStartupIntro() {
     });
 }
 
-function startRecognition() {
-    if(!voiceInputEnabled) {
+function startBrowserRecognition() {
+    if (!voiceInputEnabled) {
         updateVoiceMessage("Voice input is disabled in settings.");
         return;
     }
-    if(!voiceModeEnabled || recognition || (!window.SpeechRecognition && !window.webkitSpeechRecognition)) {
-function startBrowserRecognition() {
+
     if (!voiceModeEnabled || recognition || !hasBrowserSpeechRecognition()) {
         return;
     }
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRecognition();
     recognition.lang = "en-US";
     recognition.interimResults = false;
     recognition.continuous = true;
     recognition.maxAlternatives = 3;
+
     recognition.onresult = function (event) {
         for (let i = event.resultIndex; i < event.results.length; i += 1) {
             if (!event.results[i].isFinal) {
                 continue;
             }
+
             const transcript = event.results[i][0].transcript.trim();
             updateTranscriptField(transcript);
             transcriptQueue = transcriptQueue
@@ -399,25 +406,6 @@ function startBrowserRecognition() {
                     updateVoiceMessage("There was a problem handling that voice command.");
                 });
         }
-        };
-        recognition.onerror = function (event) {
-            updateVoiceMessage(`Speech recognition error: ${event.error}`);
-        };
-        recognition.onend = function () {
-            recognition = null;
-            if(voiceModeEnabled && !suspendedForSpeech && voiceInputEnabled) {
-                startRecognition();
-            }
-        };
-        recognition.start();
-    }   
-}
-    
-function stopRecognition() {
-    if (recognition) {
-        recognition.stop();
-    }
-    recognition = null;
     };
 
     recognition.onerror = function (event) {
@@ -426,7 +414,7 @@ function stopRecognition() {
 
     recognition.onend = function () {
         recognition = null;
-        if (voiceModeEnabled && !suspendedForSpeech && transcriptionMode === "browser") {
+        if (voiceModeEnabled && !suspendedForSpeech && transcriptionMode === "browser" && voiceInputEnabled) {
             startBrowserRecognition();
         }
     };
@@ -437,6 +425,7 @@ function stopRecognition() {
 async function transcribeRecordedAudio(blob) {
     const formData = new FormData();
     formData.append("audio", blob, "speech-command.webm");
+
     const endpoint =
         window.speechChessTranscriptionEndpoint ||
         localStorage.getItem("speechChessTranscriptionEndpoint") ||
@@ -460,13 +449,18 @@ async function transcribeRecordedAudio(blob) {
         return response.json();
     } catch (error) {
         return {
-            "success": false,
-            "error": "Could not reach the transcription server."
+            success: false,
+            error: "Could not reach the transcription server."
         };
     }
 }
 
 async function startOpenAIAudioCapture() {
+    if (!voiceInputEnabled) {
+        updateVoiceMessage("Voice input is disabled in settings.");
+        return;
+    }
+
     if (!voiceModeEnabled || suspendedForSpeech || mediaRecorder || !hasOpenAIAudioCapture()) {
         return;
     }
@@ -575,12 +569,12 @@ function startListeningMode() {
 }
 
 function enableVoiceMode(announce = true) {
-    if(!voiceInputEnabled) {
+    if (!voiceInputEnabled) {
         updateVoiceMessage("Voice input is disabled in settings.");
         return;
     }
-    if(!voiceModeEnabled) {
-        enableVoiceMode(true);
+
+    if (voiceModeEnabled) {
         return;
     }
 
@@ -588,16 +582,14 @@ function enableVoiceMode(announce = true) {
     voiceModeEnabled = true;
     clearPendingMove();
     updateVoiceModeButton();
+
     if (announce) {
         speakText("Voice mode enabled. Say Speech Chess to begin your move.");
     } else {
         updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
         startListeningMode();
     }
-    startRecognition();
-    updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
 }
-
 
 function disableVoiceMode() {
     if (!voiceModeEnabled) {
@@ -770,14 +762,11 @@ async function handleTranscript(transcript) {
 }
 
 function startVoiceInput() {
-    if(!voiceInputEnabled) {
-        updateVoiceMessage("Voice input is disabled in settings.");
-        return;
-    }
-    if(!voiceModeEnabled) {
+    if (!voiceModeEnabled) {
         enableVoiceMode(true);
         return;
     }
+
     disableVoiceMode();
 }
 
@@ -787,6 +776,7 @@ async function submitVoiceMove() {
         updateVoiceMessage("Type a transcript or use voice mode first.");
         return;
     }
+
     await handleMoveTranscript(transcript);
 }
 
@@ -794,7 +784,9 @@ async function beginAutoIntroSession() {
     if (!voiceInputEnabled) {
         updateVoiceMessage("Voice input is disabled in settings.");
         return;
-    }if(voiceModeEnabled) {
+    }
+
+    if (voiceModeEnabled) {
         return;
     }
 
@@ -803,32 +795,11 @@ async function beginAutoIntroSession() {
     clearPendingMove();
     updateVoiceModeButton();
     await speakStartupIntro();
+
     if (!voiceModeEnabled) {
         return;
     }
-    startRecognition();
 
     updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
     startListeningMode();
 }
-
-/* Allows for narration of html elements when they're hovered over. the narratable elements are those with data-narrate attribute and for 
-each of those elements it converts the data-narrate content to text which then uses speakText() to actually have the narrator say it. 
-addEventListener() runs when mouseenter (cursor hovers over) occurs, in which that function for, the element hovered over, runs and the 
-narrator reads the text aloud. */
-function attachHoverNarration() {
-    const narratableElements = document.querySelectorAll("[data-narrate]");
-    narratableElements.forEach(element => {
-        element.addEventListener("mouseenter", function () {
-            const text = element.dataset.narrate;
-            if(text) {
-                speakText(text);
-            }
-        });
-    });
-}
-
-// When the html has finished loading, run the narration on cursor hover function.
-document.addEventListener("DOMContentLoaded", function () {
-    attachHoverNarration();
-});

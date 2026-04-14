@@ -317,6 +317,44 @@ div.puzzles {
     align-items: center;
 }
 
+.page-center{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:80vh;
+}
+
+#ai-lobby{
+    background:#111;
+    padding:40px;
+    border-radius:12px;
+    width:500px;
+}
+
+.difficulty-grid{
+    display:flex;
+    gap:10px;
+}
+
+.diff-btn{
+    flex:1;
+    padding:12px;
+    background:#222;
+    border:1px solid #444;
+    color:white;
+}
+
+.diff-btn.selected{
+    background:#3b82f6;
+}
+
+#start-ai-btn{
+    margin-top:20px;
+    padding:12px;
+    width:100%;
+}
+
+
 div.get_started_page, div.login_page {
     /* This class fits to the entire width of the screen. */
     width: 100%;
