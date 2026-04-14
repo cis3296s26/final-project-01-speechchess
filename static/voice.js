@@ -133,6 +133,32 @@ function clearPendingMove() {
     savePendingMove();
 }
 
+function clearVoiceMoveHighlightsIfAvailable() {
+    if (typeof window.clearVoiceMoveHighlights === "function") {
+        window.clearVoiceMoveHighlights();
+    }
+}
+
+function canUseVoiceHighlights() {
+    return typeof window.highlightLegalMovesForSquare === "function";
+}
+
+function voiceMovePrompt() {
+    if (canUseVoiceHighlights()) {
+        return "Say Speech Chess to begin your move, or highlight then location to show legal moves.";
+    }
+
+    return "Say Speech Chess to begin your move.";
+}
+
+function voiceHelpPrompt() {
+    if (canUseVoiceHighlights()) {
+        return "Say Speech Chess and your move together, like Speech Chess knight f 3. Say highlight then location to show legal moves. Then say submit move or confirm to play a move, or cancel.";
+    }
+
+    return "Say Speech Chess and your move together, like Speech Chess knight f 3. Then say submit move or confirm to play it, or cancel.";
+}
+
 function normalizeCommand(text) {
     return text
         .toLowerCase()
@@ -192,6 +218,66 @@ function moveAfterWakePhrase(text) {
     }
 
     return "";
+}
+
+function normalizeSpokenSquareText(text) {
+    const replacements = {
+        "see": "c",
+        "sea": "c",
+        "cee": "c",
+        "bee": "b",
+        "be": "b",
+        "dee": "d",
+        "gee": "g",
+        "aitch": "h",
+        "age": "h",
+        "won": "1",
+        "one": "1",
+        "two": "2",
+        "too": "2",
+        "to": "2",
+        "three": "3",
+        "free": "3",
+        "four": "4",
+        "for": "4",
+        "five": "5",
+        "six": "6",
+        "seven": "7",
+        "eight": "8",
+        "ate": "8"
+    };
+
+    return normalizeCommand(text)
+        .split(" ")
+        .map(function (token) {
+            return replacements[token] || token;
+        })
+        .join(" ")
+        .replace(/\b([a-h])\s+([1-8])\b/g, "$1$2");
+}
+
+function highlightCommandInfo(text) {
+    const commandText = moveAfterWakePhrase(text) || normalizeCommand(text);
+
+    if (!/\bhighlight\b|\bhigh light\b/.test(commandText)) {
+        return { isHighlight: false, square: null };
+    }
+
+    const normalized = normalizeSpokenSquareText(commandText);
+    const cleaned = normalized.replace(
+        /\b(highlight|high|light|legal|moves?|destinations?|piece|square|on|at|from|for|the|my|please)\b/g,
+        " "
+    );
+    const match = cleaned.match(/\b([a-h][1-8])\b/);
+
+    return {
+        isHighlight: true,
+        square: match ? match[1] : null
+    };
+}
+
+function spokenSquare(square) {
+    return `${square[0]} ${square[1]}`;
 }
 
 function hasBrowserSpeechRecognition() {
@@ -329,7 +415,9 @@ function speakText(text, options = {}) {
 }
 
 function speakStartupIntro() {
-    const intro = "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move.";
+    const intro = canUseVoiceHighlights()
+        ? "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move. Say highlight then location to show legal moves."
+        : "Welcome to Speech Chess. Say Speech Chess, then your move, then submit move.";
     updateVoiceMessage(intro);
 
     if (!narratorEnabled) {
@@ -584,9 +672,9 @@ function enableVoiceMode(announce = true) {
     updateVoiceModeButton();
 
     if (announce) {
-        speakText("Voice mode enabled. Say Speech Chess to begin your move.");
+        speakText(`Voice mode enabled. ${voiceMovePrompt()}`);
     } else {
-        updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
+        updateVoiceMessage(`Voice mode enabled. ${voiceMovePrompt()}`);
         startListeningMode();
     }
 }
@@ -631,6 +719,7 @@ async function playPendingMove() {
         return;
     }
 
+    clearVoiceMoveHighlightsIfAvailable();
     updateVoiceMessage(`Playing ${pendingMove.spoken}...`);
 
     let data;
@@ -672,6 +761,7 @@ async function playPendingMove() {
 
 async function handleMoveTranscript(transcript) {
     parsingMove = true;
+    clearVoiceMoveHighlightsIfAvailable();
     updateVoiceMessage(`Parsing move: ${transcript}`);
 
     let result;
@@ -702,6 +792,36 @@ async function handleMoveTranscript(transcript) {
     });
 }
 
+async function handleHighlightTranscript(transcript) {
+    const command = highlightCommandInfo(transcript);
+
+    if (!command.isHighlight) {
+        return false;
+    }
+
+    if (!canUseVoiceHighlights()) {
+        return false;
+    }
+
+    clearPendingMove();
+
+    if (!command.square) {
+        updateVoiceMessage("Say highlight then location to show legal moves.");
+        return true;
+    }
+
+    const count = window.highlightLegalMovesForSquare(command.square);
+
+    if (count > 0) {
+        const moveWord = count === 1 ? "move" : "moves";
+        updateVoiceMessage(`Highlighted ${count} legal ${moveWord} from ${spokenSquare(command.square)}.`);
+        return true;
+    }
+
+    updateVoiceMessage(`No legal moves are available from ${spokenSquare(command.square)}.`);
+    return true;
+}
+
 async function handleTranscript(transcript) {
     const normalized = normalizeCommand(transcript);
     const wakeMove = moveAfterWakePhrase(transcript);
@@ -715,17 +835,23 @@ async function handleTranscript(transcript) {
     }
 
     if (isHelpCommand(normalized)) {
-        speakText("Say Speech Chess and your move together, like Speech Chess knight f 3. Then say submit move or confirm to play it, or cancel.");
+        speakText(voiceHelpPrompt());
         return;
     }
 
     if (isCancelCommand(normalized)) {
         clearPendingMove();
+        clearVoiceMoveHighlightsIfAvailable();
         speakText("Cancelled. Say Speech Chess to start another move.", { releaseMusicHold: true });
         return;
     }
 
+    if (await handleHighlightTranscript(transcript)) {
+        return;
+    }
+
     if (wakeMove) {
+        clearVoiceMoveHighlightsIfAvailable();
         holdBackgroundMusicForVoiceCommand();
         clearPendingMove();
         awaitingMove = false;
@@ -734,6 +860,7 @@ async function handleTranscript(transcript) {
     }
 
     if (isWakePhrase(normalized)) {
+        clearVoiceMoveHighlightsIfAvailable();
         holdBackgroundMusicForVoiceCommand();
         clearPendingMove();
         awaitingMove = true;
@@ -777,6 +904,10 @@ async function submitVoiceMove() {
         return;
     }
 
+    if (await handleHighlightTranscript(transcript)) {
+        return;
+    }
+
     await handleMoveTranscript(transcript);
 }
 
@@ -800,6 +931,6 @@ async function beginAutoIntroSession() {
         return;
     }
 
-    updateVoiceMessage("Voice mode enabled. Say Speech Chess to begin your move.");
+    updateVoiceMessage(`Voice mode enabled. ${voiceMovePrompt()}`);
     startListeningMode();
 }

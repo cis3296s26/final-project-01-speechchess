@@ -20,7 +20,7 @@
             soundEffectsVolume: {{ settings["sound_effects_volume"] | tojson }}
         };
     </script>
-    <script src="/static/voice.js?v=20260414b" defer></script>
+    <script src="/static/voice.js?v=20260414d" defer></script>
 </head>
 <body>
 <aside id="sidebar">
@@ -121,7 +121,7 @@
         <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
         <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
         <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
-        <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Click Start Voice Session, then say "Speech Chess e4" or "Speech Chess knight f3", then say "submit move" or "confirm".</pre>
+        <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Click Start Voice Session, then say "Speech Chess e4" or "highlight e2". Say "submit move" or "confirm" to play a pending move.</pre>
     </div>
 </main>
 
