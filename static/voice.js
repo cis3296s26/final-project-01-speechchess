@@ -176,6 +176,8 @@ function speakText(text) {
     if(!narratorEnabled) {
         return;
     }
+}
+
 function moveAfterWakePhrase(text) {
     const normalized = normalizeCommand(text);
 
@@ -409,6 +411,7 @@ function startBrowserRecognition() {
         };
         recognition.start();
     }   
+}
     
 function stopRecognition() {
     if (recognition) {

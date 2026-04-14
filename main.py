@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-from user_authentication import router as authentication_router, create_db_and_tables, engine, get_or_create_user_settings
+from user_authentication import router as authentication_router, User, engine, create_db_and_tables, get_or_create_user_settings
 from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
 from sqlmodel import Session
@@ -23,26 +23,28 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Create an instance, templates, to later render and return a TemplateResponse. All html files are in templates directory.
 templates = Jinja2Templates(directory="templates")
 
-# Helper function to return saved user settings from SQLModel object, converted to a dictionary, if user is logged in. Or return standard settings from dictionary if not.
-def render_page(request: Request, template_name: str):
+# Helper function to return saved user settings and their rating from SQLModel object, converted to a dictionary, if user is logged in. Or return standard settings from dictionary and no user rating if not.
+def render_page(request: Request, template_name: str, **extra):
     user_email = request.session.get("user_email")
     user_id = request.session.get("user_id")
-    settings = None
+    user_rating = None
+    settings = {"narrator_enabled": True, "voice_input_enabled": True, "master_volume": 50, "narrator_volume": 50, "music_volume": 50, "sound_effects_volume": 50}
     if user_id is not None:
         with Session(engine) as session:
+            user = session.get(User, user_id)
+            if user:
+                user_rating = user.rating
             settings_object = get_or_create_user_settings(session, user_id)
             settings = {"narrator_enabled": settings_object.narrator_enabled, "voice_input_enabled": settings_object.voice_input_enabled, "master_volume": settings_object.master_volume, "narrator_volume": settings_object.narrator_volume, "music_volume": settings_object.music_volume, "sound_effects_volume": settings_object.sound_effects_volume}
-            return templates.TemplateResponse(request=request, name=template_name, context={"request": request, "user_email": user_email, "settings": settings})
-    else:
-        settings = {"narrator_enabled": True, "voice_input_enabled": True, "master_volume": 50, "narrator_volume": 50, "music_volume": 50, "sound_effects_volume": 50}
-        return templates.TemplateResponse(request=request, name=template_name, context={"request": request, "user_email": user_email, "settings": settings})
+    
+    context = {"request": request, "user_email": user_email, "user_rating": user_rating, "settings": settings, **extra}
+    return templates.TemplateResponse(request=request, name=template_name, context=context)
         
 # Reads session cookie before and after every request and verifies the key. Then grants access to the request.session. request.session is a dictionary that stores the fields, fastapi middleware saves it to a cookie.
 app.add_middleware(SessionMiddleware, secret_key="secret-key")
 app.include_router(user_authentication.router)
 user_authentication.create_db_and_tables()
 
-app.add_middleware(SessionMiddleware, secret_key="speechchess-secret-key")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Switch to url of git website when it gets working
@@ -51,21 +53,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def ctx(request: Request, **extra):
-    email = request.session.get("user_email")
-    rating = None
-    if email:
-        from sqlmodel import Session, select
-        with user_authentication.Session(user_authentication.engine) as session:
-            user = session.exec(select(user_authentication.User).where(user_authentication.User.email == email)).first()
-            if user:
-                rating = user.rating
-    return {"request": request, "user_email": email, "user_rating": rating, **extra}
-
 # root() runs whenever "/" path occurs. Route returns HTML. root() passes an instance of the Request object named request. Returns template instance.
 @app.get("/", response_class = HTMLResponse)
 def root(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html", context=ctx(request))
+    return render_page(request, "index.html")
 
 # All the user_authentication directory html file returns
 @app.get("/user_authentication/get_started", response_class = HTMLResponse)
@@ -83,67 +74,57 @@ def signup_page(request: Request):
 @app.get("/user_authentication/profile",  response_class = HTMLResponse)
 def profile_page(request: Request):
     return render_page(request, "user_authentication/profile.html")
-def getStartedPage(request: Request):
-    return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context=ctx(request))
-
-@app.get("/user_authentication/login", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="user_authentication/login.html", context=ctx(request))
-
-@app.get("/user_authentication/signup", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="user_authentication/signup.html", context=ctx(request))
 
 # All the play directory html file returns
 @app.get("/play/play", response_class = HTMLResponse)
 def playPage(request: Request):
-    return templates.TemplateResponse(request=request, name="play/play.html", context=ctx(request))
+    return render_page(request, "play/play.html")
     
 @app.get("/play/play_online", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="play/play_online.html", context=ctx(request))
+    return render_page(request, "play/play_online.html")
 
 @app.get("/play/play_ai", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="play/play_ai.html", context=ctx(request))
+    return render_page(request, "play/play_ai.html")
 
 @app.get("/play/play_friends", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="play/play_friends.html", context=ctx(request))
+    return render_page(request, "play/play_friends.html")
 
 @app.get("/play/stats", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="play/stats.html", context=ctx(request))
+    return render_page(request, "play/stats.html")
 
 @app.get("/play/history", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="play/history.html", context=ctx(request))
+    return render_page(request, "play/history.html")
 
 # All the puzzle directory html file returns
 @app.get("/puzzles/daily_puzzle", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="puzzles/daily_puzzle.html", context=ctx(request))
+    return render_page(request, "puzzles/daily_puzzle.html")
 
 @app.get("/puzzles/all_puzzles", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="puzzles/all_puzzles.html", context=ctx(request))
+    return render_page(request, "puzzles/all_puzzles.html")
 
 # Rest of the sidebar html file returns
 @app.get("/sidebar/learn", response_class = HTMLResponse)
 def learnPage(request: Request):
-    return templates.TemplateResponse(request=request, name="sidebar/learn.html", context=ctx(request))    
+    return render_page(request, "sidebar/learn.html")    
     
 @app.get("/sidebar/community", response_class = HTMLResponse)
 def community_page(request: Request):
-    return templates.TemplateResponse(request=request, name="sidebar/community.html", context=ctx(request))
+    return render_page(request, "sidebar/community.html")
 
 @app.get("/sidebar/settings", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="sidebar/settings.html", context=ctx(request))
+    return render_page(request, "sidebar/settings.html")
 
 @app.get("/sidebar/support", response_class = HTMLResponse)
 def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="sidebar/support.html", context=ctx(request))
+    return render_page(request, "sidebar/support.html")
 
 #Chess Logic
 
@@ -187,11 +168,11 @@ def state(request: Request, mode: str = "example"):
 
 @app.get("/game", response_class=HTMLResponse)
 def game(request: Request):
-    return templates.TemplateResponse(request=request, name="game.html", context=ctx(request))
+    return templates.TemplateResponse(request, "game.html")
 
 @app.get("/voice", response_class=HTMLResponse)
 def voice(request: Request):
-    return templates.TemplateResponse(request=request, name="voice.html", context=ctx(request))
+    return templates.TemplateResponse(request, "voice.html")
 
 @app.get("/board")
 def board(request: Request, mode: str = "example"):
