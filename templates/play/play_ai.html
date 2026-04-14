@@ -320,7 +320,7 @@
         return legalMoves[Math.floor(Math.random() * legalMoves.length)];
     }
 
-    // Hard: fixed for AI (Black) vs Player (White)
+    // Hard: Uses a point system to determine if capture is worth
     async function getHardMove(legalMoves, board) {
         let bestScore = -Infinity;
         let bestMoves = [];
