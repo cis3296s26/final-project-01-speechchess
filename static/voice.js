@@ -172,12 +172,6 @@ function isHelpCommand(text) {
     return normalizeCommand(text) === "help";
 }
 
-function speakText(text) {
-    if(!narratorEnabled) {
-        return;
-    }
-}
-
 function moveAfterWakePhrase(text) {
     const normalized = normalizeCommand(text);
 
