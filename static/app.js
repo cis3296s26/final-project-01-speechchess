@@ -300,8 +300,8 @@ async function refreshBoard() {
 
 // Chess piece movement noise
 const moveSounds = [
-    new Audio('/static/sounds/ChessNoise1.mp3'),
-    new Audio('/static/sounds/ChessNoise2.mp3')
+    new Audio('/static/Sounds/ChessNoise1.mp3'),
+    new Audio('/static/Sounds/ChessNoise2.mp3')
 ];
 
 function playMoveSound() {
