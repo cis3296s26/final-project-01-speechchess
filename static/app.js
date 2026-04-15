@@ -111,6 +111,7 @@ function applySoundEffectsVolume(){
         soundEffectsVolume = window.speechChessSettings.soundEffectsVolume;
     }
     const finalVolume = effectiveVolume(soundEffectsVolume);
+    const moveSounds = window.speechChessMoveSounds || [];
     moveSounds.forEach(sound => {
         sound.volume = finalVolume;
     });
@@ -376,6 +377,7 @@ function initChessGame(config) {
         }
     }
 
+    let movement = false;
     async function handleDrop(source, target, piece) {
         clearLegalMoveHighlights(elementId);
         if (!config.onDrop) return "snapback";
@@ -389,8 +391,10 @@ function initChessGame(config) {
             const promoChoice = await onPromotion(isWhitePawn ? "white" : "black");
             move += promoChoice;
         }
-
+        movement = true
         return config.onDrop(source, target, piece, move);
+        movement = false
+        return result;
     }
 
     const board = Chessboard(elementId, {
@@ -402,7 +406,9 @@ function initChessGame(config) {
         onDrop:     handleDrop,
         onSnapEnd:  () => {
             clearLegalMoveHighlights(elementId);
-            board.position(toDisplayFen(currentFen));
+            if (!movement) {
+                board.position(toDisplayFen(currentFen));
+            }
             if (typeof config.onSnapEnd === "function") {
                 config.onSnapEnd();
             }
@@ -490,3 +496,5 @@ function updateSharedTimerDisplay() {
     document.getElementById("timer-white").classList.toggle("active-timer", currentTurn === "white");
     document.getElementById("timer-black").classList.toggle("active-timer", currentTurn === "black");
 }
+
+
