@@ -570,7 +570,12 @@ async function startOpenAIAudioCapture() {
     discardCurrentCapture = false;
     updateVoiceMessage("Listening...");
 
-    mediaRecorder = new MediaRecorder(mediaStream);
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")
+        ? "audio/ogg;codecs=opus"
+        : "audio/webm";
+    mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
     mediaRecorder.ondataavailable = function (event) {
         if (event.data && event.data.size > 0) {
             chunks.push(event.data);
@@ -597,7 +602,7 @@ async function startOpenAIAudioCapture() {
             return;
         }
 
-        const result = await transcribeRecordedAudio(new Blob(chunks, { type: "audio/webm" }));
+        const result = await transcribeRecordedAudio(new Blob(chunks, { type: mimeType }));
 
         if (!result.success) {
             if (result.fallback_to_browser && hasBrowserSpeechRecognition()) {
