@@ -159,23 +159,6 @@
             {% endif %}
         </ul>
     </aside>
-    <p>Play a friend page</p>
-<div id="lobby">
-    <h2>Play a Friend</h2>
-
-    <label>Your Name</label>
-    <input type="text" id="player-name" placeholder="Enter your name" />
-
-    <label>Move Timer (seconds per turn)</label>
-    <input type="range" id="timer-setting" min="10" max="300" step="10" value="60"
-           oninput="document.getElementById('timer-label').textContent = this.value + 's'" />
-    <span id="timer-label">60s</span>
-
-    <div style="margin-top: 16px;">
-        <button onclick="createRoom()">Create Room</button>
-        <button onclick="showJoinForm()">Join Room</button>
-    </div>
-
     <div id="lobby">
         <h2>Play a Friend</h2>
 

@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/chess/chessboard.min.css">
     <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
     <script type="text/javascript" src="/static/app.js" defer></script>
+    <script src="/static/voice.js" defer></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
     <script>
         window.speechChessSettings = {
@@ -181,6 +183,7 @@
     let timerInterval = null;
     let gameOver = false;
     let currentRoomData = null;
+    let currentFen = "start";
 
     loadOpenRooms();
 
@@ -233,7 +236,8 @@
 
     function connectWebSocket(color) {
         myColor = color;
-        ws = new WebSocket("wss://" + location.host + "/ws/" + roomId);
+        const protocol = location.protocol === "https:" ? "wss" : "ws";
+        ws = new WebSocket(`${protocol}://${location.host}/ws/${roomId}`);
         ws.onopen = () => {
             ws.send(JSON.stringify({ type: "join", player: myColor, name: myName, email: "{{ user_email or '' }}" }));
         };
@@ -264,13 +268,14 @@
             orientation: myColor,
             pieceTheme: "/static/chess/img/chesspieces/wikipedia/{piece}.png",
             onDrop: onDrop,
-            onSnapEnd: () => board.position(state.fen || "start")
+            onSnapEnd: () => board.position(currentFen)
         });
         applyState(state);
     }
 
     function applyState(state) {
-        if (board) board.position(state.fen || "start");
+        currentFen = state.fen || "start";
+        if (board) board.position(currentFen);
         currentTurn = state.turn;
         document.getElementById("turn-indicator").textContent = state.turn === myColor ? "Your turn" : "Opponent's turn";
         if (state.game_over) { endGame(state.winner ? state.winner + " wins!" : "Draw!", state.winner); return; }
