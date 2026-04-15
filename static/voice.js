@@ -934,3 +934,40 @@ async function beginAutoIntroSession() {
     updateVoiceMessage(`Voice mode enabled. ${voiceMovePrompt()}`);
     startListeningMode();
 }
+
+/* Allows for narration of html elements when they're hovered over. the narratable elements are those with data-narrate attribute and for 
+each of those elements it converts the data-narrate content to text which then uses speakText() to actually have the narrator say it. 
+addEventListener() runs when mouseenter (cursor hovers over) occurs, in which that function for, the element hovered over, runs and the 
+narrator reads the text aloud. */
+function attachHoverNarration(){
+    const narratableElements = document.querySelectorAll("[data-narrate]");
+    narratableElements.forEach(element => {
+        element.addEventListener("mouseenter", function (){
+            const text = element.dataset.narrate;
+            if(text){
+                speakText(text);
+            }
+        });
+    });
+}
+
+// Announce the page messsage of elements with the data-page-message attribute. Return if there is none, otherwise, the announcer reads it aloud.
+function announcePageMessage(){
+    const pageMessageElement = document.querySelector("[data-page-message]");
+    if(!pageMessageElement){
+        return;
+    }
+    const message = pageMessageElement.dataset.pageMessage;
+    if(message){
+        speakText(message);
+    }
+    setTimeout(function (){
+        speakText(message);
+    }, 500);
+}
+
+// When the html has finished loading, run the narration on cursor hover function.
+document.addEventListener("DOMContentLoaded", function (){
+    attachHoverNarration();
+    announcePageMessage();
+});
