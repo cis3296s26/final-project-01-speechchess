@@ -125,6 +125,209 @@
             {% endif %}
         </ul>
     </aside>
-    <p>Play online page</p>
+    <main style="max-width:500px; margin:40px auto; padding:24px;">
+        <h2>Play Online</h2>
+
+        <label>Your Name</label>
+        <input type="text" id="player-name" placeholder="Enter your name" style="width:100%; padding:8px; margin:6px 0 14px; box-sizing:border-box;">
+
+        <label>Move Timer (seconds per turn)</label>
+        <input type="range" id="timer-setting" min="10" max="300" step="10" value="60"
+               oninput="document.getElementById('timer-label').textContent = this.value + 's'">
+        <span id="timer-label">60s</span>
+
+        <div style="margin-top:16px;">
+            <button onclick="createRoom()">Create Room</button>
+        </div>
+
+        <div id="room-id-section" style="display:none; margin-top:16px;">
+            <p>Waiting for opponent to join...</p>
+        </div>
+
+        <div style="margin-top:24px;">
+            <h3 style="margin-bottom:8px;">Open Rooms <button onclick="loadOpenRooms()" style="font-size:0.75em; padding:2px 8px; margin-left:8px;">Refresh</button></h3>
+            <div id="open-rooms-list" style="font-size:0.9em; color:#555;">Loading...</div>
+        </div>
+
+        <p id="lobby-error" style="color:red;"></p>
+    </main>
+
+    <div id="game-area" style="display:none; max-width:500px; margin:20px auto; text-align:center;">
+        <div id="player-bar" style="display:flex; justify-content:space-between; max-width:400px; margin:0 auto 4px; font-size:0.85em; color:#555;">
+            <span id="player-black-info">Black</span>
+            <span id="player-white-info">White</span>
+        </div>
+        <div id="timer-bar" style="display:flex; justify-content:space-between; max-width:400px; margin:0 auto 8px; font-size:1.1em; font-weight:bold;">
+            <div id="timer-black" style="padding:4px 12px; border-radius:4px; background:#333; color:#fff; border:2px solid #333;">Black: <span id="time-black">--</span></div>
+            <div id="timer-white" style="padding:4px 12px; border-radius:4px; background:#fff; color:#333; border:2px solid #333;">White: <span id="time-white">--</span></div>
+        </div>
+        <div id="turn-indicator" style="margin:8px 0; font-size:1em; color:#333;">Waiting...</div>
+        <div id="board" style="width:400px; margin:0 auto 16px;"></div>
+        <div id="game-log" style="max-width:400px; margin:12px auto 0; max-height:120px; overflow-y:auto; font-size:0.85em; text-align:left; background:#fafafa; border:1px solid #ddd; padding:8px;"></div>
+        <button onclick="resignGame()" style="margin-top:12px;">Resign</button>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/chess/chessboard.min.js"></script>
+    <script>
+    let board = null;
+    let ws = null;
+    let myColor = null;
+    let myName = null;
+    let roomId = null;
+    let currentTurn = "white";
+    let timerSeconds = 60;
+    let timeLeft = { white: 60, black: 60 };
+    let timerInterval = null;
+    let gameOver = false;
+    let currentRoomData = null;
+
+    loadOpenRooms();
+
+    function loadOpenRooms() {
+        const list = document.getElementById("open-rooms-list");
+        list.textContent = "Loading...";
+        fetch("/rooms")
+            .then(r => r.json())
+            .then(rooms => {
+                const open = Object.values(rooms).filter(r => r.player_two === "waiting" && !r.game_over);
+                if (open.length === 0) {
+                    list.innerHTML = "<em>No open rooms right now.</em>";
+                    return;
+                }
+                list.innerHTML = open.map(r => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; margin:4px 0; background:#f4f4f4; border-radius:6px;">
+                        <span><strong>${r.player_one}</strong> is waiting</span>
+                        <button onclick="quickJoin('${r.room_id}')">Join</button>
+                    </div>
+                `).join("");
+            })
+            .catch(() => { list.innerHTML = "<em>Could not load rooms.</em>"; });
+    }
+
+    function quickJoin(id) {
+        myName = document.getElementById("player-name").value.trim();
+        if (!myName) { showError("Enter your name first."); return; }
+        roomId = id;
+        connectWebSocket("black");
+    }
+
+    function createRoom() {
+        myName = document.getElementById("player-name").value.trim();
+        if (!myName) { showError("Enter your name."); return; }
+        timerSeconds = parseInt(document.getElementById("timer-setting").value, 10);
+        fetch("/rooms", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ player_one: myName, player_two: "waiting", player_one_email: "{{ user_email or '' }}" })
+        })
+        .then(r => r.json())
+        .then(data => {
+            roomId = data.room_id;
+            myColor = "white";
+            document.getElementById("room-id-section").style.display = "block";
+            loadOpenRooms();
+            connectWebSocket("white");
+        });
+    }
+
+    function connectWebSocket(color) {
+        myColor = color;
+        ws = new WebSocket("wss://" + location.host + "/ws/" + roomId);
+        ws.onopen = () => {
+            ws.send(JSON.stringify({ type: "join", player: myColor, name: myName, email: "{{ user_email or '' }}" }));
+        };
+        ws.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            currentRoomData = msg.data;
+            if (msg.event === "join" || msg.event === "state") {
+                if (msg.data.player_two !== "waiting" || myColor === "black") {
+                    startGame(msg.data);
+                }
+            } else if (msg.event === "move" || msg.event === "reset") {
+                applyState(msg.data);
+            } else if (msg.event === "leave" || msg.event === "timeout") {
+                endGame(msg.data.winner + " wins!", msg.data.winner);
+            }
+        };
+        ws.onerror = () => showError("Connection error.");
+    }
+
+    function startGame(state) {
+        timerSeconds = parseInt(document.getElementById("timer-setting").value, 10);
+        timeLeft = { white: timerSeconds, black: timerSeconds };
+        document.querySelector("main").style.display = "none";
+        document.getElementById("game-area").style.display = "block";
+        board = Chessboard("board", {
+            draggable: true,
+            position: state.fen || "start",
+            orientation: myColor,
+            pieceTheme: "/static/chess/img/chesspieces/wikipedia/{piece}.png",
+            onDrop: onDrop,
+            onSnapEnd: () => board.position(state.fen || "start")
+        });
+        applyState(state);
+    }
+
+    function applyState(state) {
+        if (board) board.position(state.fen || "start");
+        currentTurn = state.turn;
+        document.getElementById("turn-indicator").textContent = state.turn === myColor ? "Your turn" : "Opponent's turn";
+        if (state.game_over) { endGame(state.winner ? state.winner + " wins!" : "Draw!", state.winner); return; }
+        startTimer();
+    }
+
+    function onDrop(source, target) {
+        if (gameOver || currentTurn !== myColor) return "snapback";
+        ws.send(JSON.stringify({ type: "move", player: myColor, move: source + target }));
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (gameOver) { clearInterval(timerInterval); return; }
+            timeLeft[currentTurn]--;
+            document.getElementById("time-white").textContent = timeLeft.white + "s";
+            document.getElementById("time-black").textContent = timeLeft.black + "s";
+            if (timeLeft[currentTurn] <= 0) {
+                clearInterval(timerInterval);
+                ws.send(JSON.stringify({ type: "leave", player: myColor }));
+                endGame("Time's up!", myColor === "white" ? "black" : "white");
+            }
+        }, 1000);
+    }
+
+    function resignGame() {
+        if (gameOver) return;
+        ws.send(JSON.stringify({ type: "leave", player: myColor }));
+        endGame("You resigned.", myColor === "white" ? "black" : "white");
+    }
+
+    function endGame(message, winnerColor) {
+        gameOver = true;
+        clearInterval(timerInterval);
+        document.getElementById("turn-indicator").textContent = message;
+        if (ws) ws.close();
+        if (roomId && winnerColor) {
+            fetch("/rooms/" + roomId)
+                .then(r => r.json())
+                .then(room => {
+                    const winnerEmail = winnerColor === "white" ? room.player_one_email : room.player_two_email;
+                    const loserEmail = winnerColor === "white" ? room.player_two_email : room.player_one_email;
+                    if (winnerEmail && loserEmail) {
+                        fetch("/update-ratings", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ winner_email: winnerEmail, loser_email: loserEmail })
+                        }).catch(() => {});
+                    }
+                }).catch(() => {});
+        }
+    }
+
+    function showError(msg) {
+        document.getElementById("lobby-error").textContent = msg;
+    }
+    </script>
 </body>
 </html>

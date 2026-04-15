@@ -197,6 +197,7 @@
             <button onclick="joinRoom()">Join</button>
         </div>
 
+
         <div id="room-id-section" style="display:none; margin-top:16px;">
             <p>Share this Room ID with your friend:</p>
             <div id="room-id-display"></div>
@@ -253,6 +254,34 @@
         }
 
         return position;
+    }
+
+    function loadOpenRooms() {
+        const list = document.getElementById("open-rooms-list");
+        list.textContent = "Loading...";
+        fetch("/rooms")
+            .then(r => r.json())
+            .then(rooms => {
+                const open = Object.values(rooms).filter(r => r.player_two === "waiting" && !r.game_over);
+                if (open.length === 0) {
+                    list.innerHTML = "<em>No open rooms right now.</em>";
+                    return;
+                }
+                list.innerHTML = open.map(r => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; margin:4px 0; background:#f4f4f4; border-radius:6px;">
+                        <span><strong>${r.player_one}</strong> is waiting</span>
+                        <button onclick="quickJoin('${r.room_id}')">Join</button>
+                    </div>
+                `).join("");
+            })
+            .catch(() => { list.innerHTML = "<em>Could not load rooms.</em>"; });
+    }
+
+    function quickJoin(id) {
+        myName = document.getElementById("player-name").value.trim();
+        if (!myName) { showError("Enter your name first."); return; }
+        document.getElementById("join-room-id").value = id;
+        joinRoom();
     }
 
     function createRoom() {
