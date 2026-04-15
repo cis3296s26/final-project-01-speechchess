@@ -124,16 +124,18 @@
     </aside>
     <main>
         {% if not user_email %}
-        <!--Will use display: flex; in CSS to put the get_started class next to chess_board class horizontally. Then will build get_started downwards.-->
         <div class="chess_board">
-            <img src="static/images/chess_board_cyan.png" alt="Cyan digital chess board."> 
+            <img src="static/images/chess_board_cyan.png" alt="Cyan digital chess board.">
             <div class="get_started">
                 <h1>Experience Chess in a Unique Way!</h1>
-                <p class="first_line">Compete in many gamemodes, train your brain, and improve your skills. Join our community today!</p>
-                <button onclick="getStarted()" data-narrate="Get Started" class="button getStarted-btn">Get Started</button>
+                <p class="first_line">Compete in many gamemodes, train your brain, and improve your skills.</p>
+                <a href="/user_authentication/login" class="button getStarted-btn" style="display:block; margin-bottom:12px;">Sign In</a>
+                <a href="/user_authentication/get_started" class="button play-btn" style="display:block; margin-bottom:12px;">Sign Up</a>
+                <a href="/guest" class="button learn-btn" style="display:block;">Continue as Guest</a>
             </div>
         </div>
         {% endif %}
+        {% if user_email %}
         <div class="play">
             <div class="home_play">
                 <h1>Play Example</h1>
@@ -158,6 +160,7 @@
             </div>
             <img src="static/images/homepage_puzzles.png" alt="Chess figure with puzzle pieces.">
         </div>
+        {% endif %}
     </main>    
 </body>
 </html>
