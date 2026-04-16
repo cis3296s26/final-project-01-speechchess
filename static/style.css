@@ -216,7 +216,7 @@ features on the homepage. Since each div comes one after the other in the html, 
 img in chess_board is on the left in one column, and the get_started class is on the right side as it's also in the container. 
 flex-wrap: nowrap forces elements to stay on the same line, and justify-content: center; to center elements in the display, the pair of 
 display: flex, for each div.*/
-div.chess_board, div.play, div.learn, div.puzzles {
+div.chess_board, div.play, div.learn, div.play_ai {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -252,7 +252,7 @@ div.chess_board img, div.play img, div.learn img, div.puzzles img {
 }
 
 /* Styles the headers for each homepage body header. */
-div.get_started h1, div.home_play h1, div.home_learn h1, div.home_puzzles h1{
+div.get_started h1, div.home_play h1, div.home_learn h1, div.home_play_ai h1{
     text-align: center;
     font-size: 42px;
     margin: 20px 0;
