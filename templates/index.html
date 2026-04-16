@@ -85,6 +85,9 @@
             </li>         
             {% if user_email %}
             <li>
+                <a href="/play/play_online" data-narrate="ELO" class="button elo-btn">Insert Elo here</a>
+            </li>
+            <li>
                 <a href="/user_authentication/profile" data-narrate="Profile" class="button profile-btn">Profile</a>
             </li>
             <li>
@@ -118,25 +121,23 @@
             <div class="home_play">
                 <h1>Play Example</h1>
                 <p class="first_line">Choose from various gamemodes to play chess and climb to the top.</p>
-                <button onclick="playExample()" data-narrate="Play" class="button play-btn">Play Example</button>
-            </div>
-            <img src="static/images/homepage_play.png" alt="Play chess trophy.">
-        </div>
-        <div class="play_ai">
-            <img src="static/images/homepage_learn_chess.png" alt="Learn chess book and magnifying glass.">
-            <div class="home_play_online">
-                <h1>Enhance Your Skills</h1>
-                <p class="first_line">Improve your game fast here! Learn valuable skills and lessons to apply to your game.</p>
-                <button onclick="playAI()" data-narrate="Learn" class="button learn-btn">Learn</button>
+                <button onclick="playExample()" data-narrate="Play Now" class="button play-btn">Play Now</button>
             </div>
         </div>
         <div class="play_online">
+            <img src="static/images/homepage_play.png" alt="Play chess trophy.">
             <div class="home_play_online">
+                <h1>Enhance Your Skills</h1>
+                <p class="first_line">Improve your game fast here! Learn valuable skills and lessons to apply to your game.</p>
+                <button onclick="playAI()" data-narrate="Learn" class="button play-online-btn">Learn</button>
+            </div>
+        </div>
+        <div class="play_ai">
+            <div class="home_play_ai">
                 <h1>Complete Chess Puzzles</h1>
                 <p class="first_line">Try your best to solve fun chess puzzles of varying difficulty</p>
-                <button onclick="playOnline()" data-narrate="Puzzles" class="button puzzles-btn">All Puzzles</button>
+                <button onclick="playOnline()" data-narrate="Play Online" class="button play-ai-btn">All Puzzles</button>
             </div>
-            <img src="static/images/homepage_puzzles.png" alt="Chess figure with puzzle pieces.">
         </div>
         {% endif %}
     </main>    
