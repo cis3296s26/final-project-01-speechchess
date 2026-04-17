@@ -104,11 +104,9 @@ def calculate_elo(winner_rating: int, loser_rating: int, k: int = 32):
     new_loser = round(loser_rating + k * (0 - expected_loser))
     return new_winner, new_loser
 
-
 class UpdateRatingsRequest(BaseModel):
     winner_email: str
     loser_email: str
-
 
 @router.get("/ratings/{email:path}")
 def get_rating(email: str):
@@ -117,7 +115,6 @@ def get_rating(email: str):
         if not user:
             return JSONResponse(status_code=404, content={"error": "User not found"})
         return {"email": user.email, "rating": user.rating}
-
 
 @router.post("/update-ratings")
 def update_ratings(req: UpdateRatingsRequest):
@@ -183,3 +180,17 @@ def update_setting(request: Request, setting_name: str = Form(...), setting_valu
         session.commit()
     # Return success from backend so frontend knows the request worked.
     return {"success": True}
+
+@router.get("/user_authentication/profile", response_class=HTMLResponse)
+def profile_page(request: Request):
+    user_id = request.session.get("user_id")
+    if user_id is None:
+        return RedirectResponse(url="/user_authentication/login", status_code=303)
+    with Session(engine) as session:
+        user = session.get(User, user_id)
+        if user is None:
+            request.session.clear()
+            return RedirectResponse(url="/user_authentication/login", status_code=303)
+        settings_object = get_or_create_user_settings(session, user_id)
+        settings = {"narrator_enabled": settings_object.narrator_enabled, "voice_input_enabled": settings_object.voice_input_enabled, "master_volume": settings_object.master_volume, "narrator_volume": settings_object.narrator_volume, "music_volume": settings_object.music_volume, "sound_effects_volume": settings_object.sound_effects_volume}
+        return templates.TemplateResponse("/user_authentication/profile.html", {"request": request, "user": user, "user_email": user.email, "settings": settings})
