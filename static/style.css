@@ -283,13 +283,15 @@ div.get_started .home-login-btn {
 }
 
 /* Styles all homepage body buttons when hovering over them with cursor. */
-div.home_play .play-btn:hover, div.home_play_online .play-online-btn:hover, div.home_play_ai .play-ai-btn:hover {
+div.home_play .play-btn:hover, div.home_play_online .play-online-btn:hover, div.home_play_ai .play-ai-btn:hover, div.get_started .home-signup-btn:hover {
     background-color: var(--hover-accent-clr);
     border: none solid var(--hover-accent-clr);
 }
 
-/* Set a top margin of 40px for each homepage div to match the top margin of the get_started div. */
-
+div.get_started .home-login-btn:hover {
+    background-color: var(--hover-base-clr);
+    border: none solid var(--hover-base-clr);
+}
 
 /* Get Started Page (Sign-Up) and Login Page styling. Combined the CSS styling for each page's html. Needed to create classes for the bodies of different pages so they may have different layouts. */
 .get_started_body, .login_body {
