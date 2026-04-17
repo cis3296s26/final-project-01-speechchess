@@ -99,20 +99,7 @@ def settings_page(request: Request):
 @app.get("/play/history", response_class = HTMLResponse)
 def settings_page(request: Request):
     return render_page(request, "play/history.html")
-
-# All the puzzle directory html file returns
-@app.get("/puzzles/daily_puzzle", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return render_page(request, "puzzles/daily_puzzle.html")
-
-@app.get("/puzzles/all_puzzles", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return render_page(request, "puzzles/all_puzzles.html")
-
-# Rest of the sidebar html file returns
-@app.get("/sidebar/learn", response_class = HTMLResponse)
-def learnPage(request: Request):
-    return render_page(request, "sidebar/learn.html")    
+ 
     
 @app.get("/sidebar/community", response_class = HTMLResponse)
 def community_page(request: Request):

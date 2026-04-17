@@ -55,20 +55,6 @@ function history(button){
     window.location.href="play/history"
 }
 
-// All the calls for window redirection to the puzzles directory html files
-function puzzlesDaily(button){
-    window.location.href="puzzles/daily_puzzle"
-}
-
-function puzzlesAll(button){
-    window.location.href="puzzles/all_puzzles"
-}
-
-// Rest of the calls for window redirection to the sidebar html files
-function learn(button){
-    window.location.href="sidebar/learn"
-}
-
 function community(button){
     window.location.href="sidebar/community"
 }

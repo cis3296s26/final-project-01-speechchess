@@ -119,24 +119,6 @@ sidebar stays in place when scrolling.*/
     background-color: var(--hover-base-clr);
 }
 
-/* Use grid to handle one child element. Control height of grid row to do this and set it to 0fr. Meaning it has no height. */
-#sidebar .sub-menu{
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: 300ms;
-}
-
-/* Div has overflow hidden as it hides elements that don't fit in the container. */
-#sidebar .sub-menu > div{
-    overflow: hidden;
-}
-
-/* Don't show the submenu unless you override the grid-template-rows value to be 1fr. Which adjusts automatically like height auto when the 
-submenu should be shown. */
-#sidebar .sub-menu.show{
-    grid-template-rows: 1fr;
-}
-
 /* Make the rotation of arrow svg visible by making it delayed. */
 .dropdown-btn svg{
     transition: 200ms;
@@ -147,13 +129,8 @@ submenu should be shown. */
     rotate: -180deg;
 }
 
-/* Anchor tags in submenu padded to have indentation. */
-#sidebar .sub-menu a{
-    padding-left: 2em;
-}
-
 /* Sidebar buttom two buttons styling, no matter if user is logged in or not. */
-#sidebar a.profile-btn, #sidebar a.login-btn {
+#sidebar a.profile-btn, #sidebar a.logout-btn, #sidebar a.login-btn, #sidebar a.elo-btn {
     background-color: var(--secondary-text-clr);
     color: var(--text-clr);
     text-align: center;
@@ -166,12 +143,12 @@ submenu should be shown. */
     width: 225px;
 }
 
-#sidebar a.profile-btn:hover,  #sidebar a.login-btn:hover {
+#sidebar a.profile-btn:hover, #sidebar a.logout-btn:hover, #sidebar a.login-btn:hover {
     background-color: var(--hover-base-clr);
     border: none var(--hover-base-clr);
 }
 
-#sidebar a.logout-btn, #sidebar a.signup-btn {
+#sidebar a.signup-btn, #sidebar a.elo-btn {
     background-color: var(--accent-clr);
     color: var(--text-clr);
     text-align: center;
@@ -183,9 +160,9 @@ submenu should be shown. */
     margin: 5px auto;
     width: 225px;
 }
-#sidebar a.logout-btn:hover, #sidebar a.signup-btn:hover {
+#sidebar a.signup-btn:hover, #sidebar a.elo-btn:hover {
     background-color: var(--accent-clr);
-    border: none var(--hover-accent-clr);
+    border: none var(--secondary-text-clr);
 }
 
 
@@ -200,7 +177,7 @@ submenu should be shown. */
 
 /* Main is a wrapper for the non-sidebar elements of the body in pages with a sidebar. All elements have a 20 pixel margin in all directions. */
 .homepage_body main {
-    padding: 50px;
+    padding: 30px;
     margin-top: 20px;
 }
 
@@ -216,12 +193,12 @@ features on the homepage. Since each div comes one after the other in the html, 
 img in chess_board is on the left in one column, and the get_started class is on the right side as it's also in the container. 
 flex-wrap: nowrap forces elements to stay on the same line, and justify-content: center; to center elements in the display, the pair of 
 display: flex, for each div.*/
-div.chess_board, div.play, div.learn, div.puzzles {
+div.chess_board, div.play, div.play_online, div.play_ai {
     display: flex;
     align-items: center;
     justify-content: center;
     /* 40px gap, preferrably 6% of screen width and max of 80 pixels. */
-    gap: clamp(40px, 6vw, 120px);
+    gap: clamp(25px, 4vw, 80px);
     flex-wrap: nowrap;
 }
 
@@ -232,16 +209,16 @@ the html file have also been removed.*/
 
 
 /* Provided a max width for every homepage body div so text doesn't stretch across different displays. */
-div.get_started, div.home_play, div.home_learn, div.home_puzzles {
+div.get_started, div.home_play, div.home_play_online, div.home_play_ai{
     text-align: center;
     /* This class fits to the entire width of the screen. */
     width: 100%;
-    /* Sets a limit on the width of the element to fit all screen sizes. */
-    max-width: 700px;
+    /* Sets a limit on the width of the element to hopefully fit all screen sizes. */
+    max-width: 550px;
 }
 
 /* Styles the images for each homepage body div. */
-div.chess_board img, div.play img, div.learn img, div.puzzles img {
+div.chess_board img, div.play img, div.play_online img, div.play_ai img {
     /* This class fits to the entire width of the screen. */
     width: 100%;
     /* Sets a limit on the width of the element to fit all screen sizes. */
@@ -252,7 +229,7 @@ div.chess_board img, div.play img, div.learn img, div.puzzles img {
 }
 
 /* Styles the headers for each homepage body header. */
-div.get_started h1, div.home_play h1, div.home_learn h1, div.home_puzzles h1{
+div.get_started h1, div.home_play h1, div.home_play_online h1, div.home_play_ai h1{
     text-align: center;
     font-size: 42px;
     margin: 20px 0;
@@ -260,7 +237,7 @@ div.get_started h1, div.home_play h1, div.home_learn h1, div.home_puzzles h1{
 }
 
 /* Styles <p> tag of each homepage body div. */
-div.get_started p.first_line, div.home_play p.first_line, div.home_learn p.first_line, div.home_puzzles p.first_line {
+div.get_started p.first_line, div.home_play p.first_line, div.home_play_online p.first_line, div.home_play_ai p.first_line {
     margin-top: 24px;
     color: var(--secondary-text-clr);
     text-align: center;
@@ -269,7 +246,7 @@ div.get_started p.first_line, div.home_play p.first_line, div.home_learn p.first
 }
 
 /* Styles all homepage body buttons. */
-div.get_started .getStarted-btn, div.home_play .play-btn, div.home_learn .learn-btn, div.home_puzzles .puzzles-btn{
+div.get_started .getStarted-btn, div.home_play .play-btn, div.home_play_online .play-online-btn, div.home_play_ai .play-ai-btn{
     background-color: var(--accent-clr);
     color: var(--text-clr);
     text-align: center;
@@ -288,23 +265,13 @@ div.get_started .getStarted-btn, div.home_play .play-btn, div.home_learn .learn-
 }
 
 /* Styles all homepage body buttons when hovering over them with cursor. */
-div.get_started .getStarted-btn:hover, div.home_play .play-btn:hover, div.home_learn .learn-btn:hover, div.home_puzzles .puzzles-btn:hover {
+div.get_started .getStarted-btn:hover, div.home_play .play-btn:hover, div.home_play_online .play-online-btn:hover, div.home_play_ai .play-ai-btn:hover {
     background-color: var(--hover-accent-clr);
     border: none solid var(--hover-accent-clr);
 }
 
 /* Set a top margin of 40px for each homepage div to match the top margin of the get_started div. */
-div.play {
-    margin-top: 40px;
-}
 
-div.learn {
-    margin-top: 40px;
-}
-
-div.puzzles {
-    margin-top: 40px;
-}
 
 /* Get Started Page (Sign-Up) and Login Page styling. Combined the CSS styling for each page's html. Needed to create classes for the bodies of different pages so they may have different layouts. */
 .get_started_body, .login_body {
