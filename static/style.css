@@ -177,7 +177,7 @@ sidebar stays in place when scrolling.*/
 
 /* Main is a wrapper for the non-sidebar elements of the body in pages with a sidebar. All elements have a 20 pixel margin in all directions. */
 .homepage_body main {
-    padding: 50px;
+    padding: 30px;
     margin-top: 20px;
 }
 
@@ -198,7 +198,7 @@ div.chess_board, div.play, div.play_online, div.play_ai {
     align-items: center;
     justify-content: center;
     /* 40px gap, preferrably 6% of screen width and max of 80 pixels. */
-    gap: clamp(40px, 6vw, 120px);
+    gap: clamp(25px, 4vw, 80px);
     flex-wrap: nowrap;
 }
 
@@ -213,8 +213,8 @@ div.get_started, div.home_play, div.home_play_online, div.home_play_ai{
     text-align: center;
     /* This class fits to the entire width of the screen. */
     width: 100%;
-    /* Sets a limit on the width of the element to fit all screen sizes. */
-    max-width: 700px;
+    /* Sets a limit on the width of the element to hopefully fit all screen sizes. */
+    max-width: 550px;
 }
 
 /* Styles the images for each homepage body div. */
@@ -265,23 +265,13 @@ div.get_started .getStarted-btn, div.home_play .play-btn, div.home_play_online .
 }
 
 /* Styles all homepage body buttons when hovering over them with cursor. */
-div.get_started .getStarted-btn:hover, div.home_play .play-btn:hover, div.home_learn .learn-btn:hover, div.home_puzzles .puzzles-btn:hover {
+div.get_started .getStarted-btn:hover, div.home_play .play-btn:hover, div.home_play_online .play-online-btn:hover, div.home_play_ai .play-ai-btn:hover {
     background-color: var(--hover-accent-clr);
     border: none solid var(--hover-accent-clr);
 }
 
 /* Set a top margin of 40px for each homepage div to match the top margin of the get_started div. */
-div.play {
-    margin-top: 40px;
-}
 
-div.learn {
-    margin-top: 40px;
-}
-
-div.puzzles {
-    margin-top: 40px;
-}
 
 /* Get Started Page (Sign-Up) and Login Page styling. Combined the CSS styling for each page's html. Needed to create classes for the bodies of different pages so they may have different layouts. */
 .get_started_body, .login_body {

@@ -110,8 +110,9 @@
             <div class="get_started">
                 <h1>Experience Chess in a Unique Way!</h1>
                 <p class="first_line">Compete in many gamemodes, train your brain, and improve your skills.</p>
-                <a href="/user_authentication/login" class="button getStarted-btn" style="display:block; margin-bottom:12px;">Sign In</a>
                 <a href="/user_authentication/get_started" class="button play-btn" style="display:block; margin-bottom:12px;">Sign Up</a>
+                <button onclick="login()" data-narrate="Login" class="button home-login-btn">Login</button>
+                <a href="/user_authentication/login" class="button getStarted-btn" style="display:block; margin-bottom:12px;">Sign In</a>
                 <a href="/guest" class="button learn-btn" style="display:block;">Continue as Guest</a>
             </div>
         </div>
@@ -119,25 +120,27 @@
         {% if user_email %}
         <div class="play">
             <div class="home_play">
-                <h1>Play Example</h1>
-                <p class="first_line">Choose from various gamemodes to play chess and climb to the top.</p>
+                <h1>Play Now</h1>
+                <p class="first_line">Get right into a locally played game! </p>
                 <button onclick="playExample()" data-narrate="Play Now" class="button play-btn">Play Now</button>
             </div>
+            <img src="static/images/homepage_play_now.png" alt="Play now hand and chess board.">
         </div>
         <div class="play_online">
             <img src="static/images/homepage_play.png" alt="Play chess trophy.">
             <div class="home_play_online">
-                <h1>Enhance Your Skills</h1>
-                <p class="first_line">Improve your game fast here! Learn valuable skills and lessons to apply to your game.</p>
-                <button onclick="playAI()" data-narrate="Learn" class="button play-online-btn">Learn</button>
+                <h1>Play Online</h1>
+                <p class="first_line">Play against other users and improve your rank!</p>
+                <button onclick="playAI()" data-narrate="Play Online" class="button play-online-btn">Learn</button>
             </div>
         </div>
         <div class="play_ai">
             <div class="home_play_ai">
-                <h1>Complete Chess Puzzles</h1>
-                <p class="first_line">Try your best to solve fun chess puzzles of varying difficulty</p>
-                <button onclick="playOnline()" data-narrate="Play Online" class="button play-ai-btn">All Puzzles</button>
+                <h1>Play AI</h1>
+                <p class="first_line">Try your best to beat AI opponents of varying skill levels.</p>
+                <button onclick="playOnline()" data-narrate="Play AI" class="button play-ai-btn">All Puzzles</button>
             </div>
+            <img src="static/images/homepage_play_ai.png" alt="Play AI robot and chess board.">
         </div>
         {% endif %}
     </main>    
