@@ -161,7 +161,7 @@ sidebar stays in place when scrolling.*/
     width: 225px;
 }
 #sidebar a.signup-btn:hover, #sidebar a.elo-btn:hover {
-    background-color: var(--accent-clr);
+    background-color: var(--hover-accent-clr);
     border: none var(--secondary-text-clr);
 }
 
