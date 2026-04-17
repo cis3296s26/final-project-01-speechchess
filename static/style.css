@@ -304,6 +304,16 @@ div.get_started .home-login-btn:hover {
     align-items: center;
 }
 
+.success-message {
+    color: #00ffcc;
+    background-color: rgba(0, 255, 204, 0.1);
+    border: 1px solid #00ffcc;
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
 .page-center{
     display:flex;
     justify-content:center;
