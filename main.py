@@ -71,10 +71,6 @@ def login_page(request: Request):
     success = "Account created successfully!" if created == "1" else None
     return render_page(request, "user_authentication/login.html", success=success)
 
-@app.get("/user_authentication/signup", response_class = HTMLResponse)
-def signup_page(request: Request):
-    return render_page(request, "user_authentication/signup.html")
-
 @app.get("/user_authentication/profile",  response_class = HTMLResponse)
 def profile_page(request: Request):
     return render_page(request, "user_authentication/profile.html")
@@ -96,26 +92,13 @@ def settings_page(request: Request):
 def settings_page(request: Request):
     return render_page(request, "play/play_friends.html")
 
-@app.get("/play/stats", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return render_page(request, "play/stats.html")
-
-@app.get("/play/history", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return render_page(request, "play/history.html")
- 
-    
-@app.get("/sidebar/community", response_class = HTMLResponse)
+@app.get("/sidebar/faq", response_class = HTMLResponse)
 def community_page(request: Request):
-    return render_page(request, "sidebar/community.html")
+    return render_page(request, "sidebar/faq.html")
 
 @app.get("/sidebar/settings", response_class = HTMLResponse)
 def settings_page(request: Request):
     return render_page(request, "sidebar/settings.html")
-
-@app.get("/sidebar/support", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return render_page(request, "sidebar/support.html")
 
 @app.get("/user_authentication/guest", response_class=HTMLResponse)
 def guest_page(request: Request):
