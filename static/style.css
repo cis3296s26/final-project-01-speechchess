@@ -246,7 +246,7 @@ div.get_started p.first_line, div.home_play p.first_line, div.home_play_online p
 }
 
 /* Styles all homepage body buttons. */
-div.get_started .getStarted-btn, div.home_play .play-btn, div.home_play_online .play-online-btn, div.home_play_ai .play-ai-btn{
+div.get_started .home-signup-btn, div.home_play .play-btn, div.home_play_online .play-online-btn, div.home_play_ai .play-ai-btn{
     background-color: var(--accent-clr);
     color: var(--text-clr);
     text-align: center;
@@ -264,8 +264,26 @@ div.get_started .getStarted-btn, div.home_play .play-btn, div.home_play_online .
     max-width: 420px;
 }
 
+div.get_started .home-login-btn {
+    background-color: var(--secondary-text-clr);
+    color: var(--text-clr);
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    border-radius: 12px;
+    font-size: 24px;
+    display: block;
+    /* Centers button. */
+    margin: 30px auto; 
+    padding: 18px 32px;
+    /* This class fits to the entire width of the screen. */
+    width: 100%;
+    /* Sets a limit on the width of the element to fit all screen sizes. */
+    max-width: 420px;
+}
+
 /* Styles all homepage body buttons when hovering over them with cursor. */
-div.get_started .getStarted-btn:hover, div.home_play .play-btn:hover, div.home_play_online .play-online-btn:hover, div.home_play_ai .play-ai-btn:hover {
+div.home_play .play-btn:hover, div.home_play_online .play-online-btn:hover, div.home_play_ai .play-ai-btn:hover {
     background-color: var(--hover-accent-clr);
     border: none solid var(--hover-accent-clr);
 }
@@ -399,17 +417,21 @@ div.get_started_signup_or_login input::placeholder, div.login_form input::placeh
     border: none var(--hover-accent-clr);    
 }
 
-div.get_started_signup_or_login p, div.login_form p {
+div.get_started_signup_or_login p, div.login_form p, div.get_started .home-guest-btn{
     text-align: center;
 }
 
-div.get_started_signup_or_login p, div.get_started_signup_or_login a, div.login_form p, div.login_form a {
+div.get_started_signup_or_login p, div.get_started_signup_or_login a, div.login_form p, div.login_form a, div.get_started .home-guest-btn{
     color: var(--secondary-text-clr);
     font-size: 0.95rem;
     text-decoration: none;
 }
 
 div.get_started_signup_or_login p, div.get_started_signup_or_login a:hover, div.login_form p, div.login_form a:hover {
+    color: var(--text-clr);
+}
+
+div.get_started .home-guest-btn:hover{
     color: var(--text-clr);
 }
 
