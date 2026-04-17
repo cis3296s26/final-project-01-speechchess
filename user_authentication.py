@@ -57,7 +57,7 @@ def get_or_create_user_settings(session: Session, user_id: int):
     return settings
 
 # Handle post request to /signup. Get form data and open a database session. Fail if email is used already, otherwise create a new user. 
-@router.post("/signup")
+@router.post("/user_authentication/signup")
 def signup(request: Request, email: str = Form(...), password: str = Form(...)):
     # If email or password fields empty, return the same page and print the error message to the screen.
     if not email or not password:
@@ -74,10 +74,10 @@ def signup(request: Request, email: str = Form(...), password: str = Form(...)):
         session.commit()
         session.refresh(new_user)
     # Redirect new user to login page after successfully creating their account. 
-    return RedirectResponse(url="/user_authentication/login", status_code=303)
+    return RedirectResponse(url="/user_authentication/login?created=1", status_code=303)
 
 # Handle post request to /login. Get form data and open a database session. Fail if no account exists for that email or if the password is incorrect.
-@router.post("/login")
+@router.post("/user_authentication/login")
 def login(request: Request, email: str = Form(...), password: str = Form(...)):
     email = email.strip()
     if not email or not password:

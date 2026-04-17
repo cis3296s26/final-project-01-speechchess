@@ -36,7 +36,7 @@
             {% if error %}
                 <p class="authentication-error">{{ error }}</p>
             {% endif %}
-            <form action="/signup" method="post">
+            <form action="/user_authentication/signup" method="post">
                 <input data-narrate="Enter email field" type="text" id="email" name="email" placeholder="Email" required >
                 <input data-narrate="Enter password field" type="password" id="password" name="password" placeholder="Password" required>  
                 <button data-narrate="Create Account button" class="button get-started-create-account-btn" type="submit">Create Account</button>          

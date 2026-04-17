@@ -34,12 +34,14 @@ def render_page(request: Request, template_name: str, **extra):
             user = session.get(User, user_id)
             if user:
                 user_rating = user.rating
+                
             settings_object = get_or_create_user_settings(session, user_id)
             settings = {"narrator_enabled": settings_object.narrator_enabled, "voice_input_enabled": settings_object.voice_input_enabled, "master_volume": settings_object.master_volume, "narrator_volume": settings_object.narrator_volume, "music_volume": settings_object.music_volume, "sound_effects_volume": settings_object.sound_effects_volume}
     
-    context = {"request": request, "user_email": user_email, "user_rating": user_rating, "settings": settings, **extra}
-    return templates.TemplateResponse(request=request, name=template_name, context=context)
-        
+    context = {"request": request, "user_email": user_email, "user_rating": user_rating, "settings": settings}
+    context.update(extra)
+    return templates.TemplateResponse(request=request, name=template_name, context=context)   
+     
 # Reads session cookie before and after every request and verifies the key. Then grants access to the request.session. request.session is a dictionary that stores the fields, fastapi middleware saves it to a cookie.
 app.add_middleware(SessionMiddleware, secret_key="secret-key")
 app.include_router(user_authentication.router)
@@ -65,7 +67,9 @@ def get_started_page(request: Request):
 
 @app.get("/user_authentication/login", response_class = HTMLResponse)
 def login_page(request: Request):
-    return render_page(request, "user_authentication/login.html")
+    created = request.query_params.get("created")
+    success = "Account created successfully!" if created == "1" else None
+    return render_page(request, "user_authentication/login.html", success=success)
 
 @app.get("/user_authentication/signup", response_class = HTMLResponse)
 def signup_page(request: Request):
