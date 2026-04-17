@@ -467,41 +467,41 @@ div.get_started .home-guest-btn:hover{
 }
 
 /* Turns the settings body to a flex display and aligns the items horizontally. */
-.settings_body main {
+.settings_body main, .profile_body main {
     display: flex;
     justify-content: center;
     margin-bottom: 10px;
 }
 
 /* Fill the container, don't go past 700px. */
-div.settings_page {
+div.settings_page, div.profile_page {
     width: 100%;
     max-width: 700px;
 }
 
 /* > ensures only that div's element, in this case header, is affected by this css. */
-div.settings_page > h1, div.settings_page > h2{
+div.settings_page > h1, div.settings_page > h2, div.profile_page > h1, div.profile_page > h2{
     text-align: center;
     padding: 30px;
     font-size: 36px;
 }
 
 /* Puts the following divs inside of this div in column form, so the setting rows are stacked vertically with 10px gaps in between them. */
-div.settings_page_content {
+div.settings_page_content, div.profile_page_content{
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
 /* Styling for the setting_row div headers, so the header for each setting. */
-div.settings_option_narrator h1, div.settings_option_voice_input h1, div.settings_option_master_volume h1, div.settings_option_narrator_volume h1, div.settings_option_music_volume h1, div.settings_option_sound_effects_volume h1 {
+div.settings_option_narrator h1, div.settings_option_voice_input h1, div.settings_option_master_volume h1, div.settings_option_narrator_volume h1, div.settings_option_music_volume h1, div.settings_option_sound_effects_volume h1, div.elo_row h1 {
     color: var(--text-clr);
     font-size: 24px;
     text-align: left;
 }
 
 /* Style the rows of each actual setting, so the header and p and button. */
-div.settings_row {
+div.settings_row, div.profile_row {
     /* Turns this div into a one dimensional container. justify-content is used horizontally, align-items is used vertically. */
     display: flex;
     /* Aligns the items horizontally to have space-between them. So there's a space between the buttons and the contents of this div. */
@@ -514,13 +514,13 @@ div.settings_row {
     border-radius: 12px;
 }
 
-div.settings_option_narrator p, div.settings_option_voice_input p, div.settings_option_master_volume p, div.settings_option_narrator_volume p, div.settings_option_music_volume p, div.settings_option_sound_effects_volume p{
+div.settings_option_narrator p, div.settings_option_voice_input p, div.settings_option_master_volume p, div.settings_option_narrator_volume p, div.settings_option_music_volume p, div.settings_option_sound_effects_volume p, div.elo_row p{
     color: var(--secondary-text-clr);
     text-align: left;
 }
 
 /* Styles the toggle buttons in the Settings page. */
-.settings_toggle {
+.settings_toggle, .profile_elo {
     color: var(--text-clr);
     border: none;
     border-radius: 12px;
@@ -531,6 +531,13 @@ div.settings_option_narrator p, div.settings_option_voice_input p, div.settings_
     align-items: right;
 }
 
+.profile_elo {
+    background-color: var(--accent-clr);
+}
+
+.profile_elo:hover {
+    background-color: var(--hover-accent-clr);
+}
 .settings_toggle.enabled {
     background-color: var(--accent-clr);
 }

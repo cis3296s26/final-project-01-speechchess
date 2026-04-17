@@ -18,10 +18,6 @@ function login(button){
     window.location.href="user_authentication/login"
 }
 
-function signUp(button){
-    window.location.href="user_authentication/signup"
-}
-
 function profile(button){
     window.location.href="user_authentication/profile"
 }
@@ -55,16 +51,12 @@ function history(button){
     window.location.href="play/history"
 }
 
-function community(button){
-    window.location.href="sidebar/community"
+function faq(button){
+    window.location.href="sidebar/faq"
 }
 
 function settings(button){
     window.location.href="sidebar/settings"
-}
-
-function support(button){
-    window.location.href="sidebar/support"
 }
 
 function guest(button){
@@ -486,5 +478,3 @@ function updateSharedTimerDisplay() {
     document.getElementById("timer-white").classList.toggle("active-timer", currentTurn === "white");
     document.getElementById("timer-black").classList.toggle("active-timer", currentTurn === "black");
 }
-
-
