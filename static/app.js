@@ -67,6 +67,10 @@ function support(button){
     window.location.href="sidebar/support"
 }
 
+function guest(button){
+    window.location.href="user_authentication/guest"
+}
+
 // Current volume is default value unless a database value is found for that account. Then local value is set to that database value.
 function effectiveVolume(localVolume){
     let currentMasterVolume = 50;

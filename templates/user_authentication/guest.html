@@ -103,18 +103,6 @@
     </aside>
     <main>
         {% if not user_email %}
-        <div class="chess_board">
-            <img src="/static/images/chess_board_cyan.png" alt="Cyan digital chess board.">
-            <div class="get_started">
-                <h1>Experience Chess in a Unique Way!</h1>
-                <p class="first_line">Compete in many gamemodes, train your brain, and improve your skills.</p>
-                <button onclick="login()" data-narrate="Login" class="button home-login-btn">Login</button>
-                <p><a href="/user_authentication/guest" class="button home-guest-btn" data-narrate="Continue as guest">Continue as Guest</a></p>
-                <button onclick="signUp()" data-narrate="Sign-Up" class="button home-signup-btn">Sign-Up</button>
-            </div>
-        </div>
-        {% endif %}
-        {% if user_email %}
         <div class="play">
             <div class="home_play">
                 <h1>Play Now</h1>

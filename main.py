@@ -113,6 +113,10 @@ def settings_page(request: Request):
 def settings_page(request: Request):
     return render_page(request, "sidebar/support.html")
 
+@app.get("/user_authentication/guest", response_class=HTMLResponse)
+def guest_page(request: Request):
+    return render_page(request, "user_authentication/guest.html")
+
 #Chess Logic
 
 class Move(BaseModel):
