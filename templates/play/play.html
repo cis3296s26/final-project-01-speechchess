@@ -20,7 +20,7 @@
             soundEffectsVolume: {{ settings["sound_effects_volume"] | tojson }}
         };
     </script>
-    <script src="/static/voice.js?v=20260414d" defer></script>
+    <script src="/static/voice.js?v=20260418a" defer></script>
 </head>
 <body style="display:grid; grid-template-columns:auto 1fr; min-height:100vh;">
 <aside id="sidebar">
@@ -100,6 +100,7 @@
     <div style="text-align: center;">
         <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
         <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
+        <button type="button" onclick="undoMove()">Undo</button>
         <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
         <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Click Start Voice Session, then say "Speech Chess e4" or "highlight e2". Say "submit move" or "confirm" to play a pending move.</pre>
     </div>
@@ -154,6 +155,22 @@
         sound.currentTime = 0;
         sound.play();
     };
+
+    async function undoMove() {
+        const res = await fetch("/undo?mode=example", { method: "POST" });
+        const data = await res.json();
+        if (!data.success) return;
+
+        suppressNextAnnouncement = true;
+        legalMoves = data.legal_moves || [];
+        if (board) board.position(boardPosition(data.fen));
+        lastHistoryLength = data.history ? data.history.length : 0;
+        playMoveSound();
+
+        if (typeof speakText === "function") {
+            speakText(`Move undone. ${data.turn} to move.`);
+        }
+    }
 
     function startBackgroundMusic() {
         const music = document.getElementById("backgroundMusic");
@@ -289,6 +306,21 @@
             });
 
             return response.json();
+        };
+
+        window.voiceSubmitPendingUndo = async function () {
+            const response = await fetch("/undo?mode=example", { method: "POST" });
+            const data = await response.json();
+
+            if (data.success) {
+                suppressNextAnnouncement = true;
+                legalMoves = data.legal_moves || [];
+                if (board) board.position(boardPosition(data.fen));
+                lastHistoryLength = data.history ? data.history.length : 0;
+                playMoveSound();
+            }
+
+            return data;
         };
 
         window.refreshVoiceBoard = refreshBoard;

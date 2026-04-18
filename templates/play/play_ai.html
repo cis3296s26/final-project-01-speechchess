@@ -99,7 +99,7 @@
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/chess/chessboard.min.js"></script>
-    <script src="/static/voice.js?v=20260414d" defer></script>
+    <script src="/static/voice.js?v=20260418a" defer></script>
 
 </head>
 
@@ -147,6 +147,7 @@
     <div class="controls-row">
         <button class="ctrl-btn primary" id="voiceModeButton" type="button" onclick="startVoiceInput()">Start voice session</button>
         <button class="ctrl-btn" type="button" onclick="submitVoiceMove()">Parse transcript</button>
+        <button class="ctrl-btn" type="button" onclick="undoAiGameMove()">Undo</button>
         <button class="ctrl-btn danger" onclick="resignAiGame()">Resign</button>
     </div>
 
@@ -488,6 +489,34 @@
             return data;
         };
 
+        window.voiceSubmitPendingUndo = async () => {
+            if (gameOver || !playerTurn || !chess) {
+                return { success: false, error: "Cannot undo right now." };
+            }
+            if (lastHistoryLength < 2) {
+                return { success: false, error: "No moves to undo." };
+            }
+
+            await fetch("/undo?mode=ai", { method: "POST" });
+            const res = await fetch("/undo?mode=ai", { method: "POST" });
+            const data = await res.json();
+            if (!data.success) return data;
+
+            legalMoves = data.legal_moves || [];
+            chess.setLegalMoves(legalMoves);
+            chess.setPosition(data.fen);
+            lastHistoryLength = data.history ? data.history.length : 0;
+
+            const log = document.getElementById("game-log");
+            log.innerHTML = "";
+            (data.history || []).forEach(san => logMove(san));
+
+            playMoveSound();
+            playerTurn = true;
+            updateTurnIndicator();
+            return data;
+        };
+
         window.onVoiceMoveResult = async (data) => {
             if (data.success) {
                 legalMoves = data.legal_moves || [];
@@ -585,6 +614,29 @@
     function resignAiGame() {
         if (gameOver) return;
         endGame("You resigned.");
+    }
+
+    async function undoAiGameMove() {
+        if (gameOver || !playerTurn || !chess) return;
+        if (lastHistoryLength < 2) return;
+
+        await fetch("/undo?mode=ai", { method: "POST" });
+        const res = await fetch("/undo?mode=ai", { method: "POST" });
+        const data = await res.json();
+        if (!data.success) return;
+
+        legalMoves = data.legal_moves || [];
+        chess.setLegalMoves(legalMoves);
+        chess.setPosition(data.fen);
+        lastHistoryLength = data.history ? data.history.length : 0;
+
+        const log = document.getElementById("game-log");
+        log.innerHTML = "";
+        (data.history || []).forEach(san => logMove(san));
+
+        playMoveSound();
+        playerTurn = true;
+        updateTurnIndicator();
     }
 </script>
 </div>
