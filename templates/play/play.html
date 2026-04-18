@@ -22,7 +22,7 @@
     </script>
     <script src="/static/voice.js?v=20260414d" defer></script>
 </head>
-<body>
+<body style="display:grid; grid-template-columns:auto 1fr; min-height:100vh;">
 <aside id="sidebar">
     <ul>
         <li>
@@ -90,13 +90,12 @@
         {% endif %}
     </ul>
 </aside>
-<h2 style="text-align:center;">Speech Chess</h2>
-
-<audio id="backgroundMusic" loop>
-    <source src="/static/Sounds/senormusica81-daytime-smooth-jazz-2025-2-458721.mp3" type="audio/mpeg">
-</audio>
 
 <main>
+    <h2 style="text-align:center;">Speech Chess</h2>
+    <audio id="backgroundMusic" loop>
+        <source src="/static/Sounds/senormusica81-daytime-smooth-jazz-2025-2-458721.mp3" type="audio/mpeg">
+    </audio>
     <div id="board" style="width: 400px; margin: 20px auto;"></div>
     <div style="text-align: center;">
         <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
