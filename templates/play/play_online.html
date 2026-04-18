@@ -30,7 +30,7 @@
         });
     </script>
 </head>
-<body>
+<body style="display:grid; grid-template-columns:auto 1fr; min-height:100vh;">
     <aside id="sidebar">
         <ul>
             <li>
@@ -98,7 +98,7 @@
             {% endif %}
         </ul>
     </aside>
-    <main style="max-width:500px; margin:40px auto; padding:24px;">
+    <main style="max-width:500px; margin:20px auto; padding:24px;">
         <h2>Play Online</h2>
 
         <label>Your Name</label>
@@ -125,7 +125,7 @@
         <p id="lobby-error" style="color:red;"></p>
     </main>
 
-    <div id="game-area" style="display:none; max-width:500px; margin:20px auto; text-align:center;">
+    <div id="game-area" style="display:none; max-width:500px; margin:20px auto; text-align:center; grid-column:2; grid-row:1;">
         <div id="player-bar" style="display:flex; justify-content:space-between; max-width:400px; margin:0 auto 4px; font-size:0.85em; color:#555;">
             <span id="player-black-info">Black</span>
             <span id="player-white-info">White</span>
