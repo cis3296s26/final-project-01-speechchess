@@ -383,10 +383,8 @@ def delete_room(room_id: str):
     return {"detail": f"Room '{room_id}' deleted"}
 
 @app.post("/undo")
-def undo_move():
-    if len(chess_logic.board.move_stack) > 0:
-        chess_logic.board.pop()
-    return {"success": True, **chess_logic.get_game_state()}
+def undo_move(request: Request, mode: str = "example"):
+    return get_single_player_game(request, mode).undo_move()
 
 @app.websocket("/ws/{room_id}")
 async def websocket_endpoint(websocket: WebSocket, room_id: str):
