@@ -23,12 +23,12 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             if (typeof speakText === "function") {
-                speakText("Settings page with accessibility features. Hover over the setting to have narrator announce them.  May use voice input to change the settings.");
+                speakText("Community page. Hover over page elements to have narrator announce them. The sidebar to navigate to other pages is found on the left side of the screen. May use voice input to navigate this page.");
             }
         });
     </script>
 </head>
-<body class="profile_body">
+<body>
     <aside id="sidebar">
         <ul>
             <li>
@@ -64,21 +64,21 @@
                     <span>Play a Friend</span>
                 </a>
             </li>
-            <li>
-                <a href="/sidebar/faq" data-narrate="Frequently Asked Questions">
+            <li class="active">
+                <a href="/sidebar/faq" data-narrate="Frequently asked questions">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M513.5-254.5Q528-269 528-290t-14.5-35.5Q499-340 478-340t-35.5 14.5Q428-311 428-290t14.5 35.5Q457-240 478-240t35.5-14.5ZM442-394h74q0-33 7.5-52t42.5-52q26-26 41-49.5t15-56.5q0-56-41-86t-97-30q-57 0-92.5 30T342-618l66 26q5-18 22.5-39t53.5-21q32 0 48 17.5t16 38.5q0 20-12 37.5T506-526q-44 39-54 59t-10 73Zm38 314q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
                     <span>FAQ</span>
                 </a>
             </li>
+            {% if user_email %}
             <li>
                 <a href="/sidebar/settings" data-narrate="Settings">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M433-80q-27 0-46.5-18T363-142l-9-66q-13-5-24.5-12T307-235l-62 26q-25 11-50 2t-39-32l-47-82q-14-23-8-49t27-43l53-40q-1-7-1-13.5v-27q0-6.5 1-13.5l-53-40q-21-17-27-43t8-49l47-82q14-23 39-32t50 2l62 26q11-8 23-15t24-12l9-66q4-26 23.5-44t46.5-18h94q27 0 46.5 18t23.5 44l9 66q13 5 24.5 12t22.5 15l62-26q25-11 50-2t39 32l47 82q14 23 8 49t-27 43l-53 40q1 7 1 13.5v27q0 6.5-2 13.5l53 40q21 17 27 43t-8 49l-48 82q-14 23-39 32t-50-2l-60-26q-11 8-23 15t-24 12l-9 66q-4 26-23.5 44T527-80h-94Zm7-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"/></svg>
                     <span>Settings</span>
                 </a>
-            </li>         
-            {% if user_email %}
+            </li>
             <li>
-                <a href="/play/play_online" data-narrate="ELO Play Online " class="button elo-btn">{{ user.rating }} ELO</a>
+                <a href="/play/play_online" data-narrate="Play Online" class="button elo-btn">{{ user_rating }} ELO</a>
             </li>
             <li>
                 <a href="/user_authentication/profile" data-narrate="Profile" class="button profile-btn">Profile</a>
@@ -96,24 +96,6 @@
             {% endif %}
         </ul>
     </aside>
-    <main>
-    <div data-page-message="Profile page. Hover over page elements to have narrator announce it. The sidebar to navigate to other pages is found on left side of screen. May use voice input to access those same elements and pages." hidden></div>
-    <div class="profile_page">  
-        <h1>{{ user.email }}'s Profile</h1>
-        <div class="profile_page_content"> 
-            <div class="profile_row" data-narrate="ELO Rating {{ user.rating }}">
-                <div class="elo_row">
-                    <h1>ELO Rating = {{ user.rating }}</h1>
-                    <p>ELO score is changed based off online performance.</p>
-                </div>
-                <!--Button with the class name of .setting_toggle.enabled if narrator is enabled, otherwise it's .setting_toggle_disabled. data-setting-name is a custom html attribute (data attribute) used for the backend to say that this element is
-                associated with the narrator enabled setting. This connects the frontend and backend. The html name that appears on the page behaves like the class name.-->
-                <button onclick="playOnline()" class="profile_elo" data-narrate="Proceed to play online.">Play Online</button>
-            </div>
-        </div>
-        <h2>{{ user.email }}'s Friends</h2>
-        <p>work in progress</p>
-    </div>
-    </main>
+    <p>Community page</p>
 </body>
 </html>

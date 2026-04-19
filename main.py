@@ -34,12 +34,14 @@ def render_page(request: Request, template_name: str, **extra):
             user = session.get(User, user_id)
             if user:
                 user_rating = user.rating
+                
             settings_object = get_or_create_user_settings(session, user_id)
             settings = {"narrator_enabled": settings_object.narrator_enabled, "voice_input_enabled": settings_object.voice_input_enabled, "master_volume": settings_object.master_volume, "narrator_volume": settings_object.narrator_volume, "music_volume": settings_object.music_volume, "sound_effects_volume": settings_object.sound_effects_volume}
     
-    context = {"request": request, "user_email": user_email, "user_rating": user_rating, "settings": settings, **extra}
-    return templates.TemplateResponse(request=request, name=template_name, context=context)
-        
+    context = {"request": request, "user_email": user_email, "user_rating": user_rating, "settings": settings}
+    context.update(extra)
+    return templates.TemplateResponse(request=request, name=template_name, context=context)   
+     
 # Reads session cookie before and after every request and verifies the key. Then grants access to the request.session. request.session is a dictionary that stores the fields, fastapi middleware saves it to a cookie.
 app.add_middleware(SessionMiddleware, secret_key="secret-key")
 app.include_router(user_authentication.router)
@@ -65,11 +67,9 @@ def get_started_page(request: Request):
 
 @app.get("/user_authentication/login", response_class = HTMLResponse)
 def login_page(request: Request):
-    return render_page(request, "user_authentication/login.html")
-
-@app.get("/user_authentication/signup", response_class = HTMLResponse)
-def signup_page(request: Request):
-    return render_page(request, "user_authentication/signup.html")
+    created = request.query_params.get("created")
+    success = "Account created successfully!" if created == "1" else None
+    return render_page(request, "user_authentication/login.html", success=success)
 
 @app.get("/user_authentication/profile",  response_class = HTMLResponse)
 def profile_page(request: Request):
@@ -92,39 +92,17 @@ def settings_page(request: Request):
 def settings_page(request: Request):
     return render_page(request, "play/play_friends.html")
 
-@app.get("/play/stats", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return render_page(request, "play/stats.html")
-
-@app.get("/play/history", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return render_page(request, "play/history.html")
-
-# All the puzzle directory html file returns
-@app.get("/puzzles/daily_puzzle", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return render_page(request, "puzzles/daily_puzzle.html")
-
-@app.get("/puzzles/all_puzzles", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return render_page(request, "puzzles/all_puzzles.html")
-
-# Rest of the sidebar html file returns
-@app.get("/sidebar/learn", response_class = HTMLResponse)
-def learnPage(request: Request):
-    return render_page(request, "sidebar/learn.html")    
-    
-@app.get("/sidebar/community", response_class = HTMLResponse)
+@app.get("/sidebar/faq", response_class = HTMLResponse)
 def community_page(request: Request):
-    return render_page(request, "sidebar/community.html")
+    return render_page(request, "sidebar/faq.html")
 
 @app.get("/sidebar/settings", response_class = HTMLResponse)
 def settings_page(request: Request):
     return render_page(request, "sidebar/settings.html")
 
-@app.get("/sidebar/support", response_class = HTMLResponse)
-def settings_page(request: Request):
-    return render_page(request, "sidebar/support.html")
+@app.get("/user_authentication/guest", response_class=HTMLResponse)
+def guest_page(request: Request):
+    return render_page(request, "user_authentication/guest.html")
 
 #Chess Logic
 
@@ -405,10 +383,8 @@ def delete_room(room_id: str):
     return {"detail": f"Room '{room_id}' deleted"}
 
 @app.post("/undo")
-def undo_move():
-    if len(chess_logic.board.move_stack) > 0:
-        chess_logic.board.pop()
-    return {"success": True, **chess_logic.get_game_state()}
+def undo_move(request: Request, mode: str = "example"):
+    return get_single_player_game(request, mode).undo_move()
 
 @app.websocket("/ws/{room_id}")
 async def websocket_endpoint(websocket: WebSocket, room_id: str):

@@ -96,6 +96,12 @@ class GameBoard:
         self.board.reset()
         return {"success": True, "message": "Reset game", **self.get_game_state()}
 
+    def undo_move(self):
+        if len(self.board.move_stack) == 0:
+            return {"success": False, "error": "No moves to undo", **self.get_game_state()}
+        self.board.pop()
+        return {"success": True, "message": "Undid move", **self.get_game_state()}
+
 def serialize_board():
     rows = []
     for rank in range(7,-1,-1): #loop from top down, rank(row) 7 to zero (8 to 1)

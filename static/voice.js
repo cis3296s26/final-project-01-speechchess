@@ -6,6 +6,7 @@ let discardCurrentCapture = false;
 let voiceModeEnabled = false;
 let suspendedForSpeech = false;
 let pendingMove = null;
+let pendingUndo = false;
 let awaitingMove = false;
 let parsingMove = false;
 let lastPrompt = "";
@@ -195,6 +196,11 @@ function isCancelCommand(text) {
 
 function isRepeatCommand(text) {
     return normalizeCommand(text) === "repeat";
+}
+
+function isUndoCommand(text) {
+    const normalized = normalizeCommand(text);
+    return normalized === "undo" || normalized === "undo move" || normalized === "undo last move";
 }
 
 function isHelpCommand(text) {
@@ -764,6 +770,53 @@ async function playPendingMove() {
     speakText(data.error || "That move could not be played.", { releaseMusicHold: true });
 }
 
+function handleUndoCommand() {
+    if (typeof window.voiceSubmitPendingUndo !== "function") {
+        speakText("Undo is not available in this mode.", { releaseMusicHold: true });
+        return;
+    }
+
+    clearPendingMove();
+    clearVoiceMoveHighlightsIfAvailable();
+    pendingUndo = true;
+    speakText("I heard undo. Say confirm to undo, or cancel.");
+}
+
+async function playPendingUndo() {
+    if (!pendingUndo) {
+        speakText("There is no pending undo.", { releaseMusicHold: true });
+        return;
+    }
+
+    if (typeof window.voiceSubmitPendingUndo !== "function") {
+        pendingUndo = false;
+        speakText("Undo is not available in this mode.", { releaseMusicHold: true });
+        return;
+    }
+
+    updateVoiceMessage("Undoing last move...");
+
+    let data;
+    try {
+        data = await window.voiceSubmitPendingUndo();
+    } catch (error) {
+        pendingUndo = false;
+        speakText("I could not undo the move.", { releaseMusicHold: true });
+        return;
+    }
+
+    pendingUndo = false;
+
+    if (data && data.success) {
+        const turnText = data.turn ? ` ${data.turn} to move.` : "";
+        speakText(`Move undone.${turnText}`, { releaseMusicHold: true });
+        return;
+    }
+
+    const message = (data && data.error) || "Nothing to undo.";
+    speakText(message, { releaseMusicHold: true });
+}
+
 async function handleMoveTranscript(transcript) {
     parsingMove = true;
     clearVoiceMoveHighlightsIfAvailable();
@@ -846,6 +899,7 @@ async function handleTranscript(transcript) {
 
     if (isCancelCommand(normalized)) {
         clearPendingMove();
+        pendingUndo = false;
         clearVoiceMoveHighlightsIfAvailable();
         speakText("Cancelled. Say Speech Chess to start another move.", { releaseMusicHold: true });
         return;
@@ -859,7 +913,12 @@ async function handleTranscript(transcript) {
         clearVoiceMoveHighlightsIfAvailable();
         holdBackgroundMusicForVoiceCommand();
         clearPendingMove();
+        pendingUndo = false;
         awaitingMove = false;
+        if (isUndoCommand(wakeMove)) {
+            handleUndoCommand();
+            return;
+        }
         await handleMoveTranscript(wakeMove);
         return;
     }
@@ -868,6 +927,7 @@ async function handleTranscript(transcript) {
         clearVoiceMoveHighlightsIfAvailable();
         holdBackgroundMusicForVoiceCommand();
         clearPendingMove();
+        pendingUndo = false;
         awaitingMove = true;
         speakText("Listening for your move.");
         return;
@@ -879,12 +939,27 @@ async function handleTranscript(transcript) {
             return;
         }
 
+        if (pendingUndo) {
+            await playPendingUndo();
+            return;
+        }
+
         await playPendingMove();
         return;
     }
 
     if (awaitingMove) {
+        if (isUndoCommand(transcript)) {
+            awaitingMove = false;
+            handleUndoCommand();
+            return;
+        }
         await handleMoveTranscript(transcript);
+        return;
+    }
+
+    if (pendingUndo) {
+        speakText("I still have a pending undo. Say confirm to undo, or cancel.");
         return;
     }
 

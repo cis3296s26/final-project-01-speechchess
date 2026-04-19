@@ -36,7 +36,7 @@
             {% if error %}
                 <p class="authentication-error">{{ error }}</p>
             {% endif %}
-            <form action="/signup" method="post">
+            <form action="/user_authentication/signup" method="post">
                 <input data-narrate="Enter email field" type="text" id="email" name="email" placeholder="Email" required >
                 <input data-narrate="Enter password field" type="password" id="password" name="password" placeholder="Password" required>  
                 <button data-narrate="Create Account button" class="button get-started-create-account-btn" type="submit">Create Account</button>          
@@ -44,7 +44,7 @@
             <!--Need to insert a button like "Create Account" to add and commit what the user entered to the database.-->
             <p><a href="/user_authentication/login" data-narrate="Already have an account button">Already Have An Account?</a></p>
             <p style="text-align:center; color:#aaa; margin: 8px 0;">or</p>
-            <a href="/guest" style="display:block; text-align:center; padding:10px; background:#f0f0f0; border-radius:6px; color:#555; text-decoration:none;">Continue as Guest</a>
+            <p><a href="/user_authentication/guest" data-narrate="Continue as guest">Continue as Guest</a></p>
         </div>
     </div>
 </body>
