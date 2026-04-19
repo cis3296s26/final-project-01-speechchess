@@ -81,6 +81,150 @@ function support(button){
     window.location.href="sidebar/support"
 }
 
+let homepageMenuRecognition = null;
+let homepageVoiceInstructionsPlayed = false;
+
+function isHomepage() {
+    return window.location.pathname === "/" || window.location.pathname === "";
+}
+
+function isTypingTarget(target) {
+    if (!target) return false;
+    const tagName = target.tagName ? target.tagName.toLowerCase() : "";
+    return tagName === "input" || tagName === "textarea" || target.isContentEditable;
+}
+
+function updateHomepageVoiceStatus(message) {
+    const status = document.getElementById("homepageVoiceStatus");
+    if (status) {
+        status.textContent = message;
+    }
+}
+
+function speakHomepageVoiceInstructions() {
+    homepageVoiceInstructionsPlayed = true;
+    const message = "Voice navigation instructions. Press V to activate menu voice control. Then say Play AI to open the Play AI page.";
+    updateHomepageVoiceStatus(message);
+
+    if (typeof speakText === "function") {
+        speakText(message);
+    }
+}
+
+function normalizeHomepageCommand(text) {
+    return String(text || "")
+        .toLowerCase()
+        .replace(/[^\w\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function handleHomepageMenuCommand(transcript) {
+    const command = normalizeHomepageCommand(transcript);
+    updateHomepageVoiceStatus(`Heard: ${transcript}`);
+
+    if (
+        command.includes("play ai") ||
+        command.includes("play a i") ||
+        command.includes("play artificial intelligence")
+    ) {
+        updateHomepageVoiceStatus("Opening Play AI.");
+        if (typeof speakText === "function") {
+            speakText("Opening Play AI.");
+        }
+        setTimeout(function () {
+            playAI();
+        }, 700);
+        return;
+    }
+
+    const retryMessage = "I heard " + transcript + ". For now, say Play AI.";
+    updateHomepageVoiceStatus(retryMessage);
+    if (typeof speakText === "function") {
+        speakText(retryMessage);
+    }
+}
+
+function startHomepageMenuVoiceControl() {
+    if (!isHomepage()) return;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        const message = "Browser speech recognition is not supported here.";
+        updateHomepageVoiceStatus(message);
+        if (typeof speakText === "function") {
+            speakText(message);
+        }
+        return;
+    }
+
+    if (homepageMenuRecognition) {
+        try {
+            homepageMenuRecognition.stop();
+        } catch (error) {
+            // Ignore stale recognition sessions before starting a fresh one.
+        }
+    }
+
+    homepageMenuRecognition = new SpeechRecognition();
+    homepageMenuRecognition.lang = "en-US";
+    homepageMenuRecognition.interimResults = false;
+    homepageMenuRecognition.continuous = false;
+    homepageMenuRecognition.maxAlternatives = 3;
+
+    homepageMenuRecognition.onstart = function () {
+        updateHomepageVoiceStatus("Menu voice control listening. Say Play AI.");
+    };
+
+    homepageMenuRecognition.onresult = function (event) {
+        const result = event.results && event.results[0] && event.results[0][0];
+        const transcript = result ? result.transcript.trim() : "";
+        if (transcript) {
+            handleHomepageMenuCommand(transcript);
+        }
+    };
+
+    homepageMenuRecognition.onerror = function (event) {
+        const message = event && event.error === "not-allowed"
+            ? "Microphone access was blocked for menu voice control."
+            : "Menu voice control did not hear a command. Press V and try again.";
+        updateHomepageVoiceStatus(message);
+        if (typeof speakText === "function") {
+            speakText(message);
+        }
+    };
+
+    homepageMenuRecognition.onend = function () {
+        homepageMenuRecognition = null;
+    };
+
+    try {
+        homepageMenuRecognition.start();
+    } catch (error) {
+        updateHomepageVoiceStatus("Menu voice control could not start. Press V and try again.");
+    }
+}
+
+document.addEventListener("keydown", function (event) {
+    if (!isHomepage() || isTypingTarget(event.target)) {
+        return;
+    }
+
+    if (event.code === "Space") {
+        event.preventDefault();
+        speakHomepageVoiceInstructions();
+        return;
+    }
+
+    if (event.key && event.key.toLowerCase() === "v") {
+        event.preventDefault();
+        if (!homepageVoiceInstructionsPlayed) {
+            updateHomepageVoiceStatus("Menu voice control activated. Say Play AI.");
+        }
+        startHomepageMenuVoiceControl();
+    }
+});
+
 // Current volume is default value unless a database value is found for that account. Then local value is set to that database value.
 function effectiveVolume(localVolume){
     let currentMasterVolume = 50;

@@ -6,7 +6,7 @@
     <title>Home</title>
     <link rel="stylesheet" href="/static/style.css">
     <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
-    <script type="text/javascript" src="/static/app.js?v=20260401c" defer></script>
+    <script type="text/javascript" src="/static/app.js?v=20260416a" defer></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
     <script>
         window.speechChessSettings = {
@@ -18,12 +18,13 @@
             soundEffectsVolume: {{ settings["sound_effects_volume"] | tojson }}
         };
     </script>
-    <script src="/static/voice.js?v=20260401a" defer></script>
-    <!--Announces this string upon loading of home page.-->
+    <script src="/static/voice.js?v=20260414d" defer></script>
+    <!-- Spacebar triggers the spoken homepage instructions from app.js. -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            if (typeof speakText === "function") {
-                speakText("Home page. Hover over page elements to have narrator announce it. The sidebar to navigate to other pages is found on left side of screen. May use voice input to access those same elements and pages.");
+            const status = document.getElementById("homepageVoiceStatus");
+            if (status) {
+                status.textContent = "Home page. Press Space for voice navigation instructions. Then press V and say Play AI.";
             }
         });
     </script>
@@ -123,6 +124,9 @@
         </ul>
     </aside>
     <main>
+        <p id="homepageVoiceStatus" style="text-align:center; margin: 12px auto; max-width: 620px;" aria-live="polite">
+            Press Space for voice navigation instructions. Press V to start menu voice control.
+        </p>
         {% if not user_email %}
         <div class="chess_board">
             <img src="static/images/chess_board_cyan.png" alt="Cyan digital chess board.">
