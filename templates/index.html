@@ -6,7 +6,7 @@
     <title>Home</title>
     <link rel="stylesheet" href="/static/style.css">
     <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
-    <script type="text/javascript" src="/static/app.js?v=20260416a" defer></script>
+    <script type="text/javascript" src="/static/app.js?v=20260419a" defer></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
     <script>
         window.speechChessSettings = {
@@ -24,7 +24,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             const status = document.getElementById("homepageVoiceStatus");
             if (status) {
-                status.textContent = "Home page. Press Space for voice navigation instructions. Then press V and say Play AI.";
+                status.textContent = "Home page. Press Space for voice navigation instructions. Then press V and say Play AI, Play Example, or Play Locally.";
             }
         });
     </script>
@@ -132,14 +132,14 @@
             <div class="home_play_online">
                 <h1>Play Online</h1>
                 <p class="first_line">Play against other users and improve your rank!</p>
-                <button onclick="playAI()" data-narrate="Play Online" class="button play-online-btn">Play Online</button>
+                <button onclick="playOnline()" data-narrate="Play Online" class="button play-online-btn">Play Online</button>
             </div>
         </div>
         <div class="play_ai">
             <div class="home_play_ai">
                 <h1>Play AI</h1>
                 <p class="first_line">Try your best to beat AI opponents of varying skill levels.</p>
-                <button onclick="playOnline()" data-narrate="Play AI" class="button play-ai-btn">Play AI</button>
+                <button onclick="playAI()" data-narrate="Play AI" class="button play-ai-btn">Play AI</button>
             </div>
             <img src="/static/images/homepage_play_ai.png" alt="Play AI robot and chess board.">
         </div>
