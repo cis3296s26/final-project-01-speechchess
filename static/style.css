@@ -585,3 +585,18 @@ div.volume_control {
     font-size: 16px;
     color: var(--text-clr);
 }
+
+.captured-pieces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    min-height: 28px;
+    max-width: 450px;
+    margin: 4px auto;
+    padding: 2px 4px;
+}
+
+.captured-pieces img {
+    width: 24px;
+    height: 24px;
+}

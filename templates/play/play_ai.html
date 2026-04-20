@@ -141,7 +141,9 @@
     <div id="ai-thinking"></div>
 
     <div class="board-wrapper">
+        <div id="captured-top" class="captured-pieces"></div>
         <div id="board" style="width: 450px; height: 450px;"></div>
+        <div id="captured-bottom" class="captured-pieces"></div>
     </div>
 
     <div class="controls-row">
@@ -162,6 +164,33 @@
         </div>
     <main>
 <script>
+    function capturedFromFen(fen) {
+        const pos = fen.split(' ')[0];
+        const start = { p: 8, r: 2, n: 2, b: 2, q: 1 };
+        const cnt = {};
+        for (const ch of pos) { if (/[prnbqPRNBQ]/.test(ch)) cnt[ch] = (cnt[ch] || 0) + 1; }
+        const order = ['q', 'r', 'b', 'n', 'p'];
+        const byBlack = [], byWhite = [];
+        for (const pt of order) {
+            const mW = start[pt] - (cnt[pt.toUpperCase()] || 0);
+            for (let i = 0; i < mW; i++) byBlack.push(pt.toUpperCase());
+            const mB = start[pt] - (cnt[pt] || 0);
+            for (let i = 0; i < mB; i++) byWhite.push(pt);
+        }
+        return { byBlack, byWhite };
+    }
+
+    function renderCaptured(fen) {
+        if (!fen) return;
+        const { byBlack, byWhite } = capturedFromFen(fen);
+        const toHtml = syms => syms.map(s => {
+            const c = s === s.toUpperCase() ? 'w' : 'b';
+            return `<img src="/static/chess/img/chesspieces/wikipedia/${c}${s.toUpperCase()}.png">`;
+        }).join('');
+        document.getElementById('captured-top').innerHTML = toHtml(byBlack);
+        document.getElementById('captured-bottom').innerHTML = toHtml(byWhite);
+    }
+
     // Lobby
     let selectedDifficulty = "easy";
     const playerColor = "white";  // always white
@@ -442,6 +471,7 @@
                 legalMoves = data.legal_moves || [];
                 chess.setLegalMoves(legalMoves);
                 chess.setPosition(data.fen);
+                renderCaptured(data.fen);
                 logMove(data.history[data.history.length - 1]);
                 playMoveSound();
                 lastHistoryLength = data.history.length;
@@ -478,6 +508,7 @@
                 legalMoves = data.legal_moves || [];
                 chess.setLegalMoves(legalMoves);
                 chess.setPosition(data.fen);
+                renderCaptured(data.fen);
                 logMove(data.history[data.history.length - 1]);
                 playMoveSound();
                 lastHistoryLength = data.history.length;
@@ -522,6 +553,7 @@
                 legalMoves = data.legal_moves || [];
                 chess.setLegalMoves(legalMoves);
                 chess.setPosition(data.fen);
+                renderCaptured(data.fen);
                 lastHistoryLength = data.history ? data.history.length : lastHistoryLength;
             }
         };
