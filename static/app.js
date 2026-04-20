@@ -68,6 +68,8 @@ let homepageVoiceInstructionsPlayed = false;
 let homepageVoiceNavigationActive = false;
 let homepageVoiceStep = "menu";
 let homepageSelectedAiDifficulty = null;
+let homepageRecognitionStarting = false;
+let homepageRecognitionRestartTimer = null;
 
 function isHomepage() {
     return window.location.pathname === "/" || window.location.pathname === "";
@@ -88,7 +90,7 @@ function updateHomepageVoiceStatus(message) {
 
 function speakHomepageVoiceInstructions() {
     homepageVoiceInstructionsPlayed = true;
-    const message = "Voice navigation instructions. Press V to activate menu voice control. Then say Play AI, Play Example, or Play Locally. If you say Play AI, I will ask for easy, medium, or hard, then ask you to say start game.";
+    const message = "Voice navigation instructions. Press V once to activate menu voice control. Then say Play AI, Play Example, or Play Locally.";
     updateHomepageVoiceStatus(message);
 
     if (typeof speakText === "function") {
@@ -147,24 +149,28 @@ function isStartGameCommand(command) {
     ]);
 }
 
-function scheduleHomepageMenuListening(delayMs = 250) {
-    if (!homepageVoiceNavigationActive || !isHomepage()) {
-        return;
-    }
-
-    setTimeout(function () {
-        if (homepageVoiceNavigationActive && !homepageMenuRecognition) {
-            startHomepageMenuVoiceControl(false);
-        }
-    }, delayMs);
-}
-
 function promptHomepageMenu(message) {
     updateHomepageVoiceStatus(message);
     if (typeof speakText === "function") {
         speakText(message);
     }
-    scheduleHomepageMenuListening(100);
+}
+
+function scheduleHomepageMenuListening(delayMs = 900) {
+    if (!homepageVoiceNavigationActive || !isHomepage()) {
+        return;
+    }
+
+    if (homepageRecognitionRestartTimer) {
+        clearTimeout(homepageRecognitionRestartTimer);
+    }
+
+    homepageRecognitionRestartTimer = setTimeout(function () {
+        homepageRecognitionRestartTimer = null;
+        if (homepageVoiceNavigationActive && !homepageMenuRecognition && !homepageRecognitionStarting) {
+            startHomepageMenuVoiceControl(false);
+        }
+    }, delayMs);
 }
 
 function beginHomepageAiSelection(command) {
@@ -187,6 +193,10 @@ function beginHomepageAiSelection(command) {
 
 function launchAiFromHomepageVoice() {
     homepageVoiceNavigationActive = false;
+    if (homepageRecognitionRestartTimer) {
+        clearTimeout(homepageRecognitionRestartTimer);
+        homepageRecognitionRestartTimer = null;
+    }
     if (homepageMenuRecognition) {
         try {
             homepageMenuRecognition.stop();
@@ -216,12 +226,14 @@ function handleHomepageMenuCommand(transcript) {
         const difficulty = difficultyFromCommand(command);
         if (!difficulty) {
             promptHomepageMenu("Please say easy, medium, or hard.");
+            scheduleHomepageMenuListening();
             return;
         }
 
         homepageSelectedAiDifficulty = difficulty;
         homepageVoiceStep = "aiStart";
         promptHomepageMenu(`${difficulty} difficulty selected. Say start game when you are ready.`);
+        scheduleHomepageMenuListening();
         return;
     }
 
@@ -230,6 +242,7 @@ function handleHomepageMenuCommand(transcript) {
         if (difficulty) {
             homepageSelectedAiDifficulty = difficulty;
             promptHomepageMenu(`${difficulty} difficulty selected. Say start game when you are ready.`);
+            scheduleHomepageMenuListening();
             return;
         }
 
@@ -239,11 +252,16 @@ function handleHomepageMenuCommand(transcript) {
         }
 
         promptHomepageMenu("Say start game to begin, or say easy, medium, or hard to change difficulty.");
+        scheduleHomepageMenuListening();
         return;
     }
 
     if (isPlayExampleCommand(command)) {
         homepageVoiceNavigationActive = false;
+        if (homepageRecognitionRestartTimer) {
+            clearTimeout(homepageRecognitionRestartTimer);
+            homepageRecognitionRestartTimer = null;
+        }
         updateHomepageVoiceStatus("Opening Play Example.");
         if (typeof speakText === "function") {
             speakText("Opening Play Example.");
@@ -255,15 +273,32 @@ function handleHomepageMenuCommand(transcript) {
     }
 
     if (isPlayAiCommand(command)) {
-        beginHomepageAiSelection(command);
+        homepageVoiceNavigationActive = false;
+        if (homepageRecognitionRestartTimer) {
+            clearTimeout(homepageRecognitionRestartTimer);
+            homepageRecognitionRestartTimer = null;
+        }
+        updateHomepageVoiceStatus("Opening Play AI.");
+        if (typeof speakText === "function") {
+            speakText("Opening Play AI.");
+        }
+        setTimeout(function () {
+            playAI();
+        }, 500);
         return;
     }
 
     promptHomepageMenu("I heard " + transcript + ". Say Play AI, Play Example, or Play Locally.");
+    scheduleHomepageMenuListening();
 }
 
 function startHomepageMenuVoiceControl(announce = true) {
     if (!isHomepage()) return;
+    if (homepageMenuRecognition || homepageRecognitionStarting) {
+        updateHomepageVoiceStatus("Menu voice control is already listening.");
+        return;
+    }
+
     homepageVoiceNavigationActive = true;
     updateHomepageVoiceStatus("Starting menu voice control...");
 
@@ -277,21 +312,15 @@ function startHomepageMenuVoiceControl(announce = true) {
         return;
     }
 
-    if (homepageMenuRecognition) {
-        try {
-            homepageMenuRecognition.stop();
-        } catch (error) {
-            // Ignore stale recognition sessions before starting a fresh one.
-        }
-    }
-
     homepageMenuRecognition = new SpeechRecognition();
+    homepageRecognitionStarting = true;
     homepageMenuRecognition.lang = "en-US";
     homepageMenuRecognition.interimResults = false;
     homepageMenuRecognition.continuous = false;
     homepageMenuRecognition.maxAlternatives = 3;
 
     homepageMenuRecognition.onstart = function () {
+        homepageRecognitionStarting = false;
         updateHomepageVoiceStatus("Menu voice control listening. Say Play AI.");
     };
 
@@ -304,24 +333,31 @@ function startHomepageMenuVoiceControl(announce = true) {
     };
 
     homepageMenuRecognition.onerror = function (event) {
+        homepageRecognitionStarting = false;
         if (event && event.error === "not-allowed") {
             homepageVoiceNavigationActive = false;
         }
 
+        if (event && event.error === "no-speech") {
+            updateHomepageVoiceStatus("Still listening for Play AI or Play Example...");
+            scheduleHomepageMenuListening(1200);
+            return;
+        }
+
         const message = event && event.error === "not-allowed"
             ? "Microphone access was blocked for menu voice control."
-            : "Menu voice control did not hear a command. Press V and try again.";
+            : "Menu voice control had trouble hearing. Still listening for Play AI or Play Example.";
         updateHomepageVoiceStatus(message);
-        if (typeof speakText === "function") {
+        if (event && event.error === "not-allowed" && typeof speakText === "function") {
             speakText(message);
         }
+        scheduleHomepageMenuListening(1200);
     };
 
     homepageMenuRecognition.onend = function () {
         homepageMenuRecognition = null;
-        if (homepageVoiceNavigationActive) {
-            scheduleHomepageMenuListening(250);
-        }
+        homepageRecognitionStarting = false;
+        scheduleHomepageMenuListening(900);
     };
 
     try {
@@ -336,6 +372,8 @@ function startHomepageMenuVoiceControl(announce = true) {
             }
         }
     } catch (error) {
+        homepageMenuRecognition = null;
+        homepageRecognitionStarting = false;
         updateHomepageVoiceStatus("Menu voice control could not start. Press V and try again.");
     }
 }
