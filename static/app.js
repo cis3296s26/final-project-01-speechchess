@@ -265,6 +265,7 @@ function handleHomepageMenuCommand(transcript) {
 function startHomepageMenuVoiceControl(announce = true) {
     if (!isHomepage()) return;
     homepageVoiceNavigationActive = true;
+    updateHomepageVoiceStatus("Starting menu voice control...");
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -350,13 +351,15 @@ document.addEventListener("keydown", function (event) {
         return;
     }
 
-    if (event.key && event.key.toLowerCase() === "v") {
+    if ((event.key && event.key.toLowerCase() === "v") || event.code === "KeyV") {
         event.preventDefault();
         homepageVoiceStep = "menu";
         homepageSelectedAiDifficulty = null;
         startHomepageMenuVoiceControl();
     }
 });
+
+window.startHomepageMenuVoiceControl = startHomepageMenuVoiceControl;
 
 // Current volume is default value unless a database value is found for that account. Then local value is set to that database value.
 function effectiveVolume(localVolume){
