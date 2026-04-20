@@ -670,6 +670,33 @@
         playerTurn = true;
         updateTurnIndicator();
     }
+
+    function applyAiVoiceStartRequest() {
+        const shouldAutoStart = sessionStorage.getItem("speechChessAiAutoStart") === "1";
+        const requestedDifficulty = sessionStorage.getItem("speechChessAiDifficulty") || "easy";
+
+        if (!shouldAutoStart) {
+            return;
+        }
+
+        sessionStorage.removeItem("speechChessAiAutoStart");
+        sessionStorage.removeItem("speechChessAiDifficulty");
+
+        const difficulty = ["easy", "medium", "hard"].includes(requestedDifficulty)
+            ? requestedDifficulty
+            : "easy";
+        const difficultyButton = document.getElementById(`diff-${difficulty}`);
+
+        if (difficultyButton) {
+            selectDifficulty(difficulty, difficultyButton);
+        }
+
+        setTimeout(function () {
+            startAiGame();
+        }, 150);
+    }
+
+    applyAiVoiceStartRequest();
 </script>
 </div>
 </body>
