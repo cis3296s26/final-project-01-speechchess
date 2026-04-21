@@ -200,4 +200,4 @@ def profile_page(request: Request):
             return RedirectResponse(url="/user_authentication/login", status_code=303)
         settings_object = get_or_create_user_settings(session, user_id)
         settings = {"narrator_enabled": settings_object.narrator_enabled, "voice_input_enabled": settings_object.voice_input_enabled, "master_volume": settings_object.master_volume, "narrator_volume": settings_object.narrator_volume, "music_volume": settings_object.music_volume, "sound_effects_volume": settings_object.sound_effects_volume}
-        return templates.TemplateResponse("/user_authentication/profile.html", {"request": request, "user": user, "user_email": user.email, "settings": settings})
+        return templates.TemplateResponse("user_authentication/profile.html", {"request": request, "user": user, "user_email": user.email, "settings": settings})
