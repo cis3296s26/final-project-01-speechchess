@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
     <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
     <script type="text/javascript" src="/static/app.js" defer></script>
-    <script src="/static/voice.js" defer></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
     <script>
         window.speechChessSettings = {
@@ -20,7 +19,7 @@
             soundEffectsVolume: {{ settings["sound_effects_volume"] | tojson }}
         };
     </script>
-    <script src="/static/voice.js?v=20260421a" defer></script>
+    <script src="/static/voice.js?v=20260421b" defer></script>
     <!--Announces this string upon loading of this page.-->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
