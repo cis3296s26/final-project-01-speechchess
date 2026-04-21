@@ -295,20 +295,8 @@ function hasOpenAIAudioCapture() {
 }
 
 function preferredTranscriptionMode() {
-    if (window.speechChessTranscriptionMode === "browser") {
-        return "browser";
-    }
-
-    if (window.speechChessTranscriptionMode === "openai" && hasOpenAIAudioCapture()) {
-        return "openai";
-    }
-
     if (hasOpenAIAudioCapture()) {
         return "openai";
-    }
-
-    if (hasBrowserSpeechRecognition()) {
-        return "browser";
     }
 
     return "none";
@@ -549,6 +537,8 @@ async function transcribeRecordedAudio(blob) {
     }
 }
 
+window.speechChessTranscribeAudio = transcribeRecordedAudio;
+
 async function startOpenAIAudioCapture() {
     if (!voiceInputEnabled) {
         updateVoiceMessage("Voice input is disabled in settings.");
@@ -565,10 +555,6 @@ async function startOpenAIAudioCapture() {
         }
     } catch (error) {
         updateVoiceMessage("Microphone access was denied.");
-        if (hasBrowserSpeechRecognition()) {
-            transcriptionMode = "browser";
-            speakText("Microphone recording was blocked. Falling back to browser speech recognition.");
-        }
         return;
     }
 
@@ -611,13 +597,7 @@ async function startOpenAIAudioCapture() {
         const result = await transcribeRecordedAudio(new Blob(chunks, { type: mimeType }));
 
         if (!result.success) {
-            if (result.fallback_to_browser && hasBrowserSpeechRecognition()) {
-                transcriptionMode = "browser";
-                speakText("OpenAI transcription is not available right now. Falling back to browser speech recognition.");
-                return;
-            }
-
-            speakText(result.error || "I could not transcribe that audio.");
+            speakText(result.error || "OpenAI transcription is not available right now.");
             return;
         }
 
