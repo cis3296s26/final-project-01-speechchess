@@ -68,13 +68,13 @@ def get_or_create_user_settings(session: Session, user_id: int):
 def signup(request: Request, email: str = Form(...), password: str = Form(...)):
     # If email or password fields empty, return the same page and print the error message to the screen.
     if not email or not password:
-        return templates.TemplateResponse("user_authentication/get_started.html", {"request": request, "error": "Email and password are required", "settings": DEFAULT_SETTINGS})
-    # Opens active connection to the database and uses a session object to update data in the database.    
+        return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context={"error": "Email and password are required", "settings": DEFAULT_SETTINGS})
+    # Opens active connection to the database and uses a session object to update data in the database.
     with Session(engine) as session:
         existing_user = session.exec(select(User).where(User.email == email)).first()
         # Fail if email is used already and return the same page, print the error message to the screen.
         if existing_user:
-            return templates.TemplateResponse("user_authentication/get_started.html", {"request": request,"error": "Email already registered", "settings": DEFAULT_SETTINGS})
+            return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context={"error": "Email already registered", "settings": DEFAULT_SETTINGS})
         # Create new user and hash the password before adding and committing to the database.
         new_user = User(email=email, hashed_password=password_hash.hash(password))
         session.add(new_user)
@@ -200,4 +200,4 @@ def profile_page(request: Request):
             return RedirectResponse(url="/user_authentication/login", status_code=303)
         settings_object = get_or_create_user_settings(session, user_id)
         settings = {"narrator_enabled": settings_object.narrator_enabled, "voice_input_enabled": settings_object.voice_input_enabled, "master_volume": settings_object.master_volume, "narrator_volume": settings_object.narrator_volume, "music_volume": settings_object.music_volume, "sound_effects_volume": settings_object.sound_effects_volume}
-        return templates.TemplateResponse("user_authentication/profile.html", {"request": request, "user": user, "user_email": user.email, "settings": settings})
+        return templates.TemplateResponse(request=request, name="user_authentication/profile.html", context={"user": user, "user_email": user.email, "settings": settings})
