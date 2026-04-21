@@ -16,7 +16,15 @@
             soundEffectsVolume: {{ settings["sound_effects_volume"] | tojson }}
         };
     </script>
-    <script src="/static/voice.js?v=20260401a" defer></script>
+    <script src="/static/voice.js?v=20260421a" defer></script>
+    <!--Announces this string upon loading of this page.-->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof speakText === "function") {
+                speakText("FAQ page. Hover over page elements to have narrator announce them. The sidebar to navigate to other pages is found on the left side of the screen.");
+            }
+        });
+    </script>
     <style>
         .homepage_body {
             background: #ffffff;

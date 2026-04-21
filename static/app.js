@@ -64,12 +64,16 @@ function guest(button){
 }
 
 let homepageMenuRecognition = null;
+let homepageMediaRecorder = null;
+let homepageMediaStream = null;
+let homepageCaptureTimeout = null;
 let homepageVoiceInstructionsPlayed = false;
 let homepageVoiceNavigationActive = false;
 let homepageVoiceStep = "menu";
 let homepageSelectedAiDifficulty = null;
 let homepageRecognitionStarting = false;
 let homepageRecognitionRestartTimer = null;
+const homepageCaptureLengthMs = 3500;
 
 function isHomepage() {
     return window.location.pathname === "/" || window.location.pathname === "";
@@ -171,6 +175,44 @@ function scheduleHomepageMenuListening(delayMs = 900) {
             startHomepageMenuVoiceControl(false);
         }
     }, delayMs);
+}
+
+async function transcribeHomepageAudio(blob) {
+    if (typeof window.speechChessTranscribeAudio === "function") {
+        return window.speechChessTranscribeAudio(blob);
+    }
+
+    const formData = new FormData();
+    formData.append("audio", blob, "homepage-command.webm");
+
+    try {
+        const response = await fetch("/voice-transcribe", {
+            method: "POST",
+            body: formData
+        });
+        return response.json();
+    } catch (error) {
+        return {
+            success: false,
+            error: "Could not reach the transcription server."
+        };
+    }
+}
+
+function stopHomepageCapture(discard = false) {
+    if (homepageCaptureTimeout) {
+        clearTimeout(homepageCaptureTimeout);
+        homepageCaptureTimeout = null;
+    }
+
+    if (homepageMediaRecorder && homepageMediaRecorder.state !== "inactive") {
+        homepageMediaRecorder._speechChessDiscard = discard;
+        try {
+            homepageMediaRecorder.stop();
+        } catch (error) {
+            homepageMediaRecorder = null;
+        }
+    }
 }
 
 function beginHomepageAiSelection(command) {
@@ -294,7 +336,7 @@ function handleHomepageMenuCommand(transcript) {
 
 function startHomepageMenuVoiceControl(announce = true) {
     if (!isHomepage()) return;
-    if (homepageMenuRecognition || homepageRecognitionStarting) {
+    if (homepageMediaRecorder || homepageRecognitionStarting) {
         updateHomepageVoiceStatus("Menu voice control is already listening.");
         return;
     }
@@ -302,9 +344,8 @@ function startHomepageMenuVoiceControl(announce = true) {
     homepageVoiceNavigationActive = true;
     updateHomepageVoiceStatus("Starting menu voice control...");
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        const message = "Browser speech recognition is not supported here.";
+    if (!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        const message = "OpenAI voice navigation needs browser audio recording support.";
         updateHomepageVoiceStatus(message);
         if (typeof speakText === "function") {
             speakText(message);
@@ -312,70 +353,97 @@ function startHomepageMenuVoiceControl(announce = true) {
         return;
     }
 
-    homepageMenuRecognition = new SpeechRecognition();
     homepageRecognitionStarting = true;
-    homepageMenuRecognition.lang = "en-US";
-    homepageMenuRecognition.interimResults = false;
-    homepageMenuRecognition.continuous = false;
-    homepageMenuRecognition.maxAlternatives = 3;
+    const startCapture = async function () {
+        const chunks = [];
 
-    homepageMenuRecognition.onstart = function () {
-        homepageRecognitionStarting = false;
-        updateHomepageVoiceStatus("Menu voice control listening. Say Play AI.");
-    };
+        try {
+            if (!homepageMediaStream) {
+                homepageMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            }
 
-    homepageMenuRecognition.onresult = function (event) {
-        const result = event.results && event.results[0] && event.results[0][0];
-        const transcript = result ? result.transcript.trim() : "";
-        if (transcript) {
-            handleHomepageMenuCommand(transcript);
-        }
-    };
+            const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+                ? "audio/webm;codecs=opus"
+                : MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")
+                ? "audio/ogg;codecs=opus"
+                : "audio/webm";
 
-    homepageMenuRecognition.onerror = function (event) {
-        homepageRecognitionStarting = false;
-        if (event && event.error === "not-allowed") {
+            homepageMediaRecorder = new MediaRecorder(homepageMediaStream, { mimeType });
+            homepageMediaRecorder._speechChessDiscard = false;
+            homepageMediaRecorder.ondataavailable = function (event) {
+                if (event.data && event.data.size > 0) {
+                    chunks.push(event.data);
+                }
+            };
+
+            homepageMediaRecorder.onerror = function () {
+                homepageMediaRecorder = null;
+                homepageRecognitionStarting = false;
+                updateHomepageVoiceStatus("There was a problem recording menu audio.");
+                scheduleHomepageMenuListening(1200);
+            };
+
+            homepageMediaRecorder.onstop = async function () {
+                const discard = homepageMediaRecorder && homepageMediaRecorder._speechChessDiscard;
+                homepageMediaRecorder = null;
+                homepageRecognitionStarting = false;
+                homepageCaptureTimeout = null;
+
+                if (!homepageVoiceNavigationActive || discard) {
+                    return;
+                }
+
+                if (!chunks.length) {
+                    updateHomepageVoiceStatus("Still listening for Play AI or Play Example...");
+                    scheduleHomepageMenuListening(900);
+                    return;
+                }
+
+                const result = await transcribeHomepageAudio(new Blob(chunks, { type: mimeType }));
+                if (!result.success) {
+                    updateHomepageVoiceStatus(result.error || "OpenAI transcription is not available right now.");
+                    scheduleHomepageMenuListening(1400);
+                    return;
+                }
+
+                const transcript = (result.transcript || "").trim();
+                if (!transcript) {
+                    updateHomepageVoiceStatus("Still listening for Play AI or Play Example...");
+                    scheduleHomepageMenuListening(900);
+                    return;
+                }
+
+                handleHomepageMenuCommand(transcript);
+            };
+
+            homepageRecognitionStarting = false;
+            homepageMediaRecorder.start();
+            updateHomepageVoiceStatus("Menu voice control listening. Say Play AI or Play Example.");
+            homepageCaptureTimeout = setTimeout(function () {
+                stopHomepageCapture(false);
+            }, homepageCaptureLengthMs);
+        } catch (error) {
+            homepageMediaRecorder = null;
+            homepageRecognitionStarting = false;
             homepageVoiceNavigationActive = false;
-        }
-
-        if (event && event.error === "no-speech") {
-            updateHomepageVoiceStatus("Still listening for Play AI or Play Example...");
-            scheduleHomepageMenuListening(1200);
-            return;
-        }
-
-        const message = event && event.error === "not-allowed"
-            ? "Microphone access was blocked for menu voice control."
-            : "Menu voice control had trouble hearing. Still listening for Play AI or Play Example.";
-        updateHomepageVoiceStatus(message);
-        if (event && event.error === "not-allowed" && typeof speakText === "function") {
-            speakText(message);
-        }
-        scheduleHomepageMenuListening(1200);
-    };
-
-    homepageMenuRecognition.onend = function () {
-        homepageMenuRecognition = null;
-        homepageRecognitionStarting = false;
-        scheduleHomepageMenuListening(900);
-    };
-
-    try {
-        homepageMenuRecognition.start();
-        if (announce) {
-            const message = homepageVoiceStep === "menu"
-                ? "Menu voice control activated. Say Play AI, Play Example, or Play Locally."
-                : "Menu voice control listening.";
-            updateHomepageVoiceStatus(message);
+            updateHomepageVoiceStatus("Microphone access was blocked for menu voice control.");
             if (typeof speakText === "function") {
-                speakText(message);
+                speakText("Microphone access was blocked for menu voice control.");
             }
         }
-    } catch (error) {
-        homepageMenuRecognition = null;
-        homepageRecognitionStarting = false;
-        updateHomepageVoiceStatus("Menu voice control could not start. Press V and try again.");
+    };
+
+    if (announce) {
+        const message = homepageVoiceStep === "menu"
+            ? "Menu voice control activated. Say Play AI, Play Example, or Play Locally."
+            : "Menu voice control listening.";
+        updateHomepageVoiceStatus(message);
+        if (typeof speakText === "function") {
+            speakText("Voice control active.");
+        }
     }
+
+    setTimeout(startCapture, announce ? 900 : 0);
 }
 
 document.addEventListener("keydown", function (event) {
