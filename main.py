@@ -71,10 +71,6 @@ def login_page(request: Request):
     success = "Account created successfully!" if created == "1" else None
     return render_page(request, "user_authentication/login.html", success=success)
 
-@app.get("/user_authentication/profile",  response_class = HTMLResponse)
-def profile_page(request: Request):
-    return render_page(request, "user_authentication/profile.html")
-
 # All the play directory html file returns
 @app.get("/play/play", response_class = HTMLResponse)
 def playPage(request: Request):
@@ -146,11 +142,11 @@ def state(request: Request, mode: str = "example"):
 
 @app.get("/game", response_class=HTMLResponse)
 def game(request: Request):
-    return templates.TemplateResponse(request, "game.html")
+    return templates.TemplateResponse("game.html", {"request": request})
 
 @app.get("/voice", response_class=HTMLResponse)
 def voice(request: Request):
-    return templates.TemplateResponse(request, "voice.html")
+    return templates.TemplateResponse("voice.html", {"request": request})
 
 @app.get("/board")
 def board(request: Request, mode: str = "example"):

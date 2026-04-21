@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 from fastapi import APIRouter, Form, Request, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
@@ -8,14 +9,20 @@ from pydantic import BaseModel
 
 # router stores the routes and will be called in main.py to add the routes to app.
 router = APIRouter()
-# templates 
+# templates
 templates = Jinja2Templates(directory="templates")
-# Create or use file to store account credentials. Create the connection to the database and allow only one thread to synchronize. Then the the hashing object.
-DATABASE_URL = "sqlite:///speechchess.db"
+# Read DATABASE_URL from environment so a Postgres database can be used on Render,
+# preventing user accounts from being wiped on every redeploy. Falls back to local
+# SQLite when DATABASE_URL is not set (local development). Render provides postgres://
+# URLs but SQLAlchemy requires postgresql://, so we fix the scheme if needed.
+_raw_db_url = os.getenv("DATABASE_URL", "sqlite:///speechchess.db")
+DATABASE_URL = _raw_db_url.replace("postgres://", "postgresql://", 1)
 """******************************************************IMPORTANT CONCEPT******************************************************
 Engine is the connection to the database and all tables within it. Session(engine) is the active connection to the database. And session
 is the object used to get data from the database and update or change the data within the database."""
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# SQLite requires check_same_thread=False; Postgres does not accept that argument.
+_connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 password_hash = PasswordHash.recommended()
 """Defines the database table with id, email, and password fields, SQLModel is passed as the base class. Has a one-to-one correspondence with
 the UserSettings database table since class UserSettings references the id field in class User by doing foreign_key="user.id".id being the 
@@ -61,13 +68,13 @@ def get_or_create_user_settings(session: Session, user_id: int):
 def signup(request: Request, email: str = Form(...), password: str = Form(...)):
     # If email or password fields empty, return the same page and print the error message to the screen.
     if not email or not password:
-        return templates.TemplateResponse("user_authentication/get_started.html", {"request": request, "error": "Email and password are required", "settings": DEFAULT_SETTINGS})
-    # Opens active connection to the database and uses a session object to update data in the database.    
+        return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context={"error": "Email and password are required", "settings": DEFAULT_SETTINGS})
+    # Opens active connection to the database and uses a session object to update data in the database.
     with Session(engine) as session:
         existing_user = session.exec(select(User).where(User.email == email)).first()
         # Fail if email is used already and return the same page, print the error message to the screen.
         if existing_user:
-            return templates.TemplateResponse("user_authentication/get_started.html", {"request": request,"error": "Email already registered", "settings": DEFAULT_SETTINGS})
+            return templates.TemplateResponse(request=request, name="user_authentication/get_started.html", context={"error": "Email already registered", "settings": DEFAULT_SETTINGS})
         # Create new user and hash the password before adding and committing to the database.
         new_user = User(email=email, hashed_password=password_hash.hash(password))
         session.add(new_user)
@@ -81,17 +88,20 @@ def signup(request: Request, email: str = Form(...), password: str = Form(...)):
 def login(request: Request, email: str = Form(...), password: str = Form(...)):
     email = email.strip()
     if not email or not password:
-        return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request, "error": "Please enter both an email and password.", "email": email, "settings": DEFAULT_SETTINGS})
+        return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"error": "Please enter both an email and password.", "email": email, "settings": DEFAULT_SETTINGS})
     # Opens active connection to the database and uses a session object to update and fetch data in the database.
     with Session(engine) as session:
         user = session.exec(select(User).where(User.email == email)).first()
         if user is None:
-            return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request, "error": "Invalid email or password.", "email": email, "settings": DEFAULT_SETTINGS})
+            return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"error": "Invalid email or password.", "email": email, "settings": DEFAULT_SETTINGS})
         if not password_hash.verify(password, user.hashed_password):
-            return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"request": request, "error": "Invalid email or password.", "email": email, "settings": DEFAULT_SETTINGS})
+            return templates.TemplateResponse(request=request, name="user_authentication/login.html", context={"error": "Invalid email or password.", "email": email, "settings": DEFAULT_SETTINGS})
+        # Store user ID and email inside the session block before it closes
+        user_id = user.id
+        user_email = user.email
     # Store the user's id in the session so it's saved into a cookie in the browser.
-    request.session["user_id"] = user.id
-    request.session["user_email"] = user.email
+    request.session["user_id"] = user_id
+    request.session["user_email"] = user_email
     # Redirect user to homepage after successfully logging in to their account.
     return RedirectResponse(url="/", status_code=303)
 
@@ -193,4 +203,4 @@ def profile_page(request: Request):
             return RedirectResponse(url="/user_authentication/login", status_code=303)
         settings_object = get_or_create_user_settings(session, user_id)
         settings = {"narrator_enabled": settings_object.narrator_enabled, "voice_input_enabled": settings_object.voice_input_enabled, "master_volume": settings_object.master_volume, "narrator_volume": settings_object.narrator_volume, "music_volume": settings_object.music_volume, "sound_effects_volume": settings_object.sound_effects_volume}
-        return templates.TemplateResponse("/user_authentication/profile.html", {"request": request, "user": user, "user_email": user.email, "settings": settings})
+        return templates.TemplateResponse(request=request, name="user_authentication/profile.html", context={"user": user, "user_email": user.email, "settings": settings})

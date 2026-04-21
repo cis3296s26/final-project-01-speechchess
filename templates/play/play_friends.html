@@ -182,7 +182,9 @@
             <div id="timer-white">White: <span id="time-white">--</span></div>
         </div>
         <div id="turn-indicator">Waiting...</div>
+        <div id="captured-top" class="captured-pieces"></div>
         <div id="board"></div>
+        <div id="captured-bottom" class="captured-pieces"></div>
         <div style="margin-top: 12px;">
             <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
             <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
@@ -194,6 +196,33 @@
     </div>
 
     <script>
+    function capturedFromFen(fen) {
+        const pos = fen.split(' ')[0];
+        const start = { p: 8, r: 2, n: 2, b: 2, q: 1 };
+        const cnt = {};
+        for (const ch of pos) { if (/[prnbqPRNBQ]/.test(ch)) cnt[ch] = (cnt[ch] || 0) + 1; }
+        const order = ['q', 'r', 'b', 'n', 'p'];
+        const byBlack = [], byWhite = [];
+        for (const pt of order) {
+            const mW = start[pt] - (cnt[pt.toUpperCase()] || 0);
+            for (let i = 0; i < mW; i++) byBlack.push(pt.toUpperCase());
+            const mB = start[pt] - (cnt[pt] || 0);
+            for (let i = 0; i < mB; i++) byWhite.push(pt);
+        }
+        return { byBlack, byWhite };
+    }
+
+    function renderCaptured(fen) {
+        if (!fen) return;
+        const { byBlack, byWhite } = capturedFromFen(fen);
+        const toHtml = syms => syms.map(s => {
+            const c = s === s.toUpperCase() ? 'w' : 'b';
+            return `<img src="/static/chess/img/chesspieces/wikipedia/${c}${s.toUpperCase()}.png">`;
+        }).join('');
+        document.getElementById('captured-top').innerHTML = toHtml(byBlack);
+        document.getElementById('captured-bottom').innerHTML = toHtml(byWhite);
+    }
+
     let board = null;
     let ws = null;
     let myColor = null;
@@ -424,6 +453,7 @@
         if (board) {
             board.position(boardPosition(state.fen));
         }
+        renderCaptured(state.fen);
         updateTimerDisplay();
 
         if (state.game_over) {

@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+    <title>FAQ - SpeechChess</title>
     <link rel="stylesheet" href="/static/style.css">
-    <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
     <script type="text/javascript" src="/static/app.js" defer></script>
-    <link href="https://fonts.googleapis.com" rel="stylesheet">
     <script>
         window.speechChessSettings = {
             narratorEnabled: {{ settings["narrator_enabled"] | tojson }},
@@ -23,12 +21,122 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             if (typeof speakText === "function") {
-                speakText("Community page. Hover over page elements to have narrator announce them. The sidebar to navigate to other pages is found on the left side of the screen. May use voice input to navigate this page.");
+                speakText("FAQ page. Hover over page elements to have narrator announce them. The sidebar to navigate to other pages is found on the left side of the screen.");
             }
         });
     </script>
+    <style>
+        .homepage_body {
+            background: #ffffff;
+        }
+
+        main {
+            background: #ffffff;
+        }
+
+        .faq-main {
+            padding: 40px 48px;
+            max-width: 820px;
+            width: 100%;
+            margin: 0 auto;
+            color: #111111;
+        }
+
+        .faq-main h1 {
+            font-size: 2rem;
+            color: #111111;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .faq-main .faq-subtitle {
+            color: #555555;
+            margin-bottom: 36px;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+
+        .faq-item {
+            width: 100%;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .faq-question {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            color: #111111;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .faq-question:hover {
+            background: #f0f0f0;
+        }
+
+        .faq-question-content {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .faq-arrow {
+            width: 20px;
+            height: 20px;
+            fill: #111111;
+            flex-shrink: 0;
+            transition: transform 0.25s ease;
+        }
+
+        .faq-item.open .faq-arrow {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0 20px;
+            color: #333333;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 5000px;
+            padding: 0 20px 20px;
+        }
+
+        .faq-answer img {
+            display: block;
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 14px 0;
+            border: 1px solid #cccccc;
+        }
+
+        .faq-answer ol,
+        .faq-answer ul {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+    </style>
 </head>
-<body>
+<body class="homepage_body">
     <aside id="sidebar">
         <ul>
             <li>
@@ -96,6 +204,137 @@
             {% endif %}
         </ul>
     </aside>
-    <p>Community page</p>
+
+    <main class="faq-main">
+        <h1>Frequently Asked Questions</h1>
+        <p class="faq-subtitle">Click any question to expand the answer.</p>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <div class="faq-question-content">
+                    <span class="faq-q-text">How to start a game?</span>
+                </div>
+                <svg class="faq-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+            <div class="faq-answer">
+                <p>From the sidebar, choose one of the play modes:</p>
+                <img src="/static/images/faq-sidebar.png" alt="Sidebar showing play mode options">
+                <ul>
+                    <li><strong>Play Now</strong> — A local two player game played on the same device.</li>
+                    <li><strong>Play AI</strong> — Playing the computer/AI with the option of Easy, Medium, and Hard mode.</li>
+                    <li><strong>Play a Friend</strong> — Create or join a room and play online with a friend.</li>
+                    <li><strong>Play Online</strong> — A Ranked matchmaking against other players. Your rank (Elo) will be affected.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <div class="faq-question-content">
+                    <span class="faq-q-text">Do I need an account to play?</span>
+                </div>
+                <svg class="faq-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+            <div class="faq-answer">
+                <p>You do not need an account with <strong>Play Now</strong> or <strong>Play AI</strong> mode. An account is required for online play to track your ELO rating. Sign up with the <strong>Sign-Up</strong> button in the sidebar. Enter an email address and a password. After the <strong>Account created successfully!</strong> message appears, proceed to log in with your email and password.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <div class="faq-question-content">
+                    <span class="faq-q-text">How do I make a move with my voice?</span>
+                </div>
+                <svg class="faq-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+            <div class="faq-answer">
+                <ol>
+                    <li>Click <strong>Start Voice Session</strong> on the game page. (Make sure to allow browser microphone permission)</li>
+                    <li>Say something like <strong>Speech Chess e2 to e4</strong>.</li>
+                    <li>Confirm by saying <strong>submit move</strong> or <strong>confirm</strong>.</li>
+                </ol>
+                <p>You must say <strong>Speech Chess</strong> first so the app knows the next words are a chess command, not general speech.</p>
+                <p><strong>Examples:</strong></p>
+                <ul>
+                    <li><strong>Speech Chess e2 to e4</strong> — move a piece (from → to).</li>
+                    <li><strong>Speech Chess highlight e2</strong> — highlight legal moves from a square.</li>
+                    <li><strong>Speech Chess undo</strong> — undo the last move.</li>
+                    <li>Then say <strong>confirm</strong> or <strong>submit move</strong> to execute a pending move.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <div class="faq-question-content">
+                    <span class="faq-q-text">How does pawn promotion work?</span>
+                </div>
+                <svg class="faq-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+            <div class="faq-answer">
+                <p>When you drag or voice command a pawn to the last row/rank, a promotion dialog box will appear. Click the piece you want to promote the pawn to (Queen, Rook, Bishop, or Knight).</p>
+                <img src="/static/images/faq-promotion.png" alt="Promotion choices: Queen, Rook, Bishop, Knight">
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <div class="faq-question-content">
+                    <span class="faq-q-text">Can I undo a move?</span>
+                </div>
+                <svg class="faq-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+            <div class="faq-answer">
+                <p>Yes, but it is only available on <strong>Play Now</strong> and <strong>Play AI</strong> to ensure fairness.</p>
+                <p>Click the <strong>Undo</strong> button on the game page, or say <strong>Speech Chess undo</strong> during a voice session. In <strong>Play AI</strong> mode, undo takes back both your move and the AI's last response.</p>
+                <img src="/static/images/faq-undo.png" alt="Undo button location on the game page">
+                <p>Undo button if voice is not being used or when voice feature is unavailable.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <div class="faq-question-content">
+                    <span class="faq-q-text">How do I play with a friend online?</span>
+                </div>
+                <svg class="faq-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+            <div class="faq-answer">
+                <ol>
+                    <li>Go to <strong>Play a Friend</strong> in the sidebar.</li>
+                    <img src="/static/images/faq-p1.png" alt="Play a Friend highlighted in the sidebar">
+                    <li>Enter your name and click <strong>Create Room</strong>.</li>
+                    <li>Share the Room ID with your friend.</li>
+                    <img src="/static/images/faq-p2.png" alt="Room ID displayed to share with friend">
+                    <li>Your friend enters the Room ID and clicks <strong>Join</strong>.</li>
+                    <img src="/static/images/faq-p3.png" alt="Friend entering Room ID and clicking Join">
+                    <li>The game starts automatically once both players are in the room.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <div class="faq-question-content">
+                    <span class="faq-q-text">What is ELO and where can I find my ELO?</span>
+                </div>
+                <svg class="faq-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+            <div class="faq-answer">
+                <p>ELO is a number that represents your skill level relative to other players — think of it like a ranking. The higher your ELO, the better you are. Winning a <strong>Play Online</strong> match will increase your ELO and losing/forfeiting will decrease it.</p>
+                <p>Beating a higher rated opponent gains you more points and losing to a lower rated opponent costs more points.</p>
+                <p>Your current ELO is shown in the sidebar next to your profile and on your profile page.</p>
+                <img src="/static/images/faq-elo.png" alt="ELO displayed in the sidebar">
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        function toggleFaq(btn) {
+            const item = btn.closest('.faq-item');
+            item.classList.toggle('open');
+        }
+    </script>
 </body>
 </html>
