@@ -13,3 +13,4 @@ itsdangerous
 websockets
 openai
 chess
+psycopg2-binary

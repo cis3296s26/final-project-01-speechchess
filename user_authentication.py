@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 from fastapi import APIRouter, Form, Request, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
@@ -8,14 +9,20 @@ from pydantic import BaseModel
 
 # router stores the routes and will be called in main.py to add the routes to app.
 router = APIRouter()
-# templates 
+# templates
 templates = Jinja2Templates(directory="templates")
-# Create or use file to store account credentials. Create the connection to the database and allow only one thread to synchronize. Then the the hashing object.
-DATABASE_URL = "sqlite:///speechchess.db"
+# Read DATABASE_URL from environment so a Postgres database can be used on Render,
+# preventing user accounts from being wiped on every redeploy. Falls back to local
+# SQLite when DATABASE_URL is not set (local development). Render provides postgres://
+# URLs but SQLAlchemy requires postgresql://, so we fix the scheme if needed.
+_raw_db_url = os.getenv("DATABASE_URL", "sqlite:///speechchess.db")
+DATABASE_URL = _raw_db_url.replace("postgres://", "postgresql://", 1)
 """******************************************************IMPORTANT CONCEPT******************************************************
 Engine is the connection to the database and all tables within it. Session(engine) is the active connection to the database. And session
 is the object used to get data from the database and update or change the data within the database."""
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# SQLite requires check_same_thread=False; Postgres does not accept that argument.
+_connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 password_hash = PasswordHash.recommended()
 """Defines the database table with id, email, and password fields, SQLModel is passed as the base class. Has a one-to-one correspondence with
 the UserSettings database table since class UserSettings references the id field in class User by doing foreign_key="user.id".id being the 
