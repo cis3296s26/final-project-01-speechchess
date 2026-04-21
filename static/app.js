@@ -341,6 +341,10 @@ function startHomepageMenuVoiceControl(announce = true) {
         return;
     }
 
+    if (typeof disableVoiceMode === "function") {
+        disableVoiceMode();
+    }
+
     homepageVoiceNavigationActive = true;
     updateHomepageVoiceStatus("Starting menu voice control...");
 

@@ -77,6 +77,14 @@ function updateVoiceMessage(message) {
     }
 }
 
+function hasGameVoiceControls() {
+    return Boolean(
+        document.getElementById("voiceMove") &&
+        document.getElementById("voiceTranscript") &&
+        document.getElementById("voiceModeButton")
+    );
+}
+
 function transcriptField() {
     return document.getElementById("voiceTranscript");
 }
@@ -630,6 +638,10 @@ async function startOpenAIAudioCapture() {
 }
 
 function startListeningMode() {
+    if (!hasGameVoiceControls()) {
+        return;
+    }
+
     if (!voiceModeEnabled || suspendedForSpeech) {
         return;
     }
@@ -648,6 +660,10 @@ function startListeningMode() {
 }
 
 function enableVoiceMode(announce = true) {
+    if (!hasGameVoiceControls()) {
+        return;
+    }
+
     if (!voiceInputEnabled) {
         updateVoiceMessage("Voice input is disabled in settings.");
         return;
@@ -949,6 +965,10 @@ async function handleTranscript(transcript) {
 }
 
 function startVoiceInput() {
+    if (!hasGameVoiceControls()) {
+        return;
+    }
+
     if (!voiceModeEnabled) {
         enableVoiceMode(true);
         return;
@@ -958,6 +978,10 @@ function startVoiceInput() {
 }
 
 async function submitVoiceMove() {
+    if (!hasGameVoiceControls()) {
+        return;
+    }
+
     const transcript = currentTranscript();
     if (!transcript) {
         updateVoiceMessage("Type a transcript or use voice mode first.");
@@ -972,6 +996,10 @@ async function submitVoiceMove() {
 }
 
 async function beginAutoIntroSession() {
+    if (!hasGameVoiceControls()) {
+        return;
+    }
+
     if (!voiceInputEnabled) {
         updateVoiceMessage("Voice input is disabled in settings.");
         return;
