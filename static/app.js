@@ -79,6 +79,10 @@ function isHomepage() {
     return window.location.pathname === "/" || window.location.pathname === "";
 }
 
+function isSettingsPage() {
+    return window.location.pathname === "/sidebar/settings";
+}
+
 function isTypingTarget(target) {
     if (!target) return false;
     const tagName = target.tagName ? target.tagName.toLowerCase() : "";
@@ -144,12 +148,21 @@ function isPlayExampleCommand(command) {
 }
 
 function isStartGameCommand(command) {
-    return commandIncludesAny(command, [
+    return command === "play" || commandIncludesAny(command, [
         "start game",
         "start",
         "begin game",
-        "begin",
-        "play"
+        "begin"
+    ]);
+}
+
+function isSettingsCommand(command) {
+    return commandIncludesAny(command, [
+        "settings",
+        "setting",
+        "open settings",
+        "go to settings",
+        "accessibility settings"
     ]);
 }
 
@@ -315,22 +328,29 @@ function handleHomepageMenuCommand(transcript) {
     }
 
     if (isPlayAiCommand(command)) {
+        beginHomepageAiSelection(command);
+        scheduleHomepageMenuListening(1200);
+        return;
+    }
+
+    if (isSettingsCommand(command)) {
         homepageVoiceNavigationActive = false;
         if (homepageRecognitionRestartTimer) {
             clearTimeout(homepageRecognitionRestartTimer);
             homepageRecognitionRestartTimer = null;
         }
-        updateHomepageVoiceStatus("Opening Play AI.");
+        sessionStorage.setItem("speechChessSettingsVoiceStart", "1");
+        updateHomepageVoiceStatus("Opening Settings.");
         if (typeof speakText === "function") {
-            speakText("Opening Play AI.");
+            speakText("Opening Settings.");
         }
         setTimeout(function () {
-            playAI();
+            settings();
         }, 500);
         return;
     }
 
-    promptHomepageMenu("I heard " + transcript + ". Say Play AI, Play Example, or Play Locally.");
+    promptHomepageMenu("I heard " + transcript + ". Say Play AI, Play Example, Play Locally, or Settings.");
     scheduleHomepageMenuListening();
 }
 
@@ -451,11 +471,11 @@ function startHomepageMenuVoiceControl(announce = true) {
 }
 
 document.addEventListener("keydown", function (event) {
-    if (!isHomepage() || isTypingTarget(event.target)) {
+    if ((!isHomepage() && !isSettingsPage()) || isTypingTarget(event.target)) {
         return;
     }
 
-    if (event.code === "Space") {
+    if (isHomepage() && event.code === "Space") {
         event.preventDefault();
         speakHomepageVoiceInstructions();
         return;
@@ -463,6 +483,11 @@ document.addEventListener("keydown", function (event) {
 
     if ((event.key && event.key.toLowerCase() === "v") || event.code === "KeyV") {
         event.preventDefault();
+        if (isSettingsPage()) {
+            startSettingsVoiceControl();
+            return;
+        }
+
         homepageVoiceStep = "menu";
         homepageSelectedAiDifficulty = null;
         startHomepageMenuVoiceControl();
@@ -470,6 +495,356 @@ document.addEventListener("keydown", function (event) {
 });
 
 window.startHomepageMenuVoiceControl = startHomepageMenuVoiceControl;
+
+let settingsMediaRecorder = null;
+let settingsMediaStream = null;
+let settingsCaptureTimeout = null;
+let settingsVoiceActive = false;
+let settingsVoiceStarting = false;
+let settingsVoiceRestartTimer = null;
+const settingsCaptureLengthMs = 3600;
+
+function updateSettingsVoiceStatus(message) {
+    const status = document.getElementById("settingsVoiceStatus");
+    if (status) {
+        status.textContent = message;
+    }
+}
+
+function numberFromSettingsCommand(command) {
+    const digitMatch = command.match(/\b(\d{1,3})\b/);
+    if (digitMatch) {
+        return Math.max(0, Math.min(100, Number(digitMatch[1])));
+    }
+
+    if (command.includes("hundred")) {
+        return 100;
+    }
+
+    const ones = {
+        zero: 0, one: 1, two: 2, three: 3, four: 4,
+        five: 5, six: 6, seven: 7, eight: 8, nine: 9
+    };
+    const teens = {
+        ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14,
+        fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19
+    };
+    const tens = {
+        twenty: 20, thirty: 30, forty: 40, fourty: 40,
+        fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90
+    };
+
+    for (const [word, value] of Object.entries(teens)) {
+        if (command.includes(word)) {
+            return value;
+        }
+    }
+
+    for (const [word, value] of Object.entries(tens)) {
+        if (command.includes(word)) {
+            const remainder = command.slice(command.indexOf(word) + word.length);
+            for (const [oneWord, oneValue] of Object.entries(ones)) {
+                if (oneValue > 0 && remainder.includes(oneWord)) {
+                    return value + oneValue;
+                }
+            }
+            return value;
+        }
+    }
+
+    for (const [word, value] of Object.entries(ones)) {
+        if (command.includes(word)) {
+            return value;
+        }
+    }
+
+    return null;
+}
+
+function volumeSettingFromCommand(command) {
+    if (command.includes("master") || command.includes("all volume") || command.includes("all sound")) {
+        return { key: "master_volume", label: "master volume" };
+    }
+    if (command.includes("narrator") || command.includes("narration")) {
+        return { key: "narrator_volume", label: "narrator volume" };
+    }
+    if (command.includes("music") || command.includes("song") || command.includes("background")) {
+        return { key: "music_volume", label: "music volume" };
+    }
+    if (command.includes("sound effect") || command.includes("effects") || command.includes("sfx") || command.includes("sound")) {
+        return { key: "sound_effects_volume", label: "sound effects volume" };
+    }
+    return null;
+}
+
+function toggleSettingFromCommand(command) {
+    if (command.includes("narrator") || command.includes("narration")) {
+        return { key: "narrator_enabled", label: "narrator" };
+    }
+    if (command.includes("voice input") || command.includes("voice control") || command.includes("microphone")) {
+        return { key: "voice_input_enabled", label: "voice input" };
+    }
+    return null;
+}
+
+function booleanValueFromCommand(command) {
+    if (commandIncludesAny(command, ["turn on", "enable", "enabled", "activate"])) {
+        return "true";
+    }
+    if (commandIncludesAny(command, ["turn off", "disable", "disabled", "deactivate"])) {
+        return "false";
+    }
+    return null;
+}
+
+function applyLocalSettingsValue(settingName, value) {
+    if (!window.speechChessSettings) {
+        return;
+    }
+
+    const numericValue = Number(value);
+    if (settingName === "master_volume") window.speechChessSettings.masterVolume = numericValue;
+    if (settingName === "narrator_volume") window.speechChessSettings.narratorVolume = numericValue;
+    if (settingName === "music_volume") window.speechChessSettings.musicVolume = numericValue;
+    if (settingName === "sound_effects_volume") window.speechChessSettings.soundEffectsVolume = numericValue;
+    if (settingName === "narrator_enabled") window.speechChessSettings.narratorEnabled = value === "true";
+    if (settingName === "voice_input_enabled") window.speechChessSettings.voiceInputEnabled = value === "true";
+}
+
+async function saveSettingValue(settingName, settingValue) {
+    const formData = new FormData();
+    formData.append("setting_name", settingName);
+    formData.append("setting_value", String(settingValue));
+    const response = await fetch("/sidebar/settings/update", { method: "POST", body: formData });
+    return response.json();
+}
+
+async function setVolumeByVoice(setting, value) {
+    const slider = document.querySelector(`.volume_slider[data-setting-name="${setting.key}"]`);
+    if (!slider) {
+        return false;
+    }
+
+    slider.value = value;
+    if (slider.nextElementSibling) {
+        slider.nextElementSibling.textContent = value;
+    }
+    applyLocalSettingsValue(setting.key, value);
+    if (setting.key === "master_volume" || setting.key === "music_volume") {
+        applyBackgroundMusicVolume();
+    }
+    if (setting.key === "master_volume" || setting.key === "sound_effects_volume") {
+        applySoundEffectsVolume();
+    }
+
+    const result = await saveSettingValue(setting.key, value);
+    if (!result.success) {
+        throw new Error("The server did not save the volume setting.");
+    }
+
+    return true;
+}
+
+async function setToggleByVoice(setting, value) {
+    const button = document.querySelector(`.settings_toggle[data-setting-name="${setting.key}"]`);
+    if (!button) {
+        return false;
+    }
+
+    button.classList.toggle("enabled", value === "true");
+    button.classList.toggle("disabled", value !== "true");
+    button.textContent = value === "true" ? "Enabled" : "Disabled";
+    applyLocalSettingsValue(setting.key, value);
+
+    if (typeof narratorEnabled !== "undefined" && setting.key === "narrator_enabled") {
+        narratorEnabled = value === "true";
+    }
+    if (typeof voiceInputEnabled !== "undefined" && setting.key === "voice_input_enabled") {
+        voiceInputEnabled = value === "true";
+    }
+
+    const result = await saveSettingValue(setting.key, value);
+    if (!result.success) {
+        throw new Error("The server did not save the setting.");
+    }
+
+    return true;
+}
+
+async function handleSettingsVoiceCommand(transcript) {
+    const command = normalizeHomepageCommand(transcript);
+    updateSettingsVoiceStatus(`Heard: ${transcript}`);
+
+    if (commandIncludesAny(command, ["home", "go home", "main menu"])) {
+        if (typeof speakText === "function") speakText("Opening home.");
+        setTimeout(function () { home(); }, 400);
+        return;
+    }
+
+    const volumeSetting = volumeSettingFromCommand(command);
+    const volumeValue = numberFromSettingsCommand(command);
+    if (volumeSetting && volumeValue !== null) {
+        try {
+            await setVolumeByVoice(volumeSetting, volumeValue);
+            const message = `Set ${volumeSetting.label} to ${volumeValue}.`;
+            updateSettingsVoiceStatus(message);
+            if (typeof speakText === "function") speakText(message);
+        } catch (error) {
+            updateSettingsVoiceStatus("I could not save that setting.");
+            if (typeof speakText === "function") speakText("I could not save that setting.");
+        }
+        scheduleSettingsVoiceListening();
+        return;
+    }
+
+    const toggleSetting = toggleSettingFromCommand(command);
+    const toggleValue = booleanValueFromCommand(command);
+    if (toggleSetting && toggleValue !== null) {
+        try {
+            await setToggleByVoice(toggleSetting, toggleValue);
+            const message = `${toggleSetting.label} ${toggleValue === "true" ? "enabled" : "disabled"}.`;
+            updateSettingsVoiceStatus(message);
+            if (typeof speakText === "function") speakText(message);
+        } catch (error) {
+            updateSettingsVoiceStatus("I could not save that setting.");
+            if (typeof speakText === "function") speakText("I could not save that setting.");
+        }
+        scheduleSettingsVoiceListening();
+        return;
+    }
+
+    const message = "Say commands like set sound to 45, set music to 30, enable narrator, or disable voice input.";
+    updateSettingsVoiceStatus(message);
+    if (typeof speakText === "function") speakText(message);
+    scheduleSettingsVoiceListening();
+}
+
+function stopSettingsCapture(discard = false) {
+    if (settingsCaptureTimeout) {
+        clearTimeout(settingsCaptureTimeout);
+        settingsCaptureTimeout = null;
+    }
+    if (settingsMediaRecorder && settingsMediaRecorder.state !== "inactive") {
+        settingsMediaRecorder._speechChessDiscard = discard;
+        settingsMediaRecorder.stop();
+    }
+}
+
+function scheduleSettingsVoiceListening(delayMs = 900) {
+    if (!settingsVoiceActive || !isSettingsPage()) {
+        return;
+    }
+    if (settingsVoiceRestartTimer) {
+        clearTimeout(settingsVoiceRestartTimer);
+    }
+    settingsVoiceRestartTimer = setTimeout(function () {
+        settingsVoiceRestartTimer = null;
+        if (settingsVoiceActive && !settingsMediaRecorder && !settingsVoiceStarting) {
+            startSettingsVoiceControl(false);
+        }
+    }, delayMs);
+}
+
+function startSettingsVoiceControl(announce = true) {
+    if (!isSettingsPage()) return;
+    if (settingsMediaRecorder || settingsVoiceStarting) {
+        updateSettingsVoiceStatus("Settings voice control is already listening.");
+        return;
+    }
+
+    settingsVoiceActive = true;
+    updateSettingsVoiceStatus("Starting settings voice control...");
+
+    if (!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        const message = "OpenAI voice settings needs browser audio recording support.";
+        updateSettingsVoiceStatus(message);
+        if (typeof speakText === "function") speakText(message);
+        return;
+    }
+
+    settingsVoiceStarting = true;
+    const startCapture = async function () {
+        const chunks = [];
+        try {
+            if (!settingsMediaStream) {
+                settingsMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            }
+            const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+                ? "audio/webm;codecs=opus"
+                : MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")
+                ? "audio/ogg;codecs=opus"
+                : "audio/webm";
+
+            settingsMediaRecorder = new MediaRecorder(settingsMediaStream, { mimeType });
+            settingsMediaRecorder._speechChessDiscard = false;
+            settingsMediaRecorder.ondataavailable = function (event) {
+                if (event.data && event.data.size > 0) {
+                    chunks.push(event.data);
+                }
+            };
+            settingsMediaRecorder.onerror = function () {
+                settingsMediaRecorder = null;
+                settingsVoiceStarting = false;
+                updateSettingsVoiceStatus("There was a problem recording settings audio.");
+                scheduleSettingsVoiceListening(1200);
+            };
+            settingsMediaRecorder.onstop = async function () {
+                const discard = settingsMediaRecorder && settingsMediaRecorder._speechChessDiscard;
+                settingsMediaRecorder = null;
+                settingsVoiceStarting = false;
+                settingsCaptureTimeout = null;
+
+                if (!settingsVoiceActive || discard) {
+                    return;
+                }
+                if (!chunks.length) {
+                    updateSettingsVoiceStatus("Still listening for a settings command...");
+                    scheduleSettingsVoiceListening();
+                    return;
+                }
+
+                const result = await transcribeHomepageAudio(new Blob(chunks, { type: mimeType }));
+                if (!result.success) {
+                    updateSettingsVoiceStatus(result.error || "OpenAI transcription is not available right now.");
+                    scheduleSettingsVoiceListening(1400);
+                    return;
+                }
+
+                const transcript = (result.transcript || "").trim();
+                if (!transcript) {
+                    updateSettingsVoiceStatus("Still listening for a settings command...");
+                    scheduleSettingsVoiceListening();
+                    return;
+                }
+
+                await handleSettingsVoiceCommand(transcript);
+            };
+
+            settingsVoiceStarting = false;
+            settingsMediaRecorder.start();
+            updateSettingsVoiceStatus("Settings voice control listening. Try: set sound to 45.");
+            settingsCaptureTimeout = setTimeout(function () {
+                stopSettingsCapture(false);
+            }, settingsCaptureLengthMs);
+        } catch (error) {
+            settingsMediaRecorder = null;
+            settingsVoiceStarting = false;
+            settingsVoiceActive = false;
+            updateSettingsVoiceStatus("Microphone access was blocked for settings voice control.");
+            if (typeof speakText === "function") speakText("Microphone access was blocked for settings voice control.");
+        }
+    };
+
+    if (announce) {
+        const message = "Settings voice control active. Say commands like set sound to 45, set music to 30, enable narrator, or disable voice input.";
+        updateSettingsVoiceStatus(message);
+        if (typeof speakText === "function") speakText(message);
+    }
+
+    setTimeout(startCapture, announce ? 1200 : 0);
+}
+
+window.startSettingsVoiceControl = startSettingsVoiceControl;
 
 // Current volume is default value unless a database value is found for that account. Then local value is set to that database value.
 function effectiveVolume(localVolume){
@@ -622,6 +997,13 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
+    if (isSettingsPage() && sessionStorage.getItem("speechChessSettingsVoiceStart") === "1") {
+        sessionStorage.removeItem("speechChessSettingsVoiceStart");
+        setTimeout(function () {
+            startSettingsVoiceControl();
+        }, 800);
+    }
 });
 
 // Promote to queen, knight, bisop, rook

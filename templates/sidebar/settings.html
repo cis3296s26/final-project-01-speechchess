@@ -6,7 +6,7 @@
     <title>Home</title>
     <link rel="stylesheet" href="/static/style.css">
     <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
-    <script type="text/javascript" src="/static/app.js" defer></script>
+    <script type="text/javascript" src="/static/app.js?v=20260421c" defer></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
     <script>
         window.speechChessSettings = {
@@ -97,9 +97,17 @@
         </ul>
     </aside>
     <main>
-    <div data-page-message="Home page. Hover over page elements to have narrator announce it. The sidebar to navigate to other pages is found on left side of screen. May use voice input to access those same elements and pages." hidden></div>
+    <div data-page-message="Settings page. Press V to use voice commands like set sound to 45, set music to 30, enable narrator, or disable voice input." hidden></div>
     <div class="settings_page">
         <h1>Accessibility Features</h1>   
+        <p id="settingsVoiceStatus" style="text-align:center; margin: 12px auto; max-width: 680px;" aria-live="polite">
+            Press V for settings voice control. Try: set sound to 45, set music to 30, enable narrator, or disable voice input.
+        </p>
+        <div style="text-align:center; margin: 0 auto 16px;">
+            <button type="button" class="button" onclick="startSettingsVoiceControl()">
+                Start Settings Voice Control
+            </button>
+        </div>
         <div class="settings_page_content"> 
             <div class="settings_row" data-narrate="Narrator Setting">
                 <div class="settings_option_narrator">
