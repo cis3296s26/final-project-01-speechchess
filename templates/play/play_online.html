@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/chess/chessboard.min.css">
     <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
-    <script type="text/javascript" src="/static/app.js" defer></script>
+    <script type="text/javascript" src="/static/app.js?v=20260422a" defer></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
     <script>
         window.speechChessSettings = {
@@ -135,6 +135,12 @@
         </div>
         <div id="turn-indicator" style="margin:8px 0; font-size:1em; color:#333;">Waiting...</div>
         <div id="board" style="width:400px; margin:0 auto 16px;"></div>
+        <div style="margin-top: 12px;">
+            <button id="voiceModeButton" type="button" onclick="startVoiceInput()">Start Voice Session</button>
+            <button type="button" onclick="submitVoiceMove()">Parse Typed Transcript</button>
+            <textarea id="voiceTranscript" rows="2" style="display: block; max-width: 400px; width: 100%; margin: 15px auto;" placeholder="Transcript appears here for debugging or manual parsing."></textarea>
+            <pre id="voiceMove" style="max-width: 400px; margin: 15px auto; white-space: pre-wrap;">Say "Speech Chess e4" or "Speech Chess knight f3", then say "submit move" or "confirm". Say "highlight e2" to show legal moves.</pre>
+        </div>
         <div id="game-log" style="max-width:400px; margin:12px auto 0; max-height:120px; overflow-y:auto; font-size:0.85em; text-align:left; background:#fafafa; border:1px solid #ddd; padding:8px;"></div>
         <button onclick="resignGame()" style="margin-top:12px;">Resign</button>
     </div>
@@ -154,6 +160,20 @@
     let gameOver = false;
     let currentRoomData = null;
     let currentFen = "start";
+    let legalMoves = [];
+
+    window.highlightLegalMovesForSquare = function (source) {
+        if (gameOver || currentTurn !== myColor) {
+            clearLegalMoveHighlights("board");
+            return 0;
+        }
+
+        return highlightLegalMoveDestinations("board", legalMoves, source);
+    };
+
+    window.clearVoiceMoveHighlights = function () {
+        clearLegalMoveHighlights("board");
+    };
 
     loadOpenRooms();
 
@@ -241,10 +261,57 @@
             onSnapEnd: () => board.position(currentFen)
         });
         applyState(state);
+
+        window.voiceParseTranscript = async function (transcript) {
+            const response = await fetch("/rooms/voice-parse", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    room_id: roomId,
+                    player: myColor,
+                    transcript: transcript
+                })
+            });
+
+            return response.json();
+        };
+
+        window.voiceSubmitPendingMove = async function (pendingMove) {
+            const response = await fetch("/rooms/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    room_id: roomId,
+                    player: myColor,
+                    move: pendingMove.uci
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok && !data.error) {
+                data.error = data.detail || "That move could not be played.";
+            }
+            return data;
+        };
+
+        window.onVoiceMoveResult = async function (data) {
+            applyState(data);
+        };
+
+        window.refreshVoiceBoard = async function () {
+            return;
+        };
+
+        setTimeout(() => {
+            if (typeof enableVoiceMode === "function") {
+                enableVoiceMode(true);
+            }
+        }, 150);
     }
 
     function applyState(state) {
         currentFen = state.fen || "start";
+        legalMoves = state.legal_moves || [];
         if (board) board.position(currentFen);
         currentTurn = state.turn;
         document.getElementById("turn-indicator").textContent = state.turn === myColor ? "Your turn" : "Opponent's turn";
