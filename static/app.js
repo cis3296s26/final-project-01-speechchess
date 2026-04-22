@@ -166,6 +166,56 @@ function isSettingsCommand(command) {
     ]);
 }
 
+function voiceNavigationTargetFromCommand(command) {
+    if (commandIncludesAny(command, ["home", "go home", "main menu"])) {
+        return { label: "home", url: "/" };
+    }
+    if (isPlayAiCommand(command)) {
+        return { label: "Play AI", url: "/play/play_ai" };
+    }
+    if (isPlayExampleCommand(command)) {
+        return { label: "Play Example", url: "/play/play" };
+    }
+    if (commandIncludesAny(command, ["play online", "online game"])) {
+        return { label: "Play Online", url: "/play/play_online" };
+    }
+    if (commandIncludesAny(command, ["play friend", "play a friend", "multiplayer", "multi player", "friends"])) {
+        return { label: "Play a Friend", url: "/play/play_friends" };
+    }
+    if (isSettingsCommand(command)) {
+        return { label: "Settings", url: "/sidebar/settings" };
+    }
+    if (commandIncludesAny(command, ["faq", "frequently asked questions", "help page"])) {
+        return { label: "FAQ", url: "/sidebar/faq" };
+    }
+    if (commandIncludesAny(command, ["learn", "learn page", "learn chess"])) {
+        return { label: "Learn", url: "/sidebar/learn" };
+    }
+    if (commandIncludesAny(command, ["support", "support page"])) {
+        return { label: "Support", url: "/sidebar/support" };
+    }
+    if (commandIncludesAny(command, ["stats", "statistics"])) {
+        return { label: "Stats", url: "/play/stats" };
+    }
+    return null;
+}
+
+function navigateToVoiceTarget(target, statusUpdater) {
+    if (!target) {
+        return;
+    }
+
+    if (typeof statusUpdater === "function") {
+        statusUpdater(`Opening ${target.label}.`);
+    }
+    if (typeof speakText === "function") {
+        speakText(`Opening ${target.label}.`);
+    }
+    setTimeout(function () {
+        window.location.href = target.url;
+    }, 500);
+}
+
 function promptHomepageMenu(message) {
     updateHomepageVoiceStatus(message);
     if (typeof speakText === "function") {
@@ -269,13 +319,24 @@ function launchAiFromHomepageVoice() {
     }
 
     setTimeout(function () {
-        playAI();
+        window.location.href = "/play/play_ai";
     }, 500);
 }
 
 function handleHomepageMenuCommand(transcript) {
     const command = normalizeHomepageCommand(transcript);
     updateHomepageVoiceStatus(`Heard: ${transcript}`);
+
+    const navigationTarget = voiceNavigationTargetFromCommand(command);
+    if (navigationTarget && navigationTarget.url !== "/play/play_ai" && homepageVoiceStep === "menu") {
+        homepageVoiceNavigationActive = false;
+        if (homepageRecognitionRestartTimer) {
+            clearTimeout(homepageRecognitionRestartTimer);
+            homepageRecognitionRestartTimer = null;
+        }
+        navigateToVoiceTarget(navigationTarget, updateHomepageVoiceStatus);
+        return;
+    }
 
     if (homepageVoiceStep === "aiDifficulty") {
         const difficulty = difficultyFromCommand(command);
@@ -322,7 +383,7 @@ function handleHomepageMenuCommand(transcript) {
             speakText("Opening Play Example.");
         }
         setTimeout(function () {
-            playExample();
+            window.location.href = "/play/play";
         }, 500);
         return;
     }
@@ -345,7 +406,7 @@ function handleHomepageMenuCommand(transcript) {
             speakText("Opening Settings.");
         }
         setTimeout(function () {
-            settings();
+            window.location.href = "/sidebar/settings";
         }, 500);
         return;
     }
@@ -675,9 +736,10 @@ async function handleSettingsVoiceCommand(transcript) {
     const command = normalizeHomepageCommand(transcript);
     updateSettingsVoiceStatus(`Heard: ${transcript}`);
 
-    if (commandIncludesAny(command, ["home", "go home", "main menu"])) {
-        if (typeof speakText === "function") speakText("Opening home.");
-        setTimeout(function () { home(); }, 400);
+    const navigationTarget = voiceNavigationTargetFromCommand(command);
+    if (navigationTarget && navigationTarget.url !== window.location.pathname) {
+        stopSettingsVoiceControl();
+        navigateToVoiceTarget(navigationTarget, updateSettingsVoiceStatus);
         return;
     }
 
@@ -693,7 +755,7 @@ async function handleSettingsVoiceCommand(transcript) {
             updateSettingsVoiceStatus("I could not save that setting.");
             if (typeof speakText === "function") speakText("I could not save that setting.");
         }
-        scheduleSettingsVoiceListening();
+        scheduleSettingsVoiceListening(2200);
         return;
     }
 
@@ -709,14 +771,13 @@ async function handleSettingsVoiceCommand(transcript) {
             updateSettingsVoiceStatus("I could not save that setting.");
             if (typeof speakText === "function") speakText("I could not save that setting.");
         }
-        scheduleSettingsVoiceListening();
+        scheduleSettingsVoiceListening(2200);
         return;
     }
 
     const message = "Say commands like set sound to 45, set music to 30, enable narrator, or disable voice input.";
     updateSettingsVoiceStatus(message);
-    if (typeof speakText === "function") speakText(message);
-    scheduleSettingsVoiceListening();
+    scheduleSettingsVoiceListening(1200);
 }
 
 function stopSettingsCapture(discard = false) {
@@ -728,6 +789,16 @@ function stopSettingsCapture(discard = false) {
         settingsMediaRecorder._speechChessDiscard = discard;
         settingsMediaRecorder.stop();
     }
+}
+
+function stopSettingsVoiceControl() {
+    settingsVoiceActive = false;
+    settingsVoiceStarting = false;
+    if (settingsVoiceRestartTimer) {
+        clearTimeout(settingsVoiceRestartTimer);
+        settingsVoiceRestartTimer = null;
+    }
+    stopSettingsCapture(true);
 }
 
 function scheduleSettingsVoiceListening(delayMs = 900) {
@@ -799,7 +870,7 @@ function startSettingsVoiceControl(announce = true) {
                 }
                 if (!chunks.length) {
                     updateSettingsVoiceStatus("Still listening for a settings command...");
-                    scheduleSettingsVoiceListening();
+                    scheduleSettingsVoiceListening(800);
                     return;
                 }
 
@@ -813,7 +884,7 @@ function startSettingsVoiceControl(announce = true) {
                 const transcript = (result.transcript || "").trim();
                 if (!transcript) {
                     updateSettingsVoiceStatus("Still listening for a settings command...");
-                    scheduleSettingsVoiceListening();
+                    scheduleSettingsVoiceListening(800);
                     return;
                 }
 
@@ -838,10 +909,10 @@ function startSettingsVoiceControl(announce = true) {
     if (announce) {
         const message = "Settings voice control active. Say commands like set sound to 45, set music to 30, enable narrator, or disable voice input.";
         updateSettingsVoiceStatus(message);
-        if (typeof speakText === "function") speakText(message);
+        if (typeof speakText === "function") speakText("Settings voice control active.");
     }
 
-    setTimeout(startCapture, announce ? 1200 : 0);
+    setTimeout(startCapture, announce ? 1700 : 0);
 }
 
 window.startSettingsVoiceControl = startSettingsVoiceControl;
@@ -1002,7 +1073,7 @@ document.addEventListener("DOMContentLoaded", function () {
         sessionStorage.removeItem("speechChessSettingsVoiceStart");
         setTimeout(function () {
             startSettingsVoiceControl();
-        }, 800);
+        }, 2600);
     }
 });
 

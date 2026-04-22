@@ -6,7 +6,7 @@
     <title>Home</title>
     <link rel="stylesheet" href="/static/style.css">
     <!--Embed the script tag for app.js. Use defer so js code will wait for the html code to finish loading-->
-    <script type="text/javascript" src="/static/app.js?v=20260421c" defer></script>
+    <script type="text/javascript" src="/static/app.js?v=20260421d" defer></script>
     <link href="https://fonts.googleapis.com" rel="stylesheet">
     <script>
         window.speechChessSettings = {
@@ -18,15 +18,7 @@
             soundEffectsVolume: {{ settings["sound_effects_volume"] | tojson }}
         };
     </script>
-    <script src="/static/voice.js?v=20260421b" defer></script>
-    <!--Announces this string upon loading of this page.-->
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            if (typeof speakText === "function") {
-                speakText("Settings page with accessibility features. Hover over the setting to have narrator announce them.  May use voice input to change the settings.");
-            }
-        });
-    </script>
+    <script src="/static/voice.js?v=20260421c" defer></script>
 </head>
 <body class="settings_body">
     <aside id="sidebar">
@@ -97,7 +89,7 @@
         </ul>
     </aside>
     <main>
-    <div data-page-message="Settings page. Press V to use voice commands like set sound to 45, set music to 30, enable narrator, or disable voice input." hidden></div>
+    <div data-page-message="Settings page. Press V for settings voice control." hidden></div>
     <div class="settings_page">
         <h1>Accessibility Features</h1>   
         <p id="settingsVoiceStatus" style="text-align:center; margin: 12px auto; max-width: 680px;" aria-live="polite">
