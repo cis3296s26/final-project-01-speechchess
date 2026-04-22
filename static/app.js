@@ -98,7 +98,7 @@ function updateHomepageVoiceStatus(message) {
 
 function speakHomepageVoiceInstructions() {
     homepageVoiceInstructionsPlayed = true;
-    const message = "Voice navigation instructions. Press V once to activate menu voice control. Then say Play AI, Play Example, or Play Locally.";
+    const message = "Voice navigation instructions. Press V once to activate menu voice control. Then say Play AI, Play Example, Play Online, Play a Friend, or Settings.";
     updateHomepageVoiceStatus(message);
 
     if (typeof speakText === "function") {
@@ -411,7 +411,7 @@ function handleHomepageMenuCommand(transcript) {
         return;
     }
 
-    promptHomepageMenu("I heard " + transcript + ". Say Play AI, Play Example, Play Locally, or Settings.");
+    promptHomepageMenu("I heard " + transcript + ". Say Play AI, Play Example, Play Online, Play a Friend, or Settings.");
     scheduleHomepageMenuListening();
 }
 
@@ -479,7 +479,7 @@ function startHomepageMenuVoiceControl(announce = true) {
                 }
 
                 if (!chunks.length) {
-                    updateHomepageVoiceStatus("Still listening for Play AI or Play Example...");
+                    updateHomepageVoiceStatus("Still listening for a menu command...");
                     scheduleHomepageMenuListening(900);
                     return;
                 }
@@ -493,7 +493,7 @@ function startHomepageMenuVoiceControl(announce = true) {
 
                 const transcript = (result.transcript || "").trim();
                 if (!transcript) {
-                    updateHomepageVoiceStatus("Still listening for Play AI or Play Example...");
+                    updateHomepageVoiceStatus("Still listening for a menu command...");
                     scheduleHomepageMenuListening(900);
                     return;
                 }
@@ -503,7 +503,7 @@ function startHomepageMenuVoiceControl(announce = true) {
 
             homepageRecognitionStarting = false;
             homepageMediaRecorder.start();
-            updateHomepageVoiceStatus("Menu voice control listening. Say Play AI or Play Example.");
+            updateHomepageVoiceStatus("Menu voice control listening. Say Play AI, Play Example, Play Online, Play a Friend, or Settings.");
             homepageCaptureTimeout = setTimeout(function () {
                 stopHomepageCapture(false);
             }, homepageCaptureLengthMs);
@@ -520,7 +520,7 @@ function startHomepageMenuVoiceControl(announce = true) {
 
     if (announce) {
         const message = homepageVoiceStep === "menu"
-            ? "Menu voice control activated. Say Play AI, Play Example, or Play Locally."
+            ? "Menu voice control activated. Say Play AI, Play Example, Play Online, Play a Friend, or Settings."
             : "Menu voice control listening.";
         updateHomepageVoiceStatus(message);
         if (typeof speakText === "function") {
