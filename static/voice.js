@@ -10,6 +10,7 @@ let pendingUndo = false;
 let awaitingMove = false;
 let parsingMove = false;
 let lastPrompt = "";
+let gameResignedForVoiceNavigation = false;
 let transcriptQueue = Promise.resolve();
 let narratorEnabled = true;
 let voiceInputEnabled = true;
@@ -213,6 +214,52 @@ function isUndoCommand(text) {
 
 function isHelpCommand(text) {
     return normalizeCommand(text) === "help";
+}
+
+function isResignCommand(text) {
+    const normalized = normalizeCommand(text);
+    return normalized === "resign" || normalized === "resign game" || normalized === "forfeit";
+}
+
+function gameNavigationTargetFromCommand(text) {
+    const command = normalizeCommand(text);
+    if (command.includes("home") || command.includes("main menu")) {
+        return { label: "home", url: "/" };
+    }
+    if (command.includes("play ai") || command.includes("play a i") || command.includes("ai mode")) {
+        return { label: "Play AI", url: "/play/play_ai" };
+    }
+    if (command.includes("play example") || command.includes("play locally") || command.includes("play local") || command.includes("play now")) {
+        return { label: "Play Example", url: "/play/play" };
+    }
+    if (command.includes("play online") || command.includes("online game")) {
+        return { label: "Play Online", url: "/play/play_online" };
+    }
+    if (command.includes("play friend") || command.includes("play a friend") || command.includes("multiplayer") || command.includes("multi player")) {
+        return { label: "Play a Friend", url: "/play/play_friends" };
+    }
+    if (command.includes("settings") || command.includes("setting")) {
+        return { label: "Settings", url: "/sidebar/settings" };
+    }
+    if (command.includes("faq") || command.includes("frequently asked questions")) {
+        return { label: "FAQ", url: "/sidebar/faq" };
+    }
+    if (command.includes("stats") || command.includes("statistics")) {
+        return { label: "Stats", url: "/play/stats" };
+    }
+    return null;
+}
+
+function resignCurrentGameForVoiceNavigation() {
+    if (typeof window.resignAiGame === "function") {
+        window.resignAiGame();
+        return true;
+    }
+    if (typeof window.resignGame === "function") {
+        window.resignGame();
+        return true;
+    }
+    return false;
 }
 
 function moveAfterWakePhrase(text) {
@@ -879,7 +926,35 @@ async function handleHighlightTranscript(transcript) {
 async function handleTranscript(transcript) {
     const normalized = normalizeCommand(transcript);
     const wakeMove = moveAfterWakePhrase(transcript);
+    const navigationTarget = gameNavigationTargetFromCommand(transcript);
     updateVoiceMessage(`Heard: ${transcript}`);
+
+    if (isResignCommand(normalized)) {
+        clearPendingMove();
+        pendingUndo = false;
+        awaitingMove = false;
+        clearVoiceMoveHighlightsIfAvailable();
+        gameResignedForVoiceNavigation = true;
+        const resigned = resignCurrentGameForVoiceNavigation();
+        const message = resigned
+            ? "Game resigned. You can now say home, settings, Play AI, or Play Example."
+            : "Navigation unlocked. You can now say home, settings, Play AI, or Play Example.";
+        speakText(message, { releaseMusicHold: true });
+        return;
+    }
+
+    if (navigationTarget) {
+        if (!gameResignedForVoiceNavigation) {
+            speakText("To leave this game by voice, say resign first.", { releaseMusicHold: true });
+            return;
+        }
+
+        speakText(`Opening ${navigationTarget.label}.`, { releaseMusicHold: true });
+        setTimeout(function () {
+            window.location.href = navigationTarget.url;
+        }, 500);
+        return;
+    }
 
     if (isRepeatCommand(normalized)) {
         if (lastPrompt) {
